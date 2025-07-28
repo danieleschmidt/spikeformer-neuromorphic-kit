@@ -1,0 +1,272 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "SpikeFormer Overview",
+    "tags": ["spikeformer", "neuromorphic"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "5s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Service Health",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "up{job=~\"spikeformer.*\"}",
+            "legendFormat": "{{job}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "options": {
+                  "0": {
+                    "text": "DOWN",
+                    "color": "red"
+                  },
+                  "1": {
+                    "text": "UP",
+                    "color": "green"
+                  }
+                },
+                "type": "value"
+              }
+            ],
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(spikeformer_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Requests/sec"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 6,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(spikeformer_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(spikeformer_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Seconds"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 18,
+          "y": 0
+        }
+      },
+      {
+        "id": 4,
+        "title": "Energy Efficiency",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "spikeformer_energy_efficiency_ratio",
+            "legendFormat": "{{model_name}} ({{backend}})"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Efficiency Ratio"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 5,
+        "title": "Power Consumption",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "spikeformer_power_consumption_watts",
+            "legendFormat": "{{component}} ({{backend}})"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Watts"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "id": 6,
+        "title": "Model Accuracy",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "spikeformer_model_accuracy",
+            "legendFormat": "{{model_name}}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "thresholds": {
+              "steps": [
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 0.8
+                },
+                {
+                  "color": "green",
+                  "value": 0.9
+                }
+              ]
+            }
+          }
+        },
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 24,
+          "y": 8
+        }
+      },
+      {
+        "id": 7,
+        "title": "Spike Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "spikeformer_spike_rate",
+            "legendFormat": "{{layer}} ({{model_name}})"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Spike Rate"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 8,
+        "title": "Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "spikeformer_memory_usage_bytes / spikeformer_memory_limit_bytes",
+            "legendFormat": "{{component}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Usage %",
+            "max": 1,
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        }
+      },
+      {
+        "id": 9,
+        "title": "Hardware Utilization",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "spikeformer_loihi2_chip_utilization",
+            "legendFormat": "Loihi2 Chip {{chip_id}}"
+          },
+          {
+            "expr": "spikeformer_cpu_utilization_percent / 100",
+            "legendFormat": "CPU Core {{core}}"
+          },
+          {
+            "expr": "spikeformer_gpu_utilization_percent / 100",
+            "legendFormat": "GPU {{gpu_id}}"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Utilization %",
+            "max": 1,
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 24
+        }
+      }
+    ]
+  }
+}

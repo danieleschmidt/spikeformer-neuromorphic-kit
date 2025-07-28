@@ -1,0 +1,26 @@
+{
+  "security": {
+    "ignore-cvss-severity-below": 7.0,
+    "ignore-cvss-unknown-severity": false,
+    "continue-on-vulnerability-error": false
+  },
+  "alert": {
+    "ignore-unpinned-requirements": false
+  },
+  "report": {
+    "only-report": false,
+    "output": {
+      "format": "json",
+      "file": "safety-report.json"
+    }
+  },
+  "ignore": {
+    "vulnerabilities": [
+      {
+        "id": "12345",
+        "reason": "False positive - not applicable to our use case",
+        "expires": "2025-06-01"
+      }
+    ]
+  }
+}

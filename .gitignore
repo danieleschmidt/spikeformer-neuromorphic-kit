@@ -205,3 +205,110 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project specific
+
+# Model files and checkpoints
+*.pth
+*.pt
+*.ckpt
+*.h5
+*.pb
+*.onnx
+models/
+checkpoints/
+weights/
+
+# Data files
+data/
+datasets/
+*.csv
+*.tsv
+*.parquet
+*.pickle
+*.pkl
+
+# Logs and outputs
+logs/
+outputs/
+runs/
+wandb/
+mlruns/
+.mlflow/
+
+# Temporary files
+tmp/
+temp/
+cache/
+
+# Hardware specific
+# Intel Loihi
+nxsdk_modules/
+*.snip
+
+# SpiNNaker
+spinnaker_tools/
+*.aplx
+
+# Neuromorphic hardware configs
+hardware_configs/
+*.hwconfig
+
+# Performance profiling
+profile.stats
+*.prof
+*.perf
+
+# Security
+*.key
+*.pem
+*.crt
+secrets/
+.env.local
+.env.production
+
+# IDE and editor files
+*.swp
+*.swo
+*~
+.idea/
+*.sublime-*
+
+# Package managers
+node_modules/
+.npm
+.yarn/
+yarn-error.log
+
+# Docker
+docker-compose.override.yml
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Kubernetes
+*.kubeconfig
+
+# Documentation build
+docs/_build/
+docs/build/
+site/
+
+# Coverage and testing
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.benchmarks/
+
+# Linting and formatting
+.ruff_cache/
+.black/
+.mypy_cache/
+
+# Local development
+local/
+dev/
+scratch/

@@ -1,0 +1,226 @@
+version: '3.8'
+
+services:
+  # Development environment
+  spikeformer-dev:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: spikeformer-dev
+    ports:
+      - "8888:8888"  # Jupyter Lab
+      - "8000:8000"  # Documentation server
+      - "3000:3000"  # Development server
+    volumes:
+      - .:/app
+      - spikeformer-cache:/root/.cache
+      - huggingface-cache:/root/.cache/huggingface
+      - torch-cache:/root/.cache/torch
+    environment:
+      - NEUROMORPHIC_ENV=development
+      - JUPYTER_ENABLE_LAB=yes
+      - WANDB_MODE=disabled
+    networks:
+      - spikeformer-network
+
+  # Production CPU service
+  spikeformer-cpu:
+    build:
+      context: .
+      target: production-cpu
+      dockerfile: Dockerfile
+    container_name: spikeformer-cpu
+    volumes:
+      - ./models:/app/models:ro
+      - ./data:/app/data:ro
+      - spikeformer-cache:/app/.cache
+    environment:
+      - NEUROMORPHIC_ENV=production
+      - LOG_LEVEL=INFO
+    networks:
+      - spikeformer-network
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+
+  # Production GPU service
+  spikeformer-gpu:
+    build:
+      context: .
+      target: production-gpu
+      dockerfile: Dockerfile
+    container_name: spikeformer-gpu
+    runtime: nvidia
+    volumes:
+      - ./models:/app/models:ro
+      - ./data:/app/data:ro
+      - spikeformer-cache:/app/.cache
+    environment:
+      - NEUROMORPHIC_ENV=production
+      - CUDA_VISIBLE_DEVICES=0
+      - LOG_LEVEL=INFO
+    networks:
+      - spikeformer-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Loihi2 specialized service
+  spikeformer-loihi2:
+    build:
+      context: .
+      target: loihi2
+      dockerfile: Dockerfile
+    container_name: spikeformer-loihi2
+    privileged: true  # Required for hardware access
+    volumes:
+      - /dev:/dev  # Hardware device access
+      - ./models:/app/models:ro
+      - spikeformer-cache:/app/.cache
+    environment:
+      - NEUROMORPHIC_ENV=production
+      - HARDWARE_BACKEND=loihi2
+      - NXSDK_ROOT=/opt/nxsdk
+    networks:
+      - spikeformer-network
+
+  # SpiNNaker specialized service  
+  spikeformer-spinnaker:
+    build:
+      context: .
+      target: spinnaker
+      dockerfile: Dockerfile
+    container_name: spikeformer-spinnaker
+    volumes:
+      - ./models:/app/models:ro
+      - spikeformer-cache:/app/.cache
+    environment:
+      - NEUROMORPHIC_ENV=production
+      - HARDWARE_BACKEND=spinnaker
+      - SPYNNAKER_IP=${SPINNAKER_IP:-192.168.1.100}
+    networks:
+      - spikeformer-network
+
+  # Edge deployment service
+  spikeformer-edge:
+    build:
+      context: .
+      target: edge
+      dockerfile: Dockerfile
+    container_name: spikeformer-edge
+    volumes:
+      - ./models:/app/models:ro
+    environment:
+      - NEUROMORPHIC_ENV=production
+      - EDGE_DEPLOYMENT_MODE=optimized
+      - EDGE_POWER_BUDGET_MW=1000
+    networks:
+      - spikeformer-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+
+  # Monitoring and observability
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: spikeformer-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - spikeformer-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: spikeformer-grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - spikeformer-network
+    depends_on:
+      - prometheus
+
+  # Model registry service
+  mlflow:
+    image: python:3.11-slim
+    container_name: spikeformer-mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=sqlite:///mlflow/mlflow.db
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlflow/artifacts
+    command: |
+      bash -c "
+        pip install mlflow && 
+        mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow/mlflow.db --default-artifact-root /mlflow/artifacts
+      "
+    networks:
+      - spikeformer-network
+
+  # Database for experiments
+  postgres:
+    image: postgres:15-alpine
+    container_name: spikeformer-postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=spikeformer
+      - POSTGRES_USER=spikeformer
+      - POSTGRES_PASSWORD=spikeformer_password
+    networks:
+      - spikeformer-network
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: spikeformer-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - spikeformer-network
+
+networks:
+  spikeformer-network:
+    driver: bridge
+
+volumes:
+  spikeformer-cache:
+  huggingface-cache:
+  torch-cache:
+  prometheus-data:
+  grafana-data:
+  mlflow-data:
+  postgres-data:
+  redis-data:
