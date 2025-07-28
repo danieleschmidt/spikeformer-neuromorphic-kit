@@ -1,0 +1,70 @@
+{
+    "name": "SpikeFormer Development",
+    "image": "mcr.microsoft.com/devcontainers/python:3.11",
+    
+    "features": {
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "18"
+        }
+    },
+    
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.black-formatter",
+                "ms-python.flake8",
+                "ms-python.isort",
+                "ms-python.mypy-type-checker",
+                "ms-vscode.test-adapter-converter",
+                "ms-toolsai.jupyter",
+                "charliermarsh.ruff",
+                "ms-vscode.makefile-tools",
+                "redhat.vscode-yaml",
+                "ms-azuretools.vscode-docker",
+                "GitHub.vscode-pull-request-github",
+                "ms-vscode.vscode-json",
+                "bradlc.vscode-tailwindcss"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.formatting.provider": "black",
+                "python.linting.enabled": true,
+                "python.linting.flake8Enabled": true,
+                "python.linting.mypyEnabled": true,
+                "python.testing.pytestEnabled": true,
+                "python.testing.unittestEnabled": false,
+                "editor.formatOnSave": true,
+                "editor.codeActionsOnSave": {
+                    "source.organizeImports": true
+                },
+                "files.exclude": {
+                    "**/__pycache__": true,
+                    "**/*.pyc": true,
+                    ".pytest_cache": true,
+                    ".coverage": true,
+                    "*.egg-info": true
+                }
+            }
+        }
+    },
+    
+    "postCreateCommand": "pip install -e '.[dev]' && pre-commit install",
+    
+    "forwardPorts": [8888, 8000, 3000],
+    
+    "mounts": [
+        "source=${localWorkspaceFolder}/.devcontainer/cache,target=/root/.cache,type=bind,consistency=cached"
+    ],
+    
+    "remoteUser": "root",
+    
+    "updateContentCommand": "pip install -e '.[dev]'",
+    
+    "containerEnv": {
+        "PYTHONPATH": "/workspaces/spikeformer-neuromorphic-kit",
+        "NEUROMORPHIC_ENV": "development"
+    }
+}

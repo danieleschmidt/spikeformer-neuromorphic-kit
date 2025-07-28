@@ -1,0 +1,87 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # SpikeFormer application metrics
+  - job_name: 'spikeformer'
+    static_configs:
+      - targets: ['localhost:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+    scrape_timeout: 5s
+
+  # SpikeFormer development service
+  - job_name: 'spikeformer-dev'
+    static_configs:
+      - targets: ['spikeformer-dev:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # SpikeFormer production CPU service
+  - job_name: 'spikeformer-cpu'
+    static_configs:
+      - targets: ['spikeformer-cpu:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  # SpikeFormer production GPU service
+  - job_name: 'spikeformer-gpu'
+    static_configs:
+      - targets: ['spikeformer-gpu:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  # Hardware-specific monitoring
+  - job_name: 'spikeformer-loihi2'
+    static_configs:
+      - targets: ['spikeformer-loihi2:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 1s  # High-frequency for hardware monitoring
+
+  - job_name: 'spikeformer-spinnaker'
+    static_configs:
+      - targets: ['spikeformer-spinnaker:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 1s
+
+  # Edge device monitoring
+  - job_name: 'spikeformer-edge'
+    static_configs:
+      - targets: ['spikeformer-edge:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s  # Lower frequency for edge devices
+
+  # System metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # Container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # Database metrics
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  # Redis metrics
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

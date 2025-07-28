@@ -1,0 +1,32 @@
+[bandit]
+# Bandit configuration for security scanning
+
+# Test IDs to skip
+skips = B101,B601,B602,B603
+
+# Test IDs to include (empty means include all except skipped)
+tests = 
+
+# Paths to exclude from scanning
+exclude = 
+    /tests/,
+    /docs/,
+    /.venv/,
+    /venv/,
+    /build/,
+    /dist/
+
+# Confidence levels: LOW, MEDIUM, HIGH
+confidence = MEDIUM
+
+# Severity levels: LOW, MEDIUM, HIGH  
+severity = MEDIUM
+
+# Output format: json, csv, txt, html, xml
+format = json
+
+# Output file
+output = bandit-report.json
+
+# Baseline file to compare against
+baseline = .bandit-baseline.json

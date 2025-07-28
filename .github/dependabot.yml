@@ -1,0 +1,68 @@
+# GitHub Dependabot configuration for automated dependency updates
+
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "security-team"
+    assignees:
+      - "maintainer-team"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "python"
+    
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "06:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "security-team"
+    labels:
+      - "dependencies"
+      - "docker"
+    
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "devops-team"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    
+  # npm dependencies (for tooling)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "06:00"
+    open-pull-requests-limit: 5
+    ignore:
+      # Ignore major version updates for stability
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    labels:
+      - "dependencies"
+      - "npm"
+
+# Security-specific settings
+# Dependabot will automatically create PRs for security updates
+# regardless of the schedule settings above

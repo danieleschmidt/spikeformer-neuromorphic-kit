@@ -1,0 +1,162 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Testing
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+htmlcov/
+
+# Documentation
+docs/_build/
+docs/build/
+site/
+
+# Jupyter
+.ipynb_checkpoints
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# Temporary files
+tmp/
+temp/
+cache/
+
+# Data and models (too large for container)
+data/
+datasets/
+models/
+checkpoints/
+weights/
+*.pth
+*.pt
+*.ckpt
+*.h5
+*.pb
+*.onnx
+*.pickle
+*.pkl
+
+# Logs
+logs/
+outputs/
+runs/
+wandb/
+mlruns/
+.mlflow/
+
+# Hardware specific
+nxsdk_modules/
+*.snip
+spinnaker_tools/
+*.aplx
+hardware_configs/
+*.hwconfig
+
+# Performance profiling
+profile.stats
+*.prof
+*.perf
+
+# Security
+*.key
+*.pem
+*.crt
+secrets/
+.env.local
+.env.production
+
+# Package managers
+node_modules/
+.npm
+.yarn/
+yarn-error.log
+
+# Development
+local/
+dev/
+scratch/
+
+# Monitoring configs (will be mounted)
+monitoring/
+
+# CI/CD
+.github/
+
+# Large files
+*.tar.gz
+*.zip
+*.7z
+
+# Cache directories
+.ruff_cache/
+.black/
+.mypy_cache/

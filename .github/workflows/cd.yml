@@ -1,0 +1,274 @@
+# NOTE: This workflow is for reference only. 
+# The user must manually create this in their GitHub repository.
+
+name: Continuous Deployment
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*.*.*' ]
+  release:
+    types: [ published ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Automated tests before deployment
+  pre-deploy-tests:
+    name: Pre-deployment Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          
+      - name: Run comprehensive tests
+        run: |
+          pytest tests/ -v --cov=spikeformer
+          
+      - name: Verify package build
+        run: |
+          python -m build
+          pip install dist/*.whl
+
+  # Build and push Docker images
+  docker-publish:
+    name: Build and Publish Docker Images
+    runs-on: ubuntu-latest
+    needs: pre-deploy-tests
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        variant: [cpu, gpu, loihi2, spinnaker, edge]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch,suffix=-${{ matrix.variant }}
+            type=ref,event=pr,suffix=-${{ matrix.variant }}
+            type=semver,pattern={{version}},suffix=-${{ matrix.variant }}
+            type=semver,pattern={{major}}.{{minor}},suffix=-${{ matrix.variant }}
+            
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: production-${{ matrix.variant }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Publish to PyPI
+  pypi-publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: pre-deploy-tests
+    if: github.event_name == 'release' && github.event.action == 'published'
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+          
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip build
+          
+      - name: Build package
+        run: python -m build
+        
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  # Deploy documentation
+  docs-deploy:
+    name: Deploy Documentation
+    runs-on: ubuntu-latest
+    needs: pre-deploy-tests
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[docs]"
+          
+      - name: Build documentation
+        run: |
+          sphinx-build -b html docs/ docs/_build/
+          
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: docs/_build/
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+
+  # Create GitHub release
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [docker-publish, pypi-publish]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Generate changelog from commits
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            ## Changes in this Release
+            ${{ steps.changelog.outputs.CHANGELOG }}
+            
+            ## Installation
+            ```bash
+            pip install spikeformer-neuromorphic-kit==${{ github.ref_name }}
+            ```
+            
+            ## Docker Images
+            - CPU: `ghcr.io/${{ github.repository }}:${{ github.ref_name }}-cpu`
+            - GPU: `ghcr.io/${{ github.repository }}:${{ github.ref_name }}-gpu`
+            - Loihi2: `ghcr.io/${{ github.repository }}:${{ github.ref_name }}-loihi2`
+            - SpiNNaker: `ghcr.io/${{ github.repository }}:${{ github.ref_name }}-spinnaker`
+            - Edge: `ghcr.io/${{ github.repository }}:${{ github.ref_name }}-edge`
+          draft: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+
+  # Notify stakeholders
+  notify:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    needs: [docker-publish, docs-deploy]
+    if: always()
+    steps:
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#neuromorphic-deployments'
+          text: |
+            Deployment Status: ${{ job.status }}
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref }}
+            Commit: ${{ github.sha }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # Staging deployment
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: docker-publish
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    steps:
+      - name: Deploy to staging environment
+        run: |
+          echo "Deploying to staging environment..."
+          # This would typically involve updating Kubernetes deployments,
+          # AWS ECS services, or other container orchestration platforms
+
+  # Production deployment
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: github.event_name == 'release' && github.event.action == 'published'
+    environment: production
+    steps:
+      - name: Deploy to production environment
+        run: |
+          echo "Deploying to production environment..."
+          # This would typically involve updating production deployments
+          # with proper blue-green or canary deployment strategies
+
+  # Post-deployment verification
+  post-deploy-verification:
+    name: Post-deployment Verification
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
+    steps:
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests..."
+          # Add smoke tests to verify deployment
+          
+      - name: Check service health
+        run: |
+          echo "Checking service health..."
+          # Add health checks for deployed services
+          
+      - name: Performance baseline check
+        run: |
+          echo "Running performance baseline check..."
+          # Add performance regression tests

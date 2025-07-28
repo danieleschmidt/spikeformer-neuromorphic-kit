@@ -1,0 +1,218 @@
+groups:
+  - name: spikeformer.rules
+    rules:
+      # High-level application alerts
+      - alert: SpikeFormerServiceDown
+        expr: up{job=~"spikeformer.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SpikeFormer service {{ $labels.job }} is down"
+          description: "SpikeFormer service {{ $labels.job }} has been down for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: rate(spikeformer_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate on {{ $labels.job }}"
+          description: "Error rate is {{ $value }} errors per second on {{ $labels.job }}."
+
+      # Performance alerts
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(spikeformer_request_duration_seconds_bucket[5m])) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency on {{ $labels.job }}"
+          description: "95th percentile latency is {{ $value }}s on {{ $labels.job }}."
+
+      - alert: HighMemoryUsage
+        expr: spikeformer_memory_usage_bytes / spikeformer_memory_limit_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.job }}"
+          description: "Memory usage is {{ $value | humanizePercentage }} on {{ $labels.job }}."
+
+      # Energy efficiency alerts
+      - alert: EnergyEfficiencyDegraded
+        expr: spikeformer_energy_efficiency_ratio < 5.0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Energy efficiency degraded on {{ $labels.job }}"
+          description: "Energy efficiency ratio dropped to {{ $value }}x on {{ $labels.job }}."
+
+      - alert: HighPowerConsumption
+        expr: spikeformer_power_consumption_watts > 10.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High power consumption on {{ $labels.job }}"
+          description: "Power consumption is {{ $value }}W on {{ $labels.job }}."
+
+      # Hardware-specific alerts
+      - alert: Loihi2ChipUtilizationHigh
+        expr: spikeformer_loihi2_chip_utilization > 0.95
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Loihi2 chip utilization high"
+          description: "Loihi2 chip utilization is {{ $value | humanizePercentage }}."
+
+      - alert: SpiNNakerCommunicationError
+        expr: rate(spikeformer_spinnaker_communication_errors_total[5m]) > 0.01
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SpiNNaker communication errors detected"
+          description: "SpiNNaker communication error rate is {{ $value }} per second."
+
+      # Model performance alerts
+      - alert: AccuracyDropped
+        expr: spikeformer_model_accuracy < 0.8
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Model accuracy dropped on {{ $labels.job }}"
+          description: "Model accuracy is {{ $value | humanizePercentage }} on {{ $labels.job }}."
+
+      - alert: SpikeRateAnomalous
+        expr: |
+          abs(spikeformer_spike_rate - spikeformer_spike_rate_baseline) / spikeformer_spike_rate_baseline > 0.3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Anomalous spike rate on {{ $labels.job }}"
+          description: "Spike rate deviates {{ $value | humanizePercentage }} from baseline on {{ $labels.job }}."
+
+      # Resource alerts
+      - alert: CPUUsageHigh
+        expr: rate(process_cpu_seconds_total{job=~"spikeformer.*"}[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.job }}"
+          description: "CPU usage is {{ $value }}% on {{ $labels.job }}."
+
+      - alert: DiskSpaceLow
+        expr: spikeformer_disk_free_bytes / spikeformer_disk_total_bytes < 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space on {{ $labels.job }}"
+          description: "Disk space is {{ $value | humanizePercentage }} full on {{ $labels.job }}."
+
+      # Training and inference alerts
+      - alert: TrainingStalled
+        expr: increase(spikeformer_training_steps_total[10m]) == 0 and spikeformer_training_active == 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Training appears stalled on {{ $labels.job }}"
+          description: "No training progress in the last 10 minutes on {{ $labels.job }}."
+
+      - alert: InferenceQueueBacklog
+        expr: spikeformer_inference_queue_size > 100
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Inference queue backlog on {{ $labels.job }}"
+          description: "Inference queue size is {{ $value }} on {{ $labels.job }}."
+
+  - name: system.rules
+    rules:
+      # System resource alerts
+      - alert: NodeDown
+        expr: up{job="node-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node {{ $labels.instance }} is down"
+          description: "Node {{ $labels.instance }} has been down for more than 1 minute."
+
+      - alert: HighSystemLoad
+        expr: node_load15 > 2 * count(node_cpu_seconds_total{mode="idle"}) by (instance)
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High system load on {{ $labels.instance }}"
+          description: "System load is {{ $value }} on {{ $labels.instance }}."
+
+      - alert: OutOfMemory
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes < 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Out of memory on {{ $labels.instance }}"
+          description: "Available memory is {{ $value | humanizePercentage }} on {{ $labels.instance }}."
+
+  - name: container.rules
+    rules:
+      # Container alerts
+      - alert: ContainerKilled
+        expr: increase(container_killed_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container killed on {{ $labels.instance }}"
+          description: "Container {{ $labels.name }} was killed on {{ $labels.instance }}."
+
+      - alert: ContainerCPUThrottling
+        expr: |
+          rate(container_cpu_cfs_throttled_seconds_total[5m]) / rate(container_cpu_cfs_periods_total[5m]) > 0.8
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container CPU throttling on {{ $labels.instance }}"
+          description: "Container {{ $labels.name }} is being CPU throttled {{ $value | humanizePercentage }} of the time."
+
+  - name: database.rules
+    rules:
+      # Database alerts
+      - alert: PostgreSQLDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL has been down for more than 1 minute."
+
+      - alert: PostgreSQLSlowQueries
+        expr: rate(pg_stat_activity_max_tx_duration[5m]) > 60
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL slow queries detected"
+          description: "PostgreSQL has queries taking more than 60 seconds."
+
+      - alert: RedisDown
+        expr: up{job="redis-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been down for more than 1 minute."
