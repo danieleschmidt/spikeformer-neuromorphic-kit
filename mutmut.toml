@@ -1,0 +1,52 @@
+# Mutation Testing Configuration
+[tool.mutmut]
+# Target source code directory
+paths_to_mutate = "spikeformer/"
+
+# Test directory
+test_dir = "tests/"
+
+# Test command
+test_command = "python -m pytest tests/unit/ -x"
+
+# Backup directory
+backup = true
+
+# Excluded files/patterns
+exclude = [
+    "__pycache__",
+    "*.pyc",
+    "*/migrations/*",
+    "*/tests/*",
+    "*/test_*",
+    "spikeformer/cli/*",  # CLI modules often have complex branching
+    "spikeformer/hardware/vendor_specific/*",  # Vendor-specific code
+]
+
+# Coverage threshold (only mutate covered code)
+coverage_data = ".coverage"
+
+# Parallel execution
+processes = 4
+
+# Output format
+output_format = "html"
+output_file = "mutation_report.html"
+
+# Kill timeout per test
+timeout = 60
+
+# Cache results to avoid re-running identical mutations
+cache_only = false
+no_cache = false
+
+# Show only killed/survived mutations
+show_killed = false
+show_survived = true
+
+# Exit codes
+exit_code_killed = 0
+exit_code_survived = 1
+exit_code_suspicious = 2
+exit_code_timeout = 3
+exit_code_error = 4

@@ -1,10 +1,37 @@
 {
-    "name": "SpikeFormer Development",
-    "image": "mcr.microsoft.com/devcontainers/python:3.11",
+    "name": "Spikeformer Development Environment",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "spikeformer-dev",
+    "workspaceFolder": "/workspace",
     
     "features": {
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": true,
+            "configureZshAsDefaultShell": true,
+            "installOhMyZsh": true,
+            "upgradePackages": true,
+            "username": "vscode",
+            "userUid": "automatic",
+            "userGid": "automatic"
+        },
+        "ghcr.io/devcontainers/features/git:1": {
+            "ppa": true,
+            "version": "latest"
+        },
+        "ghcr.io/devcontainers/features/github-cli:1": {
+            "installDirectlyFromGitHubRelease": true,
+            "version": "latest"
+        },
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+            "version": "latest",
+            "enableNonRootDocker": "true",
+            "moby": "true"
+        },
+        "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+            "version": "latest",
+            "helm": "latest",
+            "minikube": "none"
+        },
         "ghcr.io/devcontainers/features/node:1": {
             "version": "18"
         }
@@ -15,56 +42,121 @@
             "extensions": [
                 "ms-python.python",
                 "ms-python.black-formatter",
-                "ms-python.flake8",
                 "ms-python.isort",
-                "ms-python.mypy-type-checker",
-                "ms-vscode.test-adapter-converter",
-                "ms-toolsai.jupyter",
                 "charliermarsh.ruff",
-                "ms-vscode.makefile-tools",
+                "ms-python.mypy-type-checker",
+                "ms-toolsai.jupyter",
+                "ms-toolsai.jupyter-keymap",
+                "ms-toolsai.jupyter-renderers",
                 "redhat.vscode-yaml",
-                "ms-azuretools.vscode-docker",
-                "GitHub.vscode-pull-request-github",
+                "tamasfe.even-better-toml",
+                "davidanson.vscode-markdownlint",
+                "yzhang.markdown-all-in-one",
+                "gruntfuggly.todo-tree",
+                "streetsidesoftware.code-spell-checker",
+                "ms-vscode.vscode-docker",
+                "ms-kubernetes-tools.vscode-kubernetes-tools",
+                "ms-vscode.makefile-tools",
+                "github.vscode-pull-request-github",
                 "ms-vscode.vscode-json",
-                "bradlc.vscode-tailwindcss"
+                "timonwong.shellcheck",
+                "foxundermoon.shell-format"
             ],
             "settings": {
                 "python.defaultInterpreterPath": "/usr/local/bin/python",
                 "python.formatting.provider": "black",
                 "python.linting.enabled": true,
-                "python.linting.flake8Enabled": true,
+                "python.linting.ruffEnabled": true,
+                "python.linting.flake8Enabled": false,
                 "python.linting.mypyEnabled": true,
+                "python.linting.banditEnabled": true,
                 "python.testing.pytestEnabled": true,
                 "python.testing.unittestEnabled": false,
+                "python.testing.pytestArgs": [
+                    "tests",
+                    "-v",
+                    "--tb=short"
+                ],
                 "editor.formatOnSave": true,
                 "editor.codeActionsOnSave": {
-                    "source.organizeImports": true
+                    "source.organizeImports": true,
+                    "source.fixAll.ruff": true
                 },
+                "editor.rulers": [88],
                 "files.exclude": {
                     "**/__pycache__": true,
                     "**/*.pyc": true,
-                    ".pytest_cache": true,
-                    ".coverage": true,
-                    "*.egg-info": true
+                    "**/.mypy_cache": true,
+                    "**/.pytest_cache": true,
+                    "**/htmlcov": true,
+                    "**/.coverage": true,
+                    "**/dist": true,
+                    "**/build": true,
+                    "**/*.egg-info": true,
+                    "**/.ruff_cache": true,
+                    "**/.benchmarks": true
                 }
             }
         }
     },
     
-    "postCreateCommand": "pip install -e '.[dev]' && pre-commit install",
-    
-    "forwardPorts": [8888, 8000, 3000],
-    
-    "mounts": [
-        "source=${localWorkspaceFolder}/.devcontainer/cache,target=/root/.cache,type=bind,consistency=cached"
+    "forwardPorts": [
+        8888,  // Jupyter Lab
+        5000,  // API Server
+        8000,  // Alternative web server
+        9090,  // Prometheus
+        3000,  // Grafana
+        6006   // TensorBoard
     ],
     
-    "remoteUser": "root",
+    "portsAttributes": {
+        "8888": {
+            "label": "Jupyter Lab",
+            "onAutoForward": "notify"
+        },
+        "5000": {
+            "label": "API Server",
+            "onAutoForward": "notify"
+        },
+        "9090": {
+            "label": "Prometheus",
+            "onAutoForward": "silent"
+        },
+        "3000": {
+            "label": "Grafana",
+            "onAutoForward": "silent"
+        },
+        "6006": {
+            "label": "TensorBoard",
+            "onAutoForward": "silent"
+        }
+    },
     
-    "updateContentCommand": "pip install -e '.[dev]'",
+    "remoteEnv": {
+        "PYTHONPATH": "/workspace",
+        "JUPYTER_ENABLE_LAB": "yes",
+        "JUPYTER_TOKEN": "spikeformer-dev",
+        "WANDB_MODE": "offline",
+        "NEUROMORPHIC_ENV": "development"
+    },
+    
+    "mounts": [
+        "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+        "source=spikeformer-venv,target=/workspace/.venv,type=volume",
+        "source=${localWorkspaceFolder}/.devcontainer/cache,target=/home/vscode/.cache,type=bind,consistency=cached"
+    ],
+    
+    "postCreateCommand": "bash .devcontainer/post-create.sh",
+    "postStartCommand": "bash .devcontainer/post-start.sh",
+    "updateContentCommand": "bash .devcontainer/update-content.sh",
+    "postAttachCommand": "bash .devcontainer/post-attach.sh",
+    
+    "overrideCommand": false,
+    "shutdownAction": "stopContainer",
+    "remoteUser": "vscode",
     
     "containerEnv": {
-        "PYTHONPATH": "/workspaces/spikeformer-neuromorphic-kit",
-        "NEUROMORPHIC_ENV": "development"
+        "DISPLAY": "${localEnv:DISPLAY}",
+        "XAUTHORITY": "${localEnv:XAUTHORITY}"
     }
 }

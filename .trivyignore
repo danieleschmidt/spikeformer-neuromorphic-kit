@@ -1,0 +1,51 @@
+# Trivy Security Scanner Ignore File
+# Ignore specific vulnerabilities or file patterns
+
+# Development dependencies - lower risk
+CVE-2024-27351  # Example: Development-only vulnerability
+CVE-2023-52425  # Example: Test framework issue
+
+# Known false positives
+# CVE-YYYY-NNNNN  # Description of why this is safe to ignore
+
+# Files to exclude from scanning
+**/.git/**
+**/node_modules/**
+**/__pycache__/**
+**/venv/**
+**/env/**
+**/.pytest_cache/**
+**/htmlcov/**
+**/docs/_build/**
+
+# Test files and fixtures
+**/tests/fixtures/**
+**/test_data/**
+**/mock_data/**
+
+# Generated files
+**/dist/**
+**/build/** 
+**/*.egg-info/**
+
+# Temporary and cache files
+**/*.tmp
+**/*.cache
+**/.coverage*
+**/.tox/**
+
+# Hardware-specific binary files (cannot be patched by us)
+**/*.so
+**/*.dll
+**/*.dylib
+**/nxsdk_modules/**
+**/spinnaker_tools/**
+
+# Documentation and examples
+**/docs/**
+**/examples/**
+**/*.md
+**/*.rst
+
+# Configuration files that may contain test secrets
+**/tests/config/**
