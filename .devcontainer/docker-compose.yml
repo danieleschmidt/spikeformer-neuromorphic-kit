@@ -1,0 +1,181 @@
+version: '3.8'
+
+services:
+  spikeformer-dev:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+      args:
+        PYTHON_VERSION: "3.11"
+        NODE_VERSION: "18"
+    
+    volumes:
+      - ..:/workspace:cached
+      - spikeformer-venv:/workspace/.venv
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/vscode/.ssh:ro
+      - ~/.gitconfig:/home/vscode/.gitconfig:ro
+      - cache-volume:/home/vscode/.cache
+    
+    environment:
+      - PYTHONPATH=/workspace
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=spikeformer-dev
+      - WANDB_MODE=offline
+      - NEUROMORPHIC_ENV=development
+      - DOCKER_BUILDKIT=1
+    
+    ports:
+      - "8888:8888"  # Jupyter Lab
+      - "5000:5000"  # API Server
+      - "8000:8000"  # Alternative web server
+      - "9090:9090"  # Prometheus
+      - "3000:3000"  # Grafana
+      - "6006:6006"  # TensorBoard
+    
+    networks:
+      - spikeformer-dev-network
+    
+    depends_on:
+      - redis
+      - postgres
+      - prometheus
+      - grafana
+    
+    command: sleep infinity
+    
+    user: vscode
+    
+    # Enable GPU access if available
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    
+    # Hardware device access for neuromorphic chips
+    devices:
+      - /dev/bus/usb:/dev/bus/usb  # USB devices for hardware
+    
+    privileged: false
+    
+    cap_add:
+      - SYS_PTRACE  # For debugging
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - spikeformer-dev-network
+    command: redis-server --appendonly yes
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: spikeformer_dev
+      POSTGRES_USER: spikeformer
+      POSTGRES_PASSWORD: dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - spikeformer-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spikeformer -d spikeformer_dev"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - spikeformer-dev-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=dev_password
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ../monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ../monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    networks:
+      - spikeformer-dev-network
+    depends_on:
+      - prometheus
+
+  # Jupyter notebook service (alternative to built-in)
+  jupyter:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile.jupyter
+    ports:
+      - "8889:8888"
+    volumes:
+      - ..:/home/jovyan/work:cached
+      - jupyter-data:/home/jovyan/.jupyter
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=spikeformer-jupyter
+    networks:
+      - spikeformer-dev-network
+    profiles:
+      - jupyter-standalone
+
+  # MLflow tracking server
+  mlflow:
+    image: python:3.11-slim
+    ports:
+      - "5001:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=sqlite:///mlflow/mlflow.db
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlflow/artifacts
+    networks:
+      - spikeformer-dev-network
+    command: >
+      bash -c "pip install mlflow && 
+               mlflow server --host 0.0.0.0 --port 5000 
+               --backend-store-uri sqlite:///mlflow/mlflow.db 
+               --default-artifact-root /mlflow/artifacts"
+    profiles:
+      - mlflow
+
+networks:
+  spikeformer-dev-network:
+    driver: bridge
+
+volumes:
+  spikeformer-venv:
+  cache-volume:
+  redis-data:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
+  jupyter-data:
+  mlflow-data:
