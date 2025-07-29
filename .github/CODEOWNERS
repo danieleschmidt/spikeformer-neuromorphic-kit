@@ -1,0 +1,138 @@
+# CODEOWNERS file for SpikeFormer Neuromorphic Kit
+# 
+# This file defines code ownership for different parts of the repository.
+# When a pull request is created, the defined owners are automatically
+# requested as reviewers.
+#
+# Global fallback - applies to all files not covered below
+* @maintainer-team @lead-developer
+
+# Core Library Code
+/spikeformer/ @core-team @lead-developer
+/spikeformer/conversion/ @conversion-experts @core-team
+/spikeformer/training/ @training-experts @core-team
+/spikeformer/models/ @model-experts @core-team
+
+# Hardware-Specific Code
+/spikeformer/hardware/ @hardware-team @lead-developer
+/spikeformer/hardware/loihi2/ @loihi2-experts @hardware-team
+/spikeformer/hardware/spinnaker/ @spinnaker-experts @hardware-team
+/spikeformer/hardware/edge/ @edge-computing-team @hardware-team
+
+# Testing Infrastructure
+/tests/ @qa-team @core-team
+/tests/hardware/ @hardware-team @qa-team
+/tests/performance/ @performance-team @qa-team
+/tests/load/ @performance-team @qa-team
+
+# Scripts and Utilities
+/scripts/ @devops-team @core-team
+/scripts/security_scan.py @security-team @devops-team
+/scripts/generate_sbom.py @security-team @devops-team
+/scripts/container_security_scan.py @security-team @devops-team
+
+# Configuration Files
+pyproject.toml @packaging-experts @lead-developer
+setup.py @packaging-experts @lead-developer
+requirements.txt @packaging-experts @core-team
+package.json @frontend-team @devops-team
+
+# CI/CD and DevOps
+/.github/ @devops-team @lead-developer
+/.github/workflows/ @devops-team @lead-developer
+/docker-compose.yml @devops-team @containerization-experts
+/Dockerfile @devops-team @containerization-experts
+/Makefile @devops-team @core-team
+
+# Security and Compliance
+/SECURITY.md @security-team @lead-developer
+/.pre-commit-config.yaml @security-team @devops-team
+/SLSA.md @security-team @compliance-team
+/scripts/*security* @security-team
+
+# Documentation
+/README.md @docs-team @lead-developer
+/docs/ @docs-team
+/ARCHITECTURE.md @architecture-team @lead-developer
+/CONTRIBUTING.md @community-team @lead-developer
+/CODE_OF_CONDUCT.md @community-team @lead-developer
+
+# Monitoring and Observability
+/monitoring/ @sre-team @devops-team
+/monitoring/prometheus.yml @sre-team @monitoring-experts
+/monitoring/grafana/ @sre-team @monitoring-experts
+/monitoring/alert_*.yml @sre-team @monitoring-experts
+
+# Project Management
+/PROJECT_CHARTER.md @project-managers @lead-developer
+/CHANGELOG.md @release-managers @lead-developer
+/docs/ROADMAP.md @project-managers @lead-developer
+
+# Architecture Decision Records
+/docs/adr/ @architecture-team @lead-developer
+
+# Runbooks and Operations
+/docs/runbooks/ @sre-team @devops-team
+
+# Performance and Benchmarking
+*benchmark* @performance-team @core-team
+*profiling* @performance-team @core-team
+pytest-benchmark.ini @performance-team @qa-team
+
+# Hardware Configuration Files  
+*.hwconfig @hardware-team
+/hardware_configs/ @hardware-team
+
+# Model and Data Files (if any slip through .gitignore)
+*.pth @model-experts @security-team
+*.pt @model-experts @security-team  
+*.onnx @model-experts @edge-computing-team
+
+# Release and Packaging
+/dist/ @release-managers @packaging-experts
+/.release/ @release-managers @lead-developer
+
+# IDE and Development Environment
+/.vscode/ @devops-team
+/.idea/ @devops-team
+.editorconfig @devops-team @core-team
+
+# Git Configuration
+.gitignore @devops-team @security-team
+.gitattributes @devops-team @lead-developer
+
+# License and Legal
+LICENSE @legal-team @lead-developer
+NOTICE @legal-team @lead-developer
+
+# Team Definitions (GitHub Teams)
+# Create these teams in your GitHub organization:
+# 
+# @maintainer-team - Repository maintainers
+# @lead-developer - Technical lead(s)
+# @core-team - Core development team
+# @hardware-team - Hardware specialists
+# @security-team - Security and compliance experts
+# @devops-team - DevOps and infrastructure
+# @qa-team - Quality assurance team
+# @docs-team - Documentation team
+# @community-team - Community management
+# @sre-team - Site reliability engineers
+# @performance-team - Performance optimization experts
+# @architecture-team - Software architects
+# @project-managers - Project management
+# @release-managers - Release coordination
+# @legal-team - Legal and compliance review
+# 
+# Specialized teams:
+# @conversion-experts - Model conversion specialists
+# @training-experts - Neural network training experts
+# @model-experts - Model architecture experts
+# @loihi2-experts - Intel Loihi 2 specialists
+# @spinnaker-experts - SpiNNaker platform experts
+# @edge-computing-team - Edge deployment specialists
+# @packaging-experts - Python packaging specialists
+# @frontend-team - Frontend/UI development
+# @containerization-experts - Docker/containerization
+# @monitoring-experts - Monitoring and observability
+# @compliance-team - Regulatory compliance
