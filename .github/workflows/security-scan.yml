@@ -1,0 +1,525 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run comprehensive security scans weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of security scan'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - comprehensive
+          - dependency-only
+          - code-only
+          - container-only
+
+env:
+  PYTHON_VERSION: '3.11'
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  # Static Code Analysis
+  code-security:
+    name: Code Security Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: |
+      (github.event.inputs.scan_type == 'comprehensive') ||
+      (github.event.inputs.scan_type == 'code-only') ||
+      (github.event_name != 'workflow_dispatch')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit[toml] semgrep safety
+
+    - name: Run Bandit security scan
+      run: |
+        bandit -r spikeformer/ -f json -o bandit-report.json
+        bandit -r spikeformer/ -f txt
+
+    - name: Run Semgrep security scan
+      run: |
+        semgrep --config=auto --json --output=semgrep-report.json spikeformer/
+        semgrep --config=auto spikeformer/
+
+    - name: Upload Bandit results to GitHub Security
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: bandit-report.sarif
+      continue-on-error: true
+
+    - name: Upload security scan artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: code-security-reports
+        path: |
+          bandit-report.json
+          semgrep-report.json
+        retention-days: 30
+
+  # Dependency Security Scanning
+  dependency-security:
+    name: Dependency Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: |
+      (github.event.inputs.scan_type == 'comprehensive') ||
+      (github.event.inputs.scan_type == 'dependency-only') ||
+      (github.event_name != 'workflow_dispatch')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety pip-audit cyclonedx-bom
+
+    - name: Run Safety check
+      run: |
+        safety check --json --output safety-report.json || true
+        safety check --output safety-report.txt || true
+
+    - name: Run pip-audit
+      run: |
+        pip-audit --format json --output pip-audit-report.json || true
+        pip-audit --format text --output pip-audit-report.txt || true
+
+    - name: Generate SBOM
+      run: |
+        cyclonedx-py --format json --output sbom.json .
+        cyclonedx-py --format xml --output sbom.xml .
+
+    - name: Vulnerability summary
+      run: |
+        echo "## Dependency Security Summary" > security-summary.md
+        echo "" >> security-summary.md
+        
+        if [ -f safety-report.json ]; then
+          SAFETY_VULNS=$(jq '.vulnerabilities | length' safety-report.json 2>/dev/null || echo "0")
+          echo "- Safety vulnerabilities: $SAFETY_VULNS" >> security-summary.md
+        fi
+        
+        if [ -f pip-audit-report.json ]; then
+          AUDIT_VULNS=$(jq '.vulnerabilities | length' pip-audit-report.json 2>/dev/null || echo "0")
+          echo "- Pip-audit vulnerabilities: $AUDIT_VULNS" >> security-summary.md
+        fi
+        
+        cat security-summary.md
+
+    - name: Upload dependency scan results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: dependency-security-reports
+        path: |
+          safety-report.*
+          pip-audit-report.*
+          sbom.*
+          security-summary.md
+        retention-days: 30
+
+  # Container Security Scanning
+  container-security:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: |
+      (github.event.inputs.scan_type == 'comprehensive') ||
+      (github.event.inputs.scan_type == 'container-only') ||
+      (github.event_name != 'workflow_dispatch')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build container for scanning
+      run: |
+        docker build --target development -t spikeformer:security-scan .
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'spikeformer:security-scan'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Run Trivy filesystem scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'json'
+        output: 'trivy-fs-results.json'
+
+    - name: Upload Trivy results to GitHub Security
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Container security summary
+      run: |
+        echo "## Container Security Summary" > container-summary.md
+        echo "" >> container-summary.md
+        
+        if [ -f trivy-results.sarif ]; then
+          HIGH_VULNS=$(jq '.runs[0].results | map(select(.ruleId | contains("HIGH"))) | length' trivy-results.sarif 2>/dev/null || echo "0")
+          CRITICAL_VULNS=$(jq '.runs[0].results | map(select(.ruleId | contains("CRITICAL"))) | length' trivy-results.sarif 2>/dev/null || echo "0")
+          echo "- Critical vulnerabilities: $CRITICAL_VULNS" >> container-summary.md
+          echo "- High vulnerabilities: $HIGH_VULNS" >> container-summary.md
+        fi
+        
+        cat container-summary.md
+
+    - name: Upload container scan results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: container-security-reports
+        path: |
+          trivy-results.sarif
+          trivy-fs-results.json
+          container-summary.md
+        retention-days: 30
+
+  # Secret Scanning
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'schedule' || github.event.inputs.scan_type == 'comprehensive'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install TruffleHog
+      run: |
+        curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+
+    - name: Run TruffleHog secret scan
+      run: |
+        trufflehog git file://. --json --output trufflehog-results.json || true
+        trufflehog git file://. --output trufflehog-results.txt || true
+
+    - name: Secret scan summary
+      run: |
+        echo "## Secret Scan Summary" > secret-summary.md
+        echo "" >> secret-summary.md
+        
+        if [ -f trufflehog-results.json ]; then
+          SECRETS_FOUND=$(jq '. | length' trufflehog-results.json 2>/dev/null || echo "0")
+          echo "- Potential secrets found: $SECRETS_FOUND" >> secret-summary.md
+        fi
+        
+        cat secret-summary.md
+
+    - name: Upload secret scan results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: secret-scan-reports
+        path: |
+          trufflehog-results.*
+          secret-summary.md
+        retention-days: 30
+
+  # License Compliance Scan
+  license-scan:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'schedule' || github.event.inputs.scan_type == 'comprehensive'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pip-licenses licensecheck
+
+    - name: Generate license report
+      run: |
+        pip-licenses --format json --output-file licenses.json
+        pip-licenses --format csv --output-file licenses.csv
+        pip-licenses --format plain --output-file licenses.txt
+
+    - name: Check for license compliance
+      run: |
+        python -c "
+        import json
+        with open('licenses.json') as f:
+            licenses = json.load(f)
+        
+        forbidden = ['GPL-3.0', 'AGPL-3.0', 'LGPL-3.0']
+        flagged = []
+        
+        for pkg in licenses:
+            if pkg['License'] in forbidden:
+                flagged.append(f\"{pkg['Name']}: {pkg['License']}\")
+        
+        if flagged:
+            print('⚠️  License compliance issues found:')
+            for issue in flagged:
+                print(f'  - {issue}')
+            exit(1)
+        else:
+            print('✅ License compliance check passed')
+        "
+
+    - name: Upload license reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: license-compliance-reports
+        path: |
+          licenses.*
+        retention-days: 30
+
+  # Hardware Security Assessment
+  hardware-security:
+    name: Hardware Security Assessment
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'schedule' || github.event.inputs.scan_type == 'comprehensive'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev]"
+
+    - name: Run hardware security checks
+      run: |
+        python scripts/hardware_security_scan.py --output hardware-security-report.json
+
+    - name: Validate hardware configurations
+      run: |
+        python scripts/validate_hardware_configs.py --security-check --output hw-config-security.json
+
+    - name: Upload hardware security reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: hardware-security-reports
+        path: |
+          hardware-security-report.json
+          hw-config-security.json
+        retention-days: 30
+
+  # Security Report Consolidation
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [code-security, dependency-security, container-security, secret-scan, license-scan, hardware-security]
+    if: always()
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all security artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: security-reports/
+
+    - name: Generate comprehensive security report
+      run: |
+        python -c "
+        import json
+        import os
+        from datetime import datetime
+        
+        report = {
+            'scan_timestamp': datetime.utcnow().isoformat(),
+            'scan_id': '${{ github.run_id }}',
+            'repository': '${{ github.repository }}',
+            'ref': '${{ github.ref }}',
+            'results': {}
+        }
+        
+        # Collect all security scan results
+        for root, dirs, files in os.walk('security-reports'):
+            for file in files:
+                if file.endswith('.json'):
+                    try:
+                        with open(os.path.join(root, file)) as f:
+                            data = json.load(f, errors='ignore')
+                            report['results'][file] = data
+                    except:
+                        pass
+        
+        with open('security-report-comprehensive.json', 'w') as f:
+            json.dump(report, f, indent=2)
+        
+        print(f'📊 Security report generated with {len(report[\"results\"])} scan results')
+        "
+
+    - name: Check security status
+      run: |
+        echo "## 🔒 Security Scan Summary" > security-status.md
+        echo "" >> security-status.md
+        echo "**Scan ID**: ${{ github.run_id }}" >> security-status.md
+        echo "**Timestamp**: $(date -u)" >> security-status.md
+        echo "" >> security-status.md
+        
+        echo "### Scan Results" >> security-status.md
+        
+        if [[ "${{ needs.code-security.result }}" == "success" ]]; then
+          echo "✅ Code Security: PASSED" >> security-status.md
+        else
+          echo "❌ Code Security: ${{ needs.code-security.result }}" >> security-status.md
+        fi
+        
+        if [[ "${{ needs.dependency-security.result }}" == "success" ]]; then
+          echo "✅ Dependency Security: PASSED" >> security-status.md
+        else
+          echo "❌ Dependency Security: ${{ needs.dependency-security.result }}" >> security-status.md
+        fi
+        
+        if [[ "${{ needs.container-security.result }}" == "success" ]]; then
+          echo "✅ Container Security: PASSED" >> security-status.md
+        else
+          echo "❌ Container Security: ${{ needs.container-security.result }}" >> security-status.md
+        fi
+        
+        if [[ "${{ needs.secret-scan.result }}" == "success" || "${{ needs.secret-scan.result }}" == "skipped" ]]; then
+          echo "✅ Secret Scan: PASSED" >> security-status.md
+        else
+          echo "❌ Secret Scan: ${{ needs.secret-scan.result }}" >> security-status.md
+        fi
+        
+        if [[ "${{ needs.license-scan.result }}" == "success" || "${{ needs.license-scan.result }}" == "skipped" ]]; then
+          echo "✅ License Compliance: PASSED" >> security-status.md
+        else
+          echo "❌ License Compliance: ${{ needs.license-scan.result }}" >> security-status.md
+        fi
+        
+        if [[ "${{ needs.hardware-security.result }}" == "success" || "${{ needs.hardware-security.result }}" == "skipped" ]]; then
+          echo "✅ Hardware Security: PASSED" >> security-status.md
+        else
+          echo "❌ Hardware Security: ${{ needs.hardware-security.result }}" >> security-status.md
+        fi
+        
+        cat security-status.md
+
+    - name: Upload comprehensive security report
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-comprehensive-report
+        path: |
+          security-report-comprehensive.json
+          security-status.md
+        retention-days: 90
+
+  # Create Security Issue on Critical Findings
+  security-issue:
+    name: Create Security Issue
+    runs-on: ubuntu-latest
+    needs: [security-summary]
+    if: failure() && (github.event_name == 'schedule' || github.event_name == 'push')
+    
+    steps:
+    - name: Create security issue
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const title = `🔒 Security Scan Failures - Run #${{ github.run_number }}`;
+          const body = `
+          ## Security Scan Failure Report
+          
+          **Run ID**: ${{ github.run_id }}
+          **Timestamp**: ${new Date().toISOString()}
+          **Branch**: ${{ github.ref }}
+          
+          ### Failed Security Scans
+          - Code Security: ${{ needs.code-security.result }}
+          - Dependency Security: ${{ needs.dependency-security.result }}
+          - Container Security: ${{ needs.container-security.result }}
+          - Secret Scan: ${{ needs.secret-scan.result }}
+          - License Compliance: ${{ needs.license-scan.result }}
+          - Hardware Security: ${{ needs.hardware-security.result }}
+          
+          ### Immediate Actions Required
+          - [ ] Review security scan results in [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          - [ ] Analyze and triage security findings
+          - [ ] Create remediation plan for critical issues
+          - [ ] Update security documentation if needed
+          - [ ] Verify fixes with additional testing
+          
+          ### Security Team Assignment
+          @security-team please review and prioritize these security findings.
+          
+          **Workflow URL**: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          `;
+          
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: title,
+            body: body,
+            labels: ['security', 'critical', 'ci-failure']
+          });
