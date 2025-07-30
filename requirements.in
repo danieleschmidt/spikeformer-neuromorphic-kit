@@ -1,0 +1,46 @@
+# Core runtime dependencies for SpikeFormer Neuromorphic Kit
+# This file defines the high-level dependencies
+# Run: pip-compile requirements.in to generate requirements.txt
+
+# Deep Learning Frameworks
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Scientific Computing
+numpy>=1.21.0
+scipy>=1.7.0
+
+# Data Processing
+pandas>=1.3.0
+h5py>=3.7.0
+
+# Visualization
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# Progress and CLI
+tqdm>=4.62.0
+click>=8.0.0
+rich>=12.0.0
+
+# Configuration
+pyyaml>=6.0
+omegaconf>=2.2.0
+
+# Machine Learning
+transformers>=4.20.0
+datasets>=2.0.0
+accelerate>=0.20.0
+
+# Experiment Tracking
+wandb>=0.15.0
+mlflow>=2.0.0
+tensorboard>=2.10.0
+
+# Monitoring
+prometheus-client>=0.14.0
+psutil>=5.8.0
+
+# Neuromorphic Computing
+# Note: Hardware-specific packages require separate installation
+# with appropriate SDK/hardware access

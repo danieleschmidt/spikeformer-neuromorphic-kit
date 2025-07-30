@@ -1,0 +1,133 @@
+# Codecov configuration for SpikeFormer Neuromorphic Kit
+# See: https://docs.codecov.com/docs/codecov-yaml
+
+codecov:
+  # Require CI to pass before coverage is merged
+  require_ci_to_pass: true
+  # Notify on upload failures
+  notify:
+    after_n_builds: 1
+    wait_for_ci: true
+
+coverage:
+  # Precision of coverage percentage (2 decimal places)
+  precision: 2
+  # Round coverage percentage (down, up, nearest)
+  round: down
+  # Coverage range (red to green)
+  range: "70...95"
+  
+  status:
+    project:
+      default:
+        # Set minimum coverage threshold
+        target: 80%
+        # Allow coverage to drop by at most 1%
+        threshold: 1%
+        # Base coverage reference (auto, pr, parent)
+        base: auto
+        # Apply coverage check to changed files only
+        if_no_uploads: error
+        if_not_found: success
+        if_ci_failed: error
+        only_pulls: false
+      
+      # Neuromorphic computing core modules
+      neuromorphic:
+        target: 85%
+        threshold: 2%
+        paths:
+          - "spikeformer/conversion/"
+          - "spikeformer/hardware/"
+          - "spikeformer/profiling/"
+        
+      # Models and neural network components  
+      models:
+        target: 90%
+        threshold: 1%
+        paths:
+          - "spikeformer/models/"
+          - "spikeformer/nn/"
+          
+      # Training and optimization
+      training:
+        target: 80%
+        threshold: 2%
+        paths:
+          - "spikeformer/training/"
+          - "spikeformer/optimization/"
+    
+    patch:
+      default:
+        # Require 70% coverage on new code
+        target: 70%
+        # Allow new code coverage to be 5% lower than target  
+        threshold: 5%
+        base: auto
+        if_no_uploads: error
+        if_not_found: success
+        if_ci_failed: error
+        only_pulls: true
+
+  # Coverage change tracking
+  changes:
+    default:
+      # Only track changes in coverage percentage
+      target: auto
+      threshold: 1%
+      base: auto
+      if_no_uploads: error
+      if_not_found: success
+      if_ci_failed: error
+
+# Comment configuration for pull requests
+comment:
+  layout: "reach,diff,flags,tree,reach"
+  behavior: new
+  require_changes: true
+  require_base: true
+  require_head: true
+  
+# Files and paths to ignore
+ignore:
+  - "tests/"
+  - "docs/"
+  - "scripts/"
+  - "examples/"
+  - "setup.py"
+  - "**/__init__.py"
+  - "**/conftest.py"
+  - "**/*_test.py"
+  - "**/test_*.py"
+
+# Flags for different test suites
+flags:
+  unit:
+    paths:
+      - "spikeformer/"
+    carryforward: true
+
+  integration:
+    paths:
+      - "spikeformer/"
+    carryforward: true
+    
+  hardware:
+    paths:
+      - "spikeformer/hardware/"
+    carryforward: false
+    
+  performance:
+    paths:
+      - "spikeformer/"
+    carryforward: false
+
+# GitHub check configuration
+github_checks:
+  annotations: true
+
+# Pull request comment configuration
+pull_request_comment:
+  layout: "reach, diff, flags, files"
+  behavior: new
+  require_changes: true
