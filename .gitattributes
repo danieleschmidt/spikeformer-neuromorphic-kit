@@ -1,0 +1,100 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Python files
+*.py text eol=lf
+*.pyx text eol=lf
+
+# Configuration files  
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+
+# Documentation
+*.md text eol=lf
+*.rst text eol=lf
+*.txt text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Web files
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+
+# Data files - treat as binary
+*.pkl binary
+*.npy binary
+*.npz binary
+*.h5 binary
+*.hdf5 binary
+*.mat binary
+*.parquet binary
+
+# Model files - treat as binary
+*.pth binary
+*.pt binary
+*.ckpt binary
+*.pb binary
+*.onnx binary
+*.tflite binary
+
+# Neuromorphic hardware files
+*.nxcore binary
+*.loihi binary
+*.spinn binary
+
+# Image files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg text
+
+# Archives
+*.zip binary
+*.tar binary
+*.gz binary
+*.7z binary
+
+# Compiled files
+*.pyc binary
+*.pyo binary
+*.so binary
+*.dll binary
+*.dylib binary
+*.a binary
+*.lib binary
+*.exe binary
+
+# IDE files
+*.code-workspace text eol=lf
+
+# Jupyter notebooks - special handling
+*.ipynb text eol=lf
+# Export notebooks without outputs for diff
+*.ipynb filter=nbstripout
+*.ipynb diff=ipynb
+
+# Hardware configuration files
+*.nxcfg text eol=lf
+*.spinncfg text eol=lf
+
+# Profiling and benchmark data
+*.stats binary
+*.prof binary
+*.benchmarks text eol=lf
+
+# Security scanning reports
+security-report.json text eol=lf
+sbom.json text eol=lf
+
+# Performance reports  
+performance-report.json text eol=lf
+energy-profile.json text eol=lf

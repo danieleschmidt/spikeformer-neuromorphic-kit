@@ -1,0 +1,103 @@
+name: 🔧 Hardware Bug Report
+description: Report issues with neuromorphic hardware deployment or compatibility
+title: "[HARDWARE] "
+labels: ["bug", "hardware", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Hardware Bug Report
+        Please provide detailed information about the hardware-related issue you're experiencing.
+
+  - type: dropdown
+    id: hardware_platform
+    attributes:
+      label: Hardware Platform
+      description: Which neuromorphic hardware platform are you using?
+      options:
+        - Intel Loihi 2
+        - SpiNNaker2
+        - BrainScaleS-2
+        - Edge neuromorphic device
+        - CPU simulation
+        - GPU simulation
+        - Other (please specify)
+    validations:
+      required: true
+
+  - type: input
+    id: hardware_version
+    attributes:
+      label: Hardware/SDK Version
+      description: Version of hardware SDK or simulation environment
+      placeholder: "e.g., NxSDK 1.0.5, sPyNNaker 6.0.1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: bug_description
+    attributes:
+      label: Bug Description
+      description: Clear description of the bug
+      placeholder: Describe what happened vs what you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: Steps to Reproduce
+      description: Minimal steps to reproduce the issue
+      placeholder: |
+        1. Initialize model with...
+        2. Deploy to hardware...
+        3. Run inference...
+        4. Error occurs...
+    validations:
+      required: true
+
+  - type: textarea
+    id: model_config
+    attributes:
+      label: Model Configuration
+      description: Configuration of the spiking model
+      placeholder: |
+        - Model type: ViT/BERT
+        - Timesteps: 32
+        - Neuron model: LIF
+        - Hardware constraints: ...
+      render: yaml
+
+  - type: textarea
+    id: error_logs
+    attributes:
+      label: Error Logs
+      description: Complete error messages and stack traces
+      render: shell
+
+  - type: textarea
+    id: environment_info
+    attributes:
+      label: Environment Information
+      description: System and software environment details
+      placeholder: |
+        - OS: Ubuntu 22.04
+        - Python: 3.10.8
+        - PyTorch: 2.0.1
+        - SpikeFormer: 0.1.0
+        - Hardware drivers: ...
+      render: yaml
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I've searched existing issues for similar problems
+          required: true
+        - label: I've tested with the latest version of SpikeFormer
+          required: true
+        - label: I've included complete error logs
+          required: true
+        - label: I can reproduce this issue consistently
+          required: true

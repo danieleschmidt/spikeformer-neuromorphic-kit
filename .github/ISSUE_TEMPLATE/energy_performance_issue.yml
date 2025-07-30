@@ -1,0 +1,96 @@
+name: ⚡ Energy/Performance Issue
+description: Report energy consumption or performance problems
+title: "[PERF] "
+labels: ["performance", "energy", "optimization"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Energy/Performance Issue
+        Report issues related to energy consumption, inference speed, or throughput.
+
+  - type: dropdown
+    id: issue_type
+    attributes:
+      label: Issue Type
+      options:
+        - Higher than expected energy consumption
+        - Slower than expected inference
+        - Memory usage issues
+        - Throughput bottleneck
+        - Accuracy degradation after conversion
+        - Other performance issue
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deployment_target
+    attributes:
+      label: Deployment Target
+      options:
+        - Intel Loihi 2
+        - SpiNNaker2
+        - Edge neuromorphic device
+        - CPU simulation
+        - GPU baseline comparison
+    validations:
+      required: true
+
+  - type: textarea
+    id: performance_metrics
+    attributes:
+      label: Performance Metrics
+      description: Observed vs expected performance
+      placeholder: |
+        Expected:
+        - Energy: <X> mJ per inference
+        - Latency: <Y> ms
+        - Throughput: <Z> samples/sec
+        
+        Observed:
+        - Energy: <A> mJ per inference
+        - Latency: <B> ms
+        - Throughput: <C> samples/sec
+      render: yaml
+
+  - type: textarea
+    id: model_details
+    attributes:
+      label: Model Details
+      description: Details about the model being benchmarked
+      placeholder: |
+        - Base model: ViT-B/16
+        - Conversion settings: ...
+        - Timesteps: 32
+        - Batch size: 1
+        - Input size: 224x224
+      render: yaml
+
+  - type: textarea
+    id: profiling_data
+    attributes:
+      label: Profiling Data
+      description: Output from energy profiler or performance analysis
+      render: text
+
+  - type: textarea
+    id: optimization_attempted
+    attributes:
+      label: Optimization Attempts
+      description: What optimization strategies have you tried?
+      placeholder: |
+        - Threshold tuning
+        - Timestep reduction
+        - Batch size adjustment
+        - Hardware-specific optimizations
+        - etc.
+
+  - type: checkboxes
+    id: analysis_completed
+    attributes:
+      label: Analysis Completed
+      options:
+        - label: Profiled with built-in energy monitor
+        - label: Compared against GPU baseline
+        - label: Tested multiple batch sizes
+        - label: Verified model conversion accuracy
