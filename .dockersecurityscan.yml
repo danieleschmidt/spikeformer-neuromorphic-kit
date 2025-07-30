@@ -1,0 +1,144 @@
+# Docker Security Scan Configuration
+# Comprehensive security scanning configuration for container images
+
+# Scan configuration
+scan:
+  # Security scan levels
+  level: comprehensive  # basic, standard, comprehensive
+  
+  # Vulnerability severity filters
+  severity:
+    critical: true
+    high: true
+    medium: true
+    low: false  # Exclude low severity in CI/CD
+    
+  # Scan types to perform
+  types:
+    - vulnerabilities    # CVE scanning
+    - secrets           # Secret detection
+    - malware          # Malware scanning
+    - compliance       # Compliance checks
+    - license          # License compliance
+    - config           # Configuration issues
+
+# Scanner configurations
+scanners:
+  trivy:
+    enabled: true
+    timeout: "30m"
+    ignore-unfixed: true
+    skip-update: false
+    
+  grype:
+    enabled: true
+    timeout: "20m"
+    fail-on: "high"
+    
+  hadolint:
+    enabled: true
+    format: "json"
+    ignore:
+      - DL3008  # Pin versions in apt get install (managed by base image)
+      - DL3009  # Delete apt cache (done in multi-stage build)
+      
+  docker-bench:
+    enabled: true
+    checks: "1,2,3,4,5,6,7"  # Docker daemon and image checks
+
+# Compliance frameworks
+compliance:
+  frameworks:
+    - cis-docker     # CIS Docker Benchmark
+    - nist-sp-800-190  # NIST Container Security Guide
+    - pci-dss        # PCI DSS for payment processing
+    
+  custom-policies:
+    - neuromorphic-security  # Custom neuromorphic hardware security policies
+
+# Report configuration
+reporting:
+  formats:
+    - json
+    - sarif    # For GitHub Security tab integration
+    - html     # Human-readable reports
+    - junit    # CI/CD integration
+    
+  outputs:
+    directory: "security-reports"
+    timestamp: true
+    include-suppressed: false
+    
+  notifications:
+    critical-threshold: 1    # Fail on any critical vulnerabilities
+    high-threshold: 10       # Fail on 10+ high vulnerabilities
+    
+# Secret detection configuration
+secrets:
+  patterns:
+    - api-keys
+    - tokens
+    - passwords
+    - certificates
+    - neuromorphic-sdk-keys  # Hardware SDK authentication keys
+    
+  exclude-patterns:
+    - "test_*.py"           # Test files may have dummy secrets
+    - "example_*.py"        # Example files with placeholder secrets
+    - "docs/**"             # Documentation examples
+    
+# License scanning
+license:
+  allowed:
+    - MIT
+    - Apache-2.0
+    - BSD-3-Clause
+    - BSD-2-Clause
+    - ISC
+    - GPL-3.0-or-later     # For hardware SDK compatibility
+    
+  forbidden:
+    - GPL-2.0-only         # Stricter GPL version
+    - AGPL-3.0            # Network copyleft
+    - Commercial          # Commercial licenses
+
+# Performance optimization
+performance:
+  parallel-scans: true
+  cache-enabled: true
+  cache-ttl: "24h"
+  max-memory: "4GB"
+  
+# Integration settings
+integration:
+  ci-cd:
+    fail-fast: true        # Stop on first critical issue
+    retry-count: 2         # Retry failed scans
+    timeout: "45m"         # Total scan timeout
+    
+  github:
+    sarif-upload: true     # Upload SARIF to GitHub Security
+    pr-comments: true      # Comment on PRs with results
+    
+  metrics:
+    prometheus: true       # Export metrics to Prometheus
+    grafana-dashboard: true # Use provided Grafana dashboard
+
+# Neuromorphic-specific configurations
+neuromorphic:
+  hardware-sdks:
+    intel-nxsdk:
+      version-check: true
+      security-updates: "vendor-managed"
+      
+    spinnaker-sdk:
+      version-check: true
+      security-updates: "vendor-managed"
+      
+  binary-analysis:
+    chip-firmware: true    # Scan chip firmware binaries
+    driver-analysis: true  # Analyze hardware drivers
+    
+  compliance:
+    export-control: true   # Check export control compliance
+    hardware-certification: true  # Verify hardware certifications

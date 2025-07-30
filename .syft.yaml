@@ -1,0 +1,142 @@
+# Syft SBOM Generator Configuration
+# Advanced SBOM generation for supply chain security
+# https://github.com/anchore/syft
+
+# Output formats to generate
+outputs:
+  - "spdx-json"      # SPDX 2.3 JSON format
+  - "cyclonedx-json" # CycloneDX 1.4 JSON format
+  - "syft-json"      # Native Syft format (most detailed)
+  - "table"          # Human-readable table format
+
+# Package cataloger configurations
+catalogers:
+  enabled:
+    - python          # Python packages (pip, setuptools, etc.)
+    - javascript      # NPM packages
+    - go-module       # Go modules (if any)
+    - rust-cargo      # Rust packages (if any)
+    - java            # JAR files
+    - ruby-bundler    # Ruby gems
+    - binary          # Binary analysis
+
+  disabled:
+    - dpkg            # Debian packages (not applicable)
+    - rpm             # RPM packages (not applicable)
+
+# Scope configuration
+scope: "all-layers"   # all-layers, squashed
+
+# Package selection
+package:
+  # Search for packages in these paths
+  search-indexed-archives: true
+  search-unindexed-archives: false
+  
+  # Cataloger-specific configurations
+  python:
+    # Include development dependencies
+    guess-unpinned-requirements: true
+    
+  javascript:
+    # Include devDependencies
+    include-dev-deps: true
+    
+  binary:
+    # Enable deep binary analysis for neuromorphic libraries
+    enable: true
+
+# File selection and exclusions
+file:
+  # Content-based filtering
+  content:
+    # Skip files by MIME type
+    skip-files-by-type:
+      - "video/*"
+      - "audio/*" 
+      - "image/*"
+      
+    # File size limits
+    max-file-size: "1GB"
+
+  # Path-based filtering  
+  exclude:
+    # Version control
+    - "**/.git/**"
+    - "**/.svn/**"
+    
+    # Build artifacts
+    - "**/build/**"
+    - "**/dist/**" 
+    - "**/__pycache__/**"
+    - "**/*.pyc"
+    - "**/node_modules/**"
+    
+    # Documentation
+    - "**/docs/**"
+    - "**/*.md"
+    - "**/*.rst"
+    
+    # Test files
+    - "**/tests/**"
+    - "**/test/**"
+    - "**/*_test.py"
+    - "**/conftest.py"
+    
+    # IDE and editor files
+    - "**/.vscode/**"
+    - "**/.idea/**"
+    - "**/*.swp"
+    - "**/*.tmp"
+    
+    # Cache directories
+    - "**/.cache/**"
+    - "**/.pytest_cache/**"
+    - "**/htmlcov/**"
+    - "**/.coverage"
+    
+    # Virtual environments
+    - "**/venv/**"
+    - "**/env/**"
+    - "**/.env"
+    
+    # Neuromorphic hardware binaries (analyzed separately)
+    - "**/nxsdk_modules/**"
+    - "**/spinnaker_tools/**"
+
+# Metadata configuration
+metadata:
+  # Include source information
+  source:
+    name: "spikeformer-neuromorphic-kit"
+    version: "0.1.0"
+    type: "directory"
+    
+  # Tool information
+  tool:
+    name: "syft"
+    version: "auto"
+
+# Output file naming
+output-template-file: "sbom/spikeformer-{{.Format}}-{{.Timestamp}}.{{.Extension}}"
+
+# Logging configuration
+log:
+  level: "warn"      # error, warn, info, debug, trace
+  file: "syft.log"
+
+# Performance tuning
+# Adjust based on system capabilities
+max-workers: 4
+timeout: "5m"
+
+# Registry and authentication (for container images)
+registry:
+  # Disable registry calls for filesystem scans
+  insecure-skip-tls-verify: false
+  insecure-use-http: false
+
+# Additional configurations for advanced users
+experimental:
+  # Enable experimental features
+  enable: false
