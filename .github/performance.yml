@@ -1,0 +1,110 @@
+# Performance testing configuration for SpikeFormer Neuromorphic Kit
+# Used by automated performance regression testing
+
+# Benchmark thresholds and targets
+performance:
+  # Model conversion benchmarks
+  conversion:
+    vit_base_to_snn:
+      max_time_seconds: 300
+      max_memory_mb: 8192
+      target_accuracy_retention: 0.95
+    
+    bert_base_to_snn:
+      max_time_seconds: 600
+      max_memory_mb: 12288
+      target_accuracy_retention: 0.93
+  
+  # Hardware deployment benchmarks  
+  deployment:
+    loihi2:
+      max_compile_time_seconds: 180
+      max_energy_per_inference_uj: 1000
+      min_throughput_samples_per_second: 100
+    
+    spinnaker2:
+      max_compile_time_seconds: 120
+      max_energy_per_inference_uj: 800
+      min_throughput_samples_per_second: 150
+  
+  # Training benchmarks
+  training:
+    hybrid_ann_snn:
+      max_epoch_time_seconds: 3600
+      max_memory_per_gpu_gb: 16
+      target_convergence_epochs: 50
+    
+    direct_snn:
+      max_epoch_time_seconds: 1800
+      max_memory_per_gpu_gb: 12
+      target_convergence_epochs: 100
+
+# Regression detection
+regression:
+  # Performance degradation thresholds
+  time_regression_threshold: 0.15  # 15% slower
+  memory_regression_threshold: 0.20  # 20% more memory
+  accuracy_regression_threshold: 0.02  # 2% accuracy drop
+  energy_regression_threshold: 0.10  # 10% more energy
+
+# Benchmark environments
+environments:
+  # CPU-only benchmarks
+  cpu:
+    runner: "ubuntu-latest"
+    python_version: "3.10"
+    dependencies: ["torch-cpu"]
+  
+  # GPU benchmarks  
+  gpu:
+    runner: "gpu-enabled"
+    python_version: "3.10"
+    dependencies: ["torch-gpu", "cuda-11.8"]
+  
+  # Hardware-specific benchmarks
+  loihi2:
+    runner: "neuromorphic-hardware"
+    python_version: "3.10"
+    dependencies: ["nxsdk", "torch-cpu"]
+    hardware_required: true
+  
+  spinnaker2:
+    runner: "neuromorphic-hardware"
+    python_version: "3.10"
+    dependencies: ["spynnaker", "torch-cpu"]
+    hardware_required: true
+
+# Benchmark datasets
+datasets:
+  small:
+    name: "CIFAR-10-subset"
+    size: 1000
+    use_for: ["quick-tests", "pr-checks"]
+  
+  medium:
+    name: "ImageNet-subset"
+    size: 10000
+    use_for: ["nightly-builds", "release-testing"]
+  
+  large:
+    name: "ImageNet-full"
+    size: 1281167
+    use_for: ["comprehensive-testing", "hardware-validation"]
+
+# Reporting configuration  
+reporting:
+  # Performance comparison baselines
+  baseline_branch: "main"
+  comparison_branches: ["develop", "release/*"]
+  
+  # Alert thresholds
+  alert_on_regression: true
+  alert_recipients: ["performance-team@company.com"]
+  
+  # Dashboard integration
+  grafana_dashboard: "spikeformer-performance"
+  prometheus_metrics: true
+  
+  # Artifact retention
+  benchmark_results_retention_days: 90
+  performance_reports_retention_days: 30

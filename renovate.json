@@ -1,0 +1,141 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    "security:openssf-scorecard",
+    ":semanticCommits"
+  ],
+  "description": "Renovate configuration for SpikeFormer Neuromorphic Kit",
+  "timezone": "UTC",
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "assignees": ["@danieleschmidt"],
+  "reviewers": ["@danieleschmidt"],
+  "rangeStrategy": "bump",
+  "semanticCommits": "enabled",
+  "commitMessagePrefix": "deps:",
+  "commitMessageAction": "update",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to {{newVersion}}",
+  "prHourlyLimit": 2,
+  "prConcurrentLimit": 10,
+  "branchPrefix": "renovate/",
+  "packageRules": [
+    {
+      "description": "Python dependencies",
+      "matchFileNames": ["pyproject.toml", "requirements*.txt", "setup.py"],
+      "addLabels": ["python"],
+      "automerge": false,
+      "stabilityDays": 3,
+      "groupName": "Python dependencies"
+    },
+    {
+      "description": "Development dependencies - auto-merge patch updates",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true,
+      "addLabels": ["automerge"]
+    },
+    {
+      "description": "Security updates - high priority",
+      "matchPackagePatterns": ["*"],
+      "vulnerabilityAlerts": true,
+      "prPriority": 10,
+      "addLabels": ["security"],
+      "automerge": false,
+      "reviewersFromCodeOwners": true
+    },
+    {
+      "description": "Neuromorphic computing libraries",
+      "matchPackageNames": [
+        "torch",
+        "torchvision", 
+        "transformers",
+        "nxsdk",
+        "spynnaker",
+        "spalloc"
+      ],
+      "addLabels": ["neuromorphic"],
+      "automerge": false,
+      "reviewersFromCodeOwners": true,
+      "stabilityDays": 7
+    },
+    {
+      "description": "Testing frameworks",
+      "matchPackageNames": [
+        "pytest",
+        "pytest-cov",
+        "pytest-xdist",
+        "pytest-benchmark"
+      ],
+      "addLabels": ["testing"],
+      "groupName": "Testing dependencies",
+      "automerge": false
+    },
+    {
+      "description": "Code quality tools",
+      "matchPackageNames": [
+        "black",
+        "ruff",
+        "mypy",
+        "isort",
+        "bandit",
+        "safety"
+      ],
+      "addLabels": ["code-quality"],
+      "groupName": "Code quality tools",
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Docker base images",
+      "matchFileNames": ["Dockerfile*", "docker-compose.yml"],
+      "addLabels": ["docker"],
+      "automerge": false,
+      "stabilityDays": 5
+    },
+    {
+      "description": "GitHub Actions",
+      "matchFileNames": [".github/workflows/**"],
+      "addLabels": ["github-actions"],
+      "automerge": false,
+      "reviewersFromCodeOwners": true
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "prPriority": 20,
+    "addLabels": ["security", "vulnerability"]
+  },
+  "osvVulnerabilityAlerts": true,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on sunday"],
+    "commitMessageAction": "update",
+    "commitMessageTopic": "lock file maintenance",
+    "addLabels": ["lockfile-maintenance"]
+  },
+  "python": {
+    "ignoreDeps": [
+      "nxsdk"
+    ]
+  },
+  "hostRules": [
+    {
+      "matchHost": "pypi.org",
+      "timeout": 120000
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["^requirements.*\\.txt$"],
+      "matchStrings": [
+        "(?<depName>[a-zA-Z0-9\\-_]+)(?<currentValue>[>=<~!]+[0-9\\.]+)"
+      ],
+      "datasourceTemplate": "pypi"
+    }
+  ]
+}
