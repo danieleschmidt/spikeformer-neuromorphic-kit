@@ -1,0 +1,139 @@
+# Dependabot configuration for automated dependency updates
+# Complements Renovate with GitHub-native security alerts and PR management
+
+version: 2
+
+updates:
+  # Python dependencies via pip
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    
+    # Dependency update configuration
+    open-pull-requests-limit: 5
+    reviewers:
+      - "danieleschmidt"
+    assignees:
+      - "danieleschmidt"
+    labels:
+      - "dependencies"
+      - "python" 
+      - "dependabot"
+    
+    # Version requirements
+    versioning-strategy: "increase"
+    target-branch: "main"
+    
+    # Grouping rules
+    groups:
+      testing-deps:
+        patterns:
+          - "pytest*"
+          - "coverage*"
+        
+      ml-frameworks:
+        patterns:
+          - "torch*"
+          - "transformers"
+          - "datasets"
+          - "accelerate"
+          
+      code-quality:
+        patterns:
+          - "black"
+          - "ruff" 
+          - "mypy"
+          - "isort"
+          - "bandit"
+          - "safety"
+          
+      monitoring:
+        patterns:
+          - "prometheus*"
+          - "opentelemetry*"
+          - "wandb"
+          - "mlflow"
+    
+    # Ignore certain packages
+    ignore:
+      # Hardware SDK dependencies - managed manually
+      - dependency-name: "nxsdk"
+        reason: "Hardware vendor managed, requires compatibility testing"
+      - dependency-name: "spynnaker"
+        reason: "Hardware vendor managed, requires compatibility testing"
+        
+      # Major version updates - require manual review
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+        reason: "Major updates require manual compatibility testing"
+
+  # NPM dependencies (for tooling)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "06:00"
+      timezone: "UTC"
+      
+    open-pull-requests-limit: 3
+    reviewers:
+      - "danieleschmidt"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "dependabot"
+      
+    # Only dev dependencies
+    allow:
+      - dependency-type: "development"
+      
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "06:00"
+      timezone: "UTC"
+      
+    open-pull-requests-limit: 2
+    reviewers:
+      - "danieleschmidt"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "dependabot"
+      
+    # Docker-specific settings
+    insecure-external-code-execution: "deny"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "06:00"
+      timezone: "UTC"
+      
+    open-pull-requests-limit: 3
+    reviewers:
+      - "danieleschmidt"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "dependabot"
+
+# Security-specific configuration
+enable-beta-ecosystems: true
+
+# Custom commit messages
+commit-message:
+  prefix: "deps"
+  prefix-development: "deps-dev"
+  include: "scope"

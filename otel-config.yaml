@@ -1,0 +1,260 @@
+# OpenTelemetry Configuration for Spikeformer Neuromorphic Kit
+# Comprehensive observability for neuromorphic AI applications
+
+# Service information
+service:
+  name: "spikeformer-neuromorphic-kit"
+  version: "0.1.0"
+  namespace: "neuromorphic-ai"
+  instance_id: "${HOSTNAME:-unknown}"
+
+# Telemetry SDK configuration
+telemetry:
+  # Logging configuration
+  logs:
+    level: info
+    include_trace_context: true
+    
+  # Internal metrics about the SDK itself
+  metrics:
+    address: "localhost:8888"
+
+# Resource attributes (attached to all telemetry)
+resource:
+  attributes:
+    service.name: "spikeformer-neuromorphic-kit"
+    service.version: "0.1.0"
+    service.namespace: "neuromorphic-ai"
+    deployment.environment: "${ENVIRONMENT:-development}"
+    
+    # Hardware-specific attributes
+    neuromorphic.hardware.available: "${NEUROMORPHIC_HARDWARE:-simulation}"
+    neuromorphic.loihi2.enabled: "${LOIHI2_AVAILABLE:-false}"
+    neuromorphic.spinnaker.enabled: "${SPINNAKER_AVAILABLE:-false}"
+    
+    # Compute resources
+    host.name: "${HOSTNAME:-unknown}"
+    host.arch: "${HOSTTYPE:-unknown}"
+    process.pid: "${PROCESS_PID:-unknown}"
+
+# Exporters configuration
+exporters:
+  # OTLP exporter (recommended for production)
+  otlp:
+    endpoint: "${OTEL_EXPORTER_OTLP_ENDPOINT:-http://localhost:4317}"
+    headers:
+      authorization: "Bearer ${OTEL_EXPORTER_OTLP_HEADERS_AUTHORIZATION:-}"
+    compression: gzip
+    timeout: 10s
+    
+  # Prometheus metrics exporter
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: "spikeformer"
+    const_labels:
+      version: "0.1.0"
+      
+  # Jaeger traces exporter (for development)
+  jaeger:
+    endpoint: "${JAEGER_ENDPOINT:-http://localhost:14268/api/traces}"
+    
+  # Console exporter (for debugging)
+  logging:
+    loglevel: debug
+    sampling_initial: 2
+    sampling_thereafter: 500
+
+# Receivers configuration
+receivers:
+  # OTLP receiver
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:4317"
+      http:
+        endpoint: "0.0.0.0:4318"
+        
+  # Prometheus scrape receiver
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: "spikeformer-internal"
+          scrape_interval: 15s
+          static_configs:
+            - targets: ["localhost:8889"]
+              
+        - job_name: "spikeformer-hardware"
+          scrape_interval: 30s
+          static_configs:
+            - targets: ["localhost:8890"]
+          metrics_path: "/hardware/metrics"
+
+# Processors configuration
+processors:
+  # Batch processor (recommended for performance)
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+    
+  # Memory limiter (prevent OOM)
+  memory_limiter:
+    limit_mib: 512
+    spike_limit_mib: 128
+    check_interval: 5s
+    
+  # Resource processor (add/modify resource attributes)
+  resource:
+    attributes:
+      - key: neuromorphic.framework
+        value: "spikeformer"
+        action: insert
+      - key: ml.framework
+        value: "pytorch"
+        action: insert
+        
+  # Attributes processor (manipulate span/metric attributes)
+  attributes:
+    actions:
+      - key: user.id
+        action: delete  # Remove sensitive user information
+      - key: neuromorphic.model.params
+        action: hash    # Hash model parameters for privacy
+        
+  # Sampling processor (reduce trace volume)
+  probabilistic_sampler:
+    sampling_percentage: 10  # Sample 10% of traces
+    
+  # Filter processor (exclude certain telemetry)
+  filter:
+    metrics:
+      exclude:
+        match_type: regexp
+        metric_names:
+          - ".*debug.*"
+          - ".*test.*"
+
+# Extensions configuration
+extensions:
+  # Health check extension
+  health_check:
+    endpoint: "0.0.0.0:13133"
+    
+  # Performance profiler
+  pprof:
+    endpoint: "0.0.0.0:1777"
+    
+  # Memory ballast (improve GC performance)
+  memory_ballast:
+    size_mib: 64
+
+# Service pipelines
+service:
+  extensions: [health_check, pprof, memory_ballast]
+  
+  pipelines:
+    # Traces pipeline
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp, jaeger, logging]
+      
+    # Metrics pipeline  
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp, prometheus, logging]
+      
+    # Logs pipeline
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp, logging]
+
+# Neuromorphic-specific instrumentation
+neuromorphic:
+  # Hardware monitoring
+  hardware:
+    # Intel Loihi 2
+    loihi2:
+      enabled: "${LOIHI2_AVAILABLE:-false}"
+      metrics:
+        - chip_utilization      # Neuromorphic chip utilization
+        - power_consumption     # Power usage per chip
+        - spike_rate           # Neural spike rate
+        - synapse_operations   # Synaptic operations per second
+        - memory_usage         # On-chip memory usage
+        
+    # SpiNNaker
+    spinnaker:
+      enabled: "${SPINNAKER_AVAILABLE:-false}"
+      metrics:
+        - board_temperature    # Board temperature
+        - core_utilization     # ARM core utilization
+        - packet_drops         # Network packet drops
+        - routing_efficiency   # Routing table efficiency
+        
+  # Model instrumentation
+  model:
+    trace_inference: true      # Trace inference calls
+    trace_training: true       # Trace training steps
+    measure_energy: true       # Measure energy consumption
+    
+    # Custom metrics
+    metrics:
+      - inference_latency      # Model inference time
+      - training_loss         # Training loss per epoch
+      - spike_sparsity        # Spike sparsity ratio
+      - conversion_accuracy   # ANN-to-SNN conversion accuracy
+      - energy_efficiency     # Energy per inference/token
+      
+  # Performance benchmarking
+  benchmarks:
+    auto_instrument: true      # Automatically instrument benchmarks
+    detailed_metrics: true     # Collect detailed performance metrics
+    
+# Sampling configuration
+sampling:
+  # Default sampling for all services
+  default_strategy:
+    type: probabilistic
+    param: 0.1  # 10% sampling rate
+    
+  # Per-service sampling strategies
+  per_service_strategies:
+    - service: "spikeformer-training"
+      type: probabilistic  
+      param: 0.05  # 5% for training (high volume)
+      
+    - service: "spikeformer-inference"
+      type: probabilistic
+      param: 0.2   # 20% for inference (more important)
+      
+    - service: "spikeformer-hardware"
+      type: probabilistic
+      param: 1.0   # 100% for hardware monitoring
+
+# Security configuration
+security:
+  # TLS configuration
+  tls:
+    insecure: false
+    ca_file: "${OTEL_TLS_CA_FILE:-}"
+    cert_file: "${OTEL_TLS_CERT_FILE:-}"
+    key_file: "${OTEL_TLS_KEY_FILE:-}"
+    
+  # Authentication
+  auth:
+    type: "${OTEL_AUTH_TYPE:-none}"  # none, bearer_token, oauth2
+    token: "${OTEL_AUTH_TOKEN:-}"
+
+# Development and debugging
+debug:
+  # Enable detailed logging in development
+  verbosity: "${OTEL_LOG_LEVEL:-info}"
+  
+  # Local development endpoints
+  local_endpoints:
+    jaeger_ui: "http://localhost:16686"
+    prometheus_ui: "http://localhost:9090" 
+    grafana_ui: "http://localhost:3000"

@@ -1,6 +1,7 @@
-"""Monitoring and metrics collection for SpikeFormer."""
+"""Monitoring and metrics collection for SpikeFormer with OpenTelemetry integration."""
 
 import time
+import os
 import psutil
 import threading
 from typing import Dict, Any, Optional, List
@@ -12,6 +13,22 @@ from prometheus_client import (
 )
 import torch
 
+# OpenTelemetry imports (optional)
+try:
+    from opentelemetry import trace, metrics as otel_metrics
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.sdk.metrics import MeterProvider
+    from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+    from opentelemetry.sdk.resources import Resource
+    OTEL_AVAILABLE = True
+except ImportError:
+    OTEL_AVAILABLE = False
+    trace = None
+    otel_metrics = None
+
 
 @dataclass
 class MetricValue:
@@ -22,13 +39,91 @@ class MetricValue:
     
 
 class SpikeFormerMetrics:
-    """Centralized metrics collection for SpikeFormer."""
+    """Centralized metrics collection for SpikeFormer with OpenTelemetry support."""
     
-    def __init__(self, registry: Optional[CollectorRegistry] = None):
+    def __init__(self, registry: Optional[CollectorRegistry] = None, enable_otel: bool = True):
         self.registry = registry or CollectorRegistry()
+        self.enable_otel = enable_otel and OTEL_AVAILABLE
         self._setup_metrics()
+        self._setup_opentelemetry()
         self._monitoring_thread = None
         self._stop_monitoring = threading.Event()
+        
+    def _setup_opentelemetry(self):
+        """Initialize OpenTelemetry instrumentation."""
+        if not self.enable_otel:
+            self.tracer = None
+            self.meter = None
+            self.otel_metrics = {}
+            return
+            
+        try:
+            # Set up resource with neuromorphic-specific attributes
+            resource = Resource.create({
+                "service.name": "spikeformer-neuromorphic-kit",
+                "service.version": "0.1.0",
+                "service.namespace": "neuromorphic-ai",
+                "neuromorphic.framework": "spikeformer",
+                "ml.framework": "pytorch",
+                "neuromorphic.hardware.available": os.getenv("NEUROMORPHIC_HARDWARE", "simulation"),
+                "neuromorphic.loihi2.enabled": os.getenv("LOIHI2_AVAILABLE", "false"),
+                "neuromorphic.spinnaker.enabled": os.getenv("SPINNAKER_AVAILABLE", "false"),
+            })
+            
+            # Set up tracing
+            trace.set_tracer_provider(TracerProvider(resource=resource))
+            otlp_exporter = OTLPSpanExporter(
+                endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"),
+                insecure=True
+            )
+            span_processor = BatchSpanProcessor(otlp_exporter)
+            trace.get_tracer_provider().add_span_processor(span_processor)
+            self.tracer = trace.get_tracer(__name__)
+            
+            # Set up metrics
+            metric_reader = PeriodicExportingMetricReader(
+                OTLPMetricExporter(
+                    endpoint=os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"),
+                    insecure=True
+                ),
+                export_interval_millis=5000
+            )
+            otel_metrics.set_meter_provider(MeterProvider(resource=resource, metric_readers=[metric_reader]))
+            self.meter = otel_metrics.get_meter(__name__)
+            
+            # Create neuromorphic-specific OpenTelemetry metrics
+            self.otel_metrics = {
+                "inference_counter": self.meter.create_counter(
+                    "spikeformer_inferences_total",
+                    description="Total number of neuromorphic model inferences"
+                ),
+                "energy_histogram": self.meter.create_histogram(
+                    "spikeformer_energy_consumption_mj", 
+                    description="Energy consumption per inference in millijoules"
+                ),
+                "spike_sparsity_gauge": self.meter.create_up_down_counter(
+                    "spikeformer_spike_sparsity_ratio",
+                    description="Neural spike sparsity ratio"
+                ),
+                "hardware_utilization_gauge": self.meter.create_up_down_counter(
+                    "spikeformer_hardware_utilization_percent",
+                    description="Neuromorphic hardware utilization percentage"
+                ),
+                "training_loss_histogram": self.meter.create_histogram(
+                    "spikeformer_training_loss",
+                    description="Training loss values"
+                ),
+                "conversion_accuracy_gauge": self.meter.create_up_down_counter(
+                    "spikeformer_conversion_accuracy_percent",
+                    description="ANN-to-SNN conversion accuracy percentage"
+                )
+            }
+            
+        except Exception as e:
+            print(f"Warning: Failed to initialize OpenTelemetry: {e}")
+            self.tracer = None
+            self.meter = None
+            self.otel_metrics = {}
         
     def _setup_metrics(self):
         """Initialize Prometheus metrics."""

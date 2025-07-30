@@ -136,6 +136,22 @@
         "(?<depName>[a-zA-Z0-9\\-_]+)(?<currentValue>[>=<~!]+[0-9\\.]+)"
       ],
       "datasourceTemplate": "pypi"
+    },
+    {
+      "customType": "regex",
+      "fileMatch": ["^uv\\.lock$"],
+      "matchStrings": [
+        "name = \"(?<depName>.*?)\"\\nversion = \"(?<currentValue>.*?)\""
+      ],
+      "datasourceTemplate": "pypi"
     }
-  ]
+  ],
+  "experimental": {
+    "nativePresets": true
+  },
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "🔧 Dependency Updates Dashboard",
+  "dependencyDashboardLabels": ["dependencies", "dashboard"],
+  "dependencyDashboardHeader": "This dashboard provides an overview of all dependency updates for the Spikeformer Neuromorphic Kit.",
+  "dependencyDashboardFooter": "🧠 Neuromorphic AI • 🔬 Hardware-optimized • ⚡ Energy-efficient"
 }
