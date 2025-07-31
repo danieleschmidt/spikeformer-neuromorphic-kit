@@ -1,0 +1,114 @@
+name: Performance Regression
+description: Report a performance regression in neuromorphic AI operations
+title: "[PERF] Performance regression in <component>"
+labels: ["bug", "performance", "regression"]
+assignees: ["@performance-team"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a performance regression! This helps us maintain optimal performance for neuromorphic AI workloads.
+
+  - type: input
+    id: component
+    attributes:
+      label: Component
+      description: Which component is experiencing the performance regression?
+      placeholder: "e.g., spiking transformer, hardware conversion, inference engine"
+    validations:
+      required: true
+
+  - type: textarea
+    id: performance_baseline
+    attributes:
+      label: Performance Baseline
+      description: What was the expected/previous performance?
+      placeholder: |
+        - Previous inference time: 50ms
+        - Previous memory usage: 512MB
+        - Previous throughput: 1000 samples/sec
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_performance
+    attributes:
+      label: Current Performance
+      description: What is the current degraded performance?
+      placeholder: |
+        - Current inference time: 150ms (3x slower)
+        - Current memory usage: 1.2GB (2.3x more)
+        - Current throughput: 300 samples/sec (3.3x slower)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: hardware_platform
+    attributes:
+      label: Hardware Platform
+      description: On which hardware platform did you observe the regression?
+      options:
+        - CPU (Intel/AMD)
+        - GPU (NVIDIA/AMD)
+        - Intel Loihi 2
+        - SpiNNaker
+        - Edge devices
+        - Multiple platforms
+    validations:
+      required: true
+
+  - type: textarea
+    id: benchmark_results
+    attributes:
+      label: Benchmark Results
+      description: Please include benchmark results if available
+      placeholder: |
+        Run `npm run benchmark` or provide pytest-benchmark output:
+        ```
+        <benchmark output here>
+        ```
+
+  - type: input
+    id: regression_commit
+    attributes:
+      label: Suspected Regression Commit
+      description: If known, which commit introduced the regression?
+      placeholder: "e.g., commit hash or PR number"
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Please provide environment details
+      placeholder: |
+        - OS: Ubuntu 20.04
+        - Python version: 3.11.0
+        - PyTorch version: 2.0.0
+        - Hardware specs: Intel i7-12700K, 32GB RAM, RTX 4080
+        - Package version: 0.1.0
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: performance_impact
+    attributes:
+      label: Performance Impact
+      description: What type of performance impact are you seeing?
+      options:
+        - label: Increased latency
+        - label: Decreased throughput
+        - label: Higher memory usage
+        - label: Higher CPU/GPU utilization
+        - label: Longer training times
+        - label: Hardware resource exhaustion
+
+  - type: textarea
+    id: additional_info
+    attributes:
+      label: Additional Information
+      description: Any other information that might help us diagnose the regression
+      placeholder: |
+        - Does this affect all models or specific architectures?
+        - Is the regression consistent or intermittent?
+        - Any error messages or warnings?

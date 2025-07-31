@@ -1,0 +1,100 @@
+# Benchmark configuration for pytest-benchmark
+# Advanced benchmarking setup for neuromorphic AI performance tracking
+
+performance:
+  # Minimum iterations for stable measurements
+  min_rounds: 5
+  min_time: 0.000005
+  max_time: 1.0
+  
+  # Timer precision
+  timer: perf_counter
+  
+  # Calibration settings
+  calibration_precision: 10
+  
+  # Warmup settings
+  warmup: true
+  warmup_iterations: 2
+
+storage:
+  # Store benchmark data in JSON format
+  path: ".benchmarks"
+  
+  # Autosave results
+  autosave: true
+  
+  # Compare against previous runs
+  compare: "0001"
+  compare_fail: ["min:5%", "max:10%"]
+
+machine_info:
+  # Capture detailed machine information
+  collect: true
+  
+histogram:
+  # Generate performance histograms
+  bins: 20
+  
+columns:
+  - "min"
+  - "max" 
+  - "mean"
+  - "stddev"
+  - "median"
+  - "iqr"
+  - "outliers"
+  - "ops"
+  - "rounds"
+  - "iterations"
+
+# Neuromorphic-specific benchmark groups
+groups:
+  spiking_layers:
+    description: "Spiking neural network layer benchmarks"
+    patterns: ["*spiking*", "*neuron*", "*synapse*"]
+    
+  transformers:
+    description: "Transformer architecture benchmarks"
+    patterns: ["*transformer*", "*attention*", "*embedding*"]
+    
+  hardware_conversion:
+    description: "Hardware conversion benchmarks"
+    patterns: ["*convert*", "*compile*", "*deploy*"]
+    
+  inference:
+    description: "Model inference benchmarks"
+    patterns: ["*forward*", "*predict*", "*inference*"]
+
+# Performance thresholds (fail if exceeded)
+thresholds:
+  # Forward pass should be under 10ms for small models
+  forward_pass_ms: 10.0
+  
+  # Memory usage should be under 1GB for test models
+  memory_usage_mb: 1024.0
+  
+  # Training step should be under 100ms
+  training_step_ms: 100.0
+
+# Hardware-specific configurations
+hardware:
+  cpu:
+    # CPU-specific benchmarks
+    parallel_workers: 4
+    affinity: [0, 1, 2, 3]
+    
+  gpu:
+    # GPU benchmarks (if available)
+    device: "cuda:0"
+    memory_fraction: 0.8
+    
+  neuromorphic:
+    # Neuromorphic hardware benchmarks
+    loihi2:
+      enabled: false  # Enable when hardware available
+      chip_count: 1
+      
+    spinnaker:
+      enabled: false  # Enable when hardware available
+      board_count: 1
