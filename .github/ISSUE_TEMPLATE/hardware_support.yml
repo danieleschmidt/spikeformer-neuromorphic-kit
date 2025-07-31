@@ -1,0 +1,139 @@
+name: Hardware Support Request
+description: Request support for new neuromorphic hardware or report hardware-specific issues
+title: "[HARDWARE] Support request for <hardware>"
+labels: ["enhancement", "hardware", "neuromorphic"]
+assignees: ["@hardware-team"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for your hardware support request! We're always looking to expand neuromorphic hardware compatibility.
+
+  - type: dropdown
+    id: request_type
+    attributes:
+      label: Request Type
+      description: What type of hardware support are you requesting?
+      options:
+        - New hardware platform support
+        - Hardware-specific bug report
+        - Hardware optimization request
+        - Hardware documentation improvement
+    validations:
+      required: true
+
+  - type: input
+    id: hardware_name
+    attributes:
+      label: Hardware Platform
+      description: Which hardware platform is this request about?
+      placeholder: "e.g., Intel Loihi 3, SpiNNaker 2, Akida, BrainChip"
+    validations:
+      required: true
+
+  - type: textarea
+    id: hardware_specs
+    attributes:
+      label: Hardware Specifications
+      description: Please provide detailed hardware specifications
+      placeholder: |
+        - Chip architecture: 
+        - Number of cores/neurons:
+        - Memory capacity:
+        - Power consumption:
+        - Connectivity:
+        - SDK/API availability:
+        - Documentation links:
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority_level
+    attributes:
+      label: Priority Level
+      description: How critical is this hardware support for your use case?
+      options:
+        - Low - Nice to have
+        - Medium - Would improve workflows
+        - High - Blocking critical work
+        - Critical - Production deployment blocker
+    validations:
+      required: true
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use Case Description
+      description: Describe your specific use case for this hardware
+      placeholder: |
+        - What type of neuromorphic models will you run?
+        - Expected workload characteristics
+        - Performance requirements
+        - Power constraints
+        - Deployment environment
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: features_needed
+    attributes:
+      label: Required Features
+      description: Which features would you need for this hardware?
+      options:
+        - label: Model conversion/compilation
+        - label: Training support
+        - label: Inference optimization
+        - label: Debugging and profiling tools
+        - label: Monitoring and telemetry
+        - label: Multi-chip scaling
+        - label: Power management
+        - label: Real-time constraints
+
+  - type: textarea
+    id: current_solution
+    attributes:
+      label: Current Workaround
+      description: How are you currently handling this without native support?
+      placeholder: "Describe any workarounds or alternative approaches you're using"
+
+  - type: textarea
+    id: hardware_access
+    attributes:
+      label: Hardware Access
+      description: Do you have access to this hardware for testing?
+      placeholder: |
+        - Hardware availability: Yes/No/Limited
+        - Testing timeline: 
+        - Remote access possible: Yes/No
+        - Hardware loan/sharing possible: Yes/No
+
+  - type: input
+    id: technical_contact
+    attributes:
+      label: Technical Contact
+      description: Who can we contact for technical details about this hardware?
+      placeholder: "Name, organization, email (if willing to share)"
+
+  - type: textarea
+    id: implementation_notes
+    attributes:
+      label: Implementation Notes
+      description: Any technical notes or constraints for implementation
+      placeholder: |
+        - Hardware-specific limitations
+        - SDK requirements or constraints
+        - Performance characteristics to consider
+        - Integration challenges
+
+  - type: checkboxes
+    id: contribution_willing
+    attributes:
+      label: Contribution Willingness
+      description: Are you willing to contribute to the implementation?
+      options:
+        - label: I can provide hardware access for testing
+        - label: I can contribute code/documentation
+        - label: I can provide technical expertise
+        - label: I can help with testing and validation
+        - label: I can provide performance benchmarks

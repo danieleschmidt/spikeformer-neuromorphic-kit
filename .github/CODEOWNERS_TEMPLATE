@@ -1,0 +1,56 @@
+# CODEOWNERS Template for Neuromorphic AI Repository
+# 
+# This file defines who owns different parts of the codebase and will be
+# automatically requested for review when pull requests modify their areas.
+#
+# Global fallback (must be at the end)
+# * @owner-username
+
+# Core architecture and neuromorphic components
+spikeformer/core/ @architecture-team @neuromorphic-experts
+spikeformer/models/ @ml-team @architecture-team
+spikeformer/layers/ @neuromorphic-experts
+
+# Hardware-specific implementations
+spikeformer/hardware/ @hardware-team
+spikeformer/hardware/loihi/ @loihi-experts
+spikeformer/hardware/spinnaker/ @spinnaker-experts
+
+# Training and optimization
+spikeformer/training/ @ml-team
+spikeformer/optimization/ @performance-team
+
+# Infrastructure and DevOps
+.github/ @devops-team @security-team
+docker-compose*.yml @devops-team
+Dockerfile* @devops-team
+.pre-commit-config.yaml @devops-team
+renovate.json @devops-team
+
+# Documentation
+docs/ @docs-team
+*.md @docs-team
+docs/adr/ @architecture-team
+
+# Security and compliance
+SECURITY.md @security-team
+.github/SECURITY.md @security-team
+scripts/security_scan.py @security-team
+scripts/container_security_scan.py @security-team
+
+# Performance and monitoring
+monitoring/ @observability-team @performance-team
+scripts/benchmark.py @performance-team
+pytest-benchmark.ini @performance-team
+.benchmarks.yml @performance-team
+
+# Configuration files
+pyproject.toml @devops-team @ml-team
+requirements*.txt @ml-team
+setup.py @devops-team
+
+# Testing infrastructure
+tests/ @qa-team
+tests/hardware/ @hardware-team @qa-team
+tests/performance/ @performance-team @qa-team
+conftest.py @qa-team
