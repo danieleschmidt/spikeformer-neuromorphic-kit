@@ -27,6 +27,13 @@ storage:
   # Compare against previous runs
   compare: "0001"
   compare_fail: ["min:5%", "max:10%"]
+  
+  # Continuous integration integration
+  ci_integration:
+    enabled: true
+    upload_artifacts: true
+    regression_threshold: 0.15  # 15% performance regression fails CI
+    store_history: 100  # Keep last 100 benchmark runs
 
 machine_info:
   # Capture detailed machine information
@@ -98,3 +105,54 @@ hardware:
     spinnaker:
       enabled: false  # Enable when hardware available
       board_count: 1
+
+# Advanced performance monitoring
+monitoring:
+  # Energy consumption tracking
+  energy:
+    enabled: true
+    measure_cpu_power: true
+    measure_gpu_power: true
+    sample_rate_hz: 100
+    
+  # Memory allocation tracking
+  memory:
+    enabled: true
+    track_peak_memory: true
+    track_allocations: true
+    memory_profiler: "tracemalloc"
+    
+  # Neuromorphic-specific metrics
+  neuromorphic_metrics:
+    spike_sparsity:
+      enabled: true
+      threshold: 0.1  # 10% minimum sparsity expected
+      
+    energy_efficiency:
+      enabled: true
+      baseline_gpu_watts: 250  # Baseline GPU power consumption
+      
+    conversion_quality:
+      enabled: true
+      min_accuracy_retention: 0.95  # 95% accuracy retention required
+
+# Automated reporting
+reporting:
+  # Generate performance dashboards
+  dashboard:
+    enabled: true
+    format: ["html", "json"]
+    include_trends: true
+    history_days: 30
+    
+  # GitHub integration
+  github:
+    post_pr_comments: true
+    upload_to_pages: true
+    create_badges: true
+    
+  # Alerts for performance regressions
+  alerts:
+    enabled: true
+    slack_webhook: "${SLACK_WEBHOOK_URL}"
+    email_recipients: ["devops@your-org.com"]

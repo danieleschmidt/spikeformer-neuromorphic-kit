@@ -1,0 +1,86 @@
+# Terragon Autonomous SDLC Configuration
+# Repository: spikeformer-neuromorphic-kit
+# Maturity Level: Advanced (85%)
+
+repository:
+  name: "spikeformer-neuromorphic-kit"
+  maturity_level: "advanced"
+  maturity_score: 85
+  primary_language: "python"
+  framework: "pytorch"
+  domain: "neuromorphic-ai"
+
+scoring:
+  weights:
+    # Advanced repositories prioritize technical debt and modernization
+    wsjf: 0.5
+    ice: 0.1
+    technicalDebt: 0.3
+    security: 0.1
+    
+  thresholds:
+    minScore: 15
+    maxRisk: 0.7
+    securityBoost: 2.0
+    complianceBoost: 1.8
+    modernizationBoost: 1.5
+
+discovery:
+  sources:
+    - gitHistory
+    - staticAnalysis
+    - issueTrackers
+    - vulnerabilityDatabases
+    - performanceMonitoring
+    - dependencyUpdates
+    - codeComplexity
+    - testCoverage
+    
+  tools:
+    staticAnalysis:
+      - ruff
+      - mypy  
+      - bandit
+      - safety
+    security:
+      - gitguardian
+      - syft
+      - trivy
+    performance:
+      - pytest-benchmark
+      - cProfile
+    quality:
+      - black
+      - isort
+      - pre-commit
+
+execution:
+  maxConcurrentTasks: 1
+  testRequirements:
+    minCoverage: 80
+    performanceRegression: 5
+    securityThreshold: "medium"
+  rollbackTriggers:
+    - testFailure
+    - buildFailure
+    - securityViolation
+    - performanceRegression
+
+continuous_discovery:
+  schedule:
+    immediate: "on_pr_merge"
+    hourly: "security_scan"
+    daily: "comprehensive_analysis"
+    weekly: "deep_sdlc_assessment"
+    monthly: "strategic_review"
+    
+  value_tracking:
+    enabled: true
+    metrics_file: ".terragon/value-metrics.json"
+    backlog_file: "BACKLOG.md"
+    
+  learning:
+    enabled: true
+    feedback_loop: true
+    model_adaptation: true
+    confidence_tracking: true
