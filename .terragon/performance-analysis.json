@@ -1,0 +1,911 @@
+{
+  "timestamp": "2025-08-01T02:33:56.955932Z",
+  "summary": {
+    "total_files": 13,
+    "total_issues": 79,
+    "high_priority": 0,
+    "medium_priority": 34,
+    "low_priority": 45
+  },
+  "files": {
+    ".noxfile.py": [
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 19,
+        "message": "Function 'tests' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".noxfile.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 36,
+        "message": "Function 'hardware_tests' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".noxfile.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 49,
+        "message": "Function 'lint' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".noxfile.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 58,
+        "message": "Function 'format' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".noxfile.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 66,
+        "message": "Function 'typecheck' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".noxfile.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 73,
+        "message": "Function 'security' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".noxfile.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 82,
+        "message": "Function 'docs' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".noxfile.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 89,
+        "message": "Function 'benchmark' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".noxfile.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 96,
+        "message": "Function 'coverage' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".noxfile.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 110,
+        "message": "Function 'pre_commit' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".noxfile.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 117,
+        "message": "Function 'conda_tests' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".noxfile.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 125,
+        "message": "Function 'build' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".noxfile.py"
+      }
+    ],
+    "scripts/check_model_sizes.py": [
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 24,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/check_model_sizes.py"
+      }
+    ],
+    "scripts/container_security_scan.py": [
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 19,
+        "message": "Function '__init__' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "scripts/container_security_scan.py"
+      },
+      {
+        "type": "high_complexity",
+        "severity": "medium",
+        "line": 175,
+        "message": "Function 'analyze_results' has high complexity (18)",
+        "wsjf_score": 3.0,
+        "suggestion": "Consider breaking this function into smaller, more focused functions",
+        "file": "scripts/container_security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 194,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/container_security_scan.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 239,
+        "message": "Function 'generate_report' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "scripts/container_security_scan.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 278,
+        "message": "Function 'print_summary' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "scripts/container_security_scan.py"
+      }
+    ],
+    "scripts/generate_sbom.py": [
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 40,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/generate_sbom.py"
+      }
+    ],
+    "scripts/hardware_security_scan.py": [
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 60,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/hardware_security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 60,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/hardware_security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 61,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/hardware_security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 98,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/hardware_security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 98,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/hardware_security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 98,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/hardware_security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 104,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/hardware_security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 104,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/hardware_security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 152,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/hardware_security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 199,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/hardware_security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 295,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/hardware_security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 372,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/hardware_security_scan.py"
+      }
+    ],
+    "scripts/security_scan.py": [
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 16,
+        "message": "Function '__init__' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "scripts/security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 136,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 136,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/security_scan.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 144,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": "scripts/security_scan.py"
+      },
+      {
+        "type": "string_concat_loop",
+        "severity": "medium",
+        "line": 223,
+        "message": "String concatenation in loop - use join() instead",
+        "wsjf_score": 15.0,
+        "suggestion": "Use ''.join(list) or f-strings for better performance",
+        "file": "scripts/security_scan.py"
+      },
+      {
+        "type": "string_concat_loop",
+        "severity": "medium",
+        "line": 226,
+        "message": "String concatenation in loop - use join() instead",
+        "wsjf_score": 15.0,
+        "suggestion": "Use ''.join(list) or f-strings for better performance",
+        "file": "scripts/security_scan.py"
+      },
+      {
+        "type": "string_concat_loop",
+        "severity": "medium",
+        "line": 227,
+        "message": "String concatenation in loop - use join() instead",
+        "wsjf_score": 15.0,
+        "suggestion": "Use ''.join(list) or f-strings for better performance",
+        "file": "scripts/security_scan.py"
+      },
+      {
+        "type": "string_concat_loop",
+        "severity": "medium",
+        "line": 230,
+        "message": "String concatenation in loop - use join() instead",
+        "wsjf_score": 15.0,
+        "suggestion": "Use ''.join(list) or f-strings for better performance",
+        "file": "scripts/security_scan.py"
+      },
+      {
+        "type": "string_concat_loop",
+        "severity": "medium",
+        "line": 231,
+        "message": "String concatenation in loop - use join() instead",
+        "wsjf_score": 15.0,
+        "suggestion": "Use ''.join(list) or f-strings for better performance",
+        "file": "scripts/security_scan.py"
+      },
+      {
+        "type": "string_concat_loop",
+        "severity": "medium",
+        "line": 233,
+        "message": "String concatenation in loop - use join() instead",
+        "wsjf_score": 15.0,
+        "suggestion": "Use ''.join(list) or f-strings for better performance",
+        "file": "scripts/security_scan.py"
+      }
+    ],
+    "spikeformer/health.py": [
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 32,
+        "message": "Function '__init__' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/health.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 36,
+        "message": "Function 'register_check' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/health.py"
+      }
+    ],
+    "spikeformer/monitoring.py": [
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 44,
+        "message": "Function '__init__' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 52,
+        "message": "Function '_setup_opentelemetry' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 128,
+        "message": "Function '_setup_metrics' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 307,
+        "message": "Function 'start_monitoring' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 320,
+        "message": "Function 'stop_monitoring' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 326,
+        "message": "Function '_monitoring_loop' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 337,
+        "message": "Function '_collect_system_metrics' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 353,
+        "message": "Function '_collect_gpu_metrics' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 368,
+        "message": "Function '_collect_disk_metrics' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 380,
+        "message": "Function 'record_request' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 393,
+        "message": "Function 'record_inference' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 400,
+        "message": "Function 'record_energy_consumption' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 413,
+        "message": "Function 'record_spike_rate' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 420,
+        "message": "Function 'record_accuracy' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 427,
+        "message": "Function 'record_training_step' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 435,
+        "message": "Function 'set_build_info' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 451,
+        "message": "Function '__init__' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 457,
+        "message": "Function '__enter__' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 463,
+        "message": "Function '__exit__' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": "spikeformer/monitoring.py"
+      }
+    ],
+    ".terragon/performance-optimizer.py": [
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 20,
+        "message": "Function '__init__' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".terragon/performance-optimizer.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 51,
+        "message": "Function 'visit_For' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".terragon/performance-optimizer.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 80,
+        "message": "Function 'visit_ListComp' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".terragon/performance-optimizer.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 96,
+        "message": "Function 'visit_Call' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".terragon/performance-optimizer.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 120,
+        "message": "Function 'visit_FunctionDef' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".terragon/performance-optimizer.py"
+      },
+      {
+        "type": "string_concat_loop",
+        "severity": "medium",
+        "line": 159,
+        "message": "String concatenation in loop - use join() instead",
+        "wsjf_score": 15.0,
+        "suggestion": "Use ''.join(list) or f-strings for better performance",
+        "file": ".terragon/performance-optimizer.py"
+      },
+      {
+        "type": "string_concat_loop",
+        "severity": "medium",
+        "line": 161,
+        "message": "String concatenation in loop - use join() instead",
+        "wsjf_score": 15.0,
+        "suggestion": "Use ''.join(list) or f-strings for better performance",
+        "file": ".terragon/performance-optimizer.py"
+      },
+      {
+        "type": "string_concat_loop",
+        "severity": "medium",
+        "line": 163,
+        "message": "String concatenation in loop - use join() instead",
+        "wsjf_score": 15.0,
+        "suggestion": "Use ''.join(list) or f-strings for better performance",
+        "file": ".terragon/performance-optimizer.py"
+      },
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 203,
+        "message": "Function '__init__' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".terragon/performance-optimizer.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 237,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": ".terragon/performance-optimizer.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 272,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": ".terragon/performance-optimizer.py"
+      },
+      {
+        "type": "string_concat_loop",
+        "severity": "medium",
+        "line": 294,
+        "message": "String concatenation in loop - use join() instead",
+        "wsjf_score": 15.0,
+        "suggestion": "Use ''.join(list) or f-strings for better performance",
+        "file": ".terragon/performance-optimizer.py"
+      }
+    ],
+    ".terragon/dependency-scanner.py": [
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 18,
+        "message": "Function '__init__' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".terragon/dependency-scanner.py"
+      }
+    ],
+    ".terragon/autonomous-executor.py": [
+      {
+        "type": "missing_type_hints",
+        "severity": "low",
+        "line": 31,
+        "message": "Function '__init__' missing type hints",
+        "wsjf_score": 11.0,
+        "suggestion": "Add type hints for better static analysis and potential performance gains",
+        "file": ".terragon/autonomous-executor.py"
+      },
+      {
+        "type": "nested_loop",
+        "severity": "medium",
+        "line": 163,
+        "message": "Nested loop detected - consider vectorization or algorithmic optimization",
+        "wsjf_score": 4.25,
+        "suggestion": "Consider using NumPy vectorization or DataFrame operations for better performance",
+        "file": ".terragon/autonomous-executor.py"
+      },
+      {
+        "type": "string_concat_loop",
+        "severity": "medium",
+        "line": 192,
+        "message": "String concatenation in loop - use join() instead",
+        "wsjf_score": 15.0,
+        "suggestion": "Use ''.join(list) or f-strings for better performance",
+        "file": ".terragon/autonomous-executor.py"
+      },
+      {
+        "type": "string_concat_loop",
+        "severity": "medium",
+        "line": 422,
+        "message": "String concatenation in loop - use join() instead",
+        "wsjf_score": 15.0,
+        "suggestion": "Use ''.join(list) or f-strings for better performance",
+        "file": ".terragon/autonomous-executor.py"
+      }
+    ]
+  },
+  "backlog_items": [
+    {
+      "id": "PERF-OPT-001",
+      "title": "Optimize string concat loop in security_scan.py",
+      "description": "String concatenation in loop - use join() instead",
+      "category": "Performance",
+      "subcategory": "string_concat_loop",
+      "wsjf_score": 15.0,
+      "estimated_hours": 0.5,
+      "priority": "medium",
+      "file": "scripts/security_scan.py",
+      "line": 223,
+      "suggestion": "Use ''.join(list) or f-strings for better performance"
+    },
+    {
+      "id": "PERF-OPT-002",
+      "title": "Optimize string concat loop in security_scan.py",
+      "description": "String concatenation in loop - use join() instead",
+      "category": "Performance",
+      "subcategory": "string_concat_loop",
+      "wsjf_score": 15.0,
+      "estimated_hours": 0.5,
+      "priority": "medium",
+      "file": "scripts/security_scan.py",
+      "line": 226,
+      "suggestion": "Use ''.join(list) or f-strings for better performance"
+    },
+    {
+      "id": "PERF-OPT-003",
+      "title": "Optimize string concat loop in security_scan.py",
+      "description": "String concatenation in loop - use join() instead",
+      "category": "Performance",
+      "subcategory": "string_concat_loop",
+      "wsjf_score": 15.0,
+      "estimated_hours": 0.5,
+      "priority": "medium",
+      "file": "scripts/security_scan.py",
+      "line": 227,
+      "suggestion": "Use ''.join(list) or f-strings for better performance"
+    },
+    {
+      "id": "PERF-OPT-004",
+      "title": "Optimize string concat loop in security_scan.py",
+      "description": "String concatenation in loop - use join() instead",
+      "category": "Performance",
+      "subcategory": "string_concat_loop",
+      "wsjf_score": 15.0,
+      "estimated_hours": 0.5,
+      "priority": "medium",
+      "file": "scripts/security_scan.py",
+      "line": 230,
+      "suggestion": "Use ''.join(list) or f-strings for better performance"
+    },
+    {
+      "id": "PERF-OPT-005",
+      "title": "Optimize string concat loop in security_scan.py",
+      "description": "String concatenation in loop - use join() instead",
+      "category": "Performance",
+      "subcategory": "string_concat_loop",
+      "wsjf_score": 15.0,
+      "estimated_hours": 0.5,
+      "priority": "medium",
+      "file": "scripts/security_scan.py",
+      "line": 231,
+      "suggestion": "Use ''.join(list) or f-strings for better performance"
+    },
+    {
+      "id": "PERF-OPT-006",
+      "title": "Optimize string concat loop in security_scan.py",
+      "description": "String concatenation in loop - use join() instead",
+      "category": "Performance",
+      "subcategory": "string_concat_loop",
+      "wsjf_score": 15.0,
+      "estimated_hours": 0.5,
+      "priority": "medium",
+      "file": "scripts/security_scan.py",
+      "line": 233,
+      "suggestion": "Use ''.join(list) or f-strings for better performance"
+    },
+    {
+      "id": "PERF-OPT-007",
+      "title": "Optimize string concat loop in performance-optimizer.py",
+      "description": "String concatenation in loop - use join() instead",
+      "category": "Performance",
+      "subcategory": "string_concat_loop",
+      "wsjf_score": 15.0,
+      "estimated_hours": 0.5,
+      "priority": "medium",
+      "file": ".terragon/performance-optimizer.py",
+      "line": 159,
+      "suggestion": "Use ''.join(list) or f-strings for better performance"
+    },
+    {
+      "id": "PERF-OPT-008",
+      "title": "Optimize string concat loop in performance-optimizer.py",
+      "description": "String concatenation in loop - use join() instead",
+      "category": "Performance",
+      "subcategory": "string_concat_loop",
+      "wsjf_score": 15.0,
+      "estimated_hours": 0.5,
+      "priority": "medium",
+      "file": ".terragon/performance-optimizer.py",
+      "line": 161,
+      "suggestion": "Use ''.join(list) or f-strings for better performance"
+    },
+    {
+      "id": "PERF-OPT-009",
+      "title": "Optimize string concat loop in performance-optimizer.py",
+      "description": "String concatenation in loop - use join() instead",
+      "category": "Performance",
+      "subcategory": "string_concat_loop",
+      "wsjf_score": 15.0,
+      "estimated_hours": 0.5,
+      "priority": "medium",
+      "file": ".terragon/performance-optimizer.py",
+      "line": 163,
+      "suggestion": "Use ''.join(list) or f-strings for better performance"
+    },
+    {
+      "id": "PERF-OPT-010",
+      "title": "Optimize string concat loop in performance-optimizer.py",
+      "description": "String concatenation in loop - use join() instead",
+      "category": "Performance",
+      "subcategory": "string_concat_loop",
+      "wsjf_score": 15.0,
+      "estimated_hours": 0.5,
+      "priority": "medium",
+      "file": ".terragon/performance-optimizer.py",
+      "line": 294,
+      "suggestion": "Use ''.join(list) or f-strings for better performance"
+    }
+  ],
+  "dependency_analysis": {
+    "slow_imports": [],
+    "heavy_dependencies": [
+      {
+        "package": "torch",
+        "suggestion": "Consider lazy loading torch to improve startup time"
+      },
+      {
+        "package": "transformers",
+        "suggestion": "Consider lazy loading transformers to improve startup time"
+      },
+      {
+        "package": "scipy",
+        "suggestion": "Consider lazy loading scipy to improve startup time"
+      },
+      {
+        "package": "pandas",
+        "suggestion": "Consider lazy loading pandas to improve startup time"
+      },
+      {
+        "package": "numpy",
+        "suggestion": "Consider lazy loading numpy to improve startup time"
+      },
+      {
+        "package": "matplotlib",
+        "suggestion": "Consider lazy loading matplotlib to improve startup time"
+      },
+      {
+        "package": "seaborn",
+        "suggestion": "Consider lazy loading seaborn to improve startup time"
+      }
+    ],
+    "optimization_opportunities": []
+  }
+}
