@@ -1,3 +1,12 @@
+# GitHub Workflows Setup Guide
+
+Due to GitHub permissions, the automated workflows need to be manually created. This guide provides the necessary workflow files and setup instructions.
+
+## Required Workflow: Metrics Collection
+
+Create the file `.github/workflows/metrics-collection.yml` with the following content:
+
+```yaml
 # Automated Metrics Collection for Spikeformer
 # Collects project metrics and sends them to monitoring systems
 
@@ -293,3 +302,69 @@ jobs:
                 });
               }
             }
+```
+
+## Additional Workflow Templates
+
+The following workflow templates are available in `docs/workflows/examples/`:
+
+1. **Security Scanning Workflow** (`security-scanning.yml`)
+   - Comprehensive security scanning with SAST, SCA, container scanning
+   - Secrets detection and license compliance
+   - Automated vulnerability reporting
+
+2. **Hardware Testing Workflow** (`hardware-testing.yml`)
+   - Matrix builds for different neuromorphic hardware platforms
+   - Hardware availability detection and testing
+   - Energy efficiency validation
+
+3. **Release Automation Workflow** (`release-automation.yml`)
+   - Semantic versioning and automated releases
+   - Multi-platform Docker image builds
+   - PyPI publication and documentation deployment
+
+## Setup Instructions
+
+1. **Create the Metrics Collection Workflow:**
+   ```bash
+   mkdir -p .github/workflows
+   # Copy the content above into .github/workflows/metrics-collection.yml
+   ```
+
+2. **Configure Repository Secrets:**
+   - `PROMETHEUS_GATEWAY_URL`: URL for Prometheus pushgateway (optional)
+   - `TEST_PYPI_API_TOKEN`: Token for TestPyPI (for releases)
+   - `PYPI_API_TOKEN`: Token for PyPI (for releases)
+
+3. **Enable GitHub Actions:**
+   - Go to repository Settings → Actions → General
+   - Enable "Allow all actions and reusable workflows"
+   - Enable "Allow GitHub Actions to create and approve pull requests"
+
+4. **Set Up Branch Protection:**
+   - Go to repository Settings → Branches
+   - Add branch protection rule for `main`
+   - Require status checks from workflows
+
+5. **Configure Dependabot:**
+   The repository includes `.github/dependabot.yml` for automated dependency updates.
+
+## Workflow Integration
+
+The workflows integrate with the comprehensive SDLC system:
+
+- **Metrics Collection**: Daily automated collection with threshold monitoring
+- **Security Scanning**: Continuous vulnerability assessment
+- **Hardware Testing**: Nightly testing on available neuromorphic hardware
+- **Release Automation**: Streamlined release process with quality gates
+
+All workflows are designed to work with the monitoring stack (Prometheus, Grafana) and include comprehensive error handling and alerting.
+
+## Next Steps
+
+1. Create the metrics collection workflow manually
+2. Test the workflow execution
+3. Configure monitoring dashboard integration
+4. Set up additional workflows as needed for your specific requirements
+
+The SDLC implementation is complete and ready for production use once the workflows are manually created.
