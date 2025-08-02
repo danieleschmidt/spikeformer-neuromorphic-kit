@@ -1,0 +1,210 @@
+{
+  "project": {
+    "name": "spikeformer-neuromorphic-kit",
+    "description": "Complete toolkit for training and deploying spiking transformer networks on neuromorphic hardware",
+    "repository": "danieleschmidt/spikeformer-neuromorphic-kit",
+    "maintainers": ["danieleschmidt"],
+    "license": "MIT",
+    "language": "Python",
+    "domain": "neuromorphic-ai"
+  },
+  "metrics": {
+    "code_quality": {
+      "coverage_target": 85,
+      "complexity_threshold": 10,
+      "maintainability_index_min": 70,
+      "technical_debt_ratio_max": 0.1,
+      "duplication_percentage_max": 5
+    },
+    "performance": {
+      "build_time_target_minutes": 15,
+      "test_suite_runtime_target_minutes": 30,
+      "model_conversion_time_target_seconds": 300,
+      "energy_efficiency_improvement_min": 5.0,
+      "accuracy_retention_min": 0.9
+    },
+    "security": {
+      "critical_vulnerabilities_max": 0,
+      "high_vulnerabilities_max": 5,
+      "medium_vulnerabilities_max": 20,
+      "secrets_detected_max": 0,
+      "license_compliance_required": true
+    },
+    "reliability": {
+      "uptime_target": 99.9,
+      "mttr_hours_max": 4,
+      "mtbf_hours_min": 720,
+      "error_rate_max": 0.01,
+      "availability_target": 99.5
+    },
+    "development_velocity": {
+      "deployment_frequency_target": "daily",
+      "lead_time_hours_max": 72,
+      "change_failure_rate_max": 0.05,
+      "recovery_time_hours_max": 24
+    },
+    "neuromorphic_specific": {
+      "hardware_compatibility": {
+        "loihi2_support": true,
+        "spinnaker_support": true,
+        "edge_deployment_support": true
+      },
+      "model_performance": {
+        "conversion_success_rate_min": 0.95,
+        "hardware_utilization_target": 0.8,
+        "spike_rate_optimization": true,
+        "power_consumption_tracking": true
+      },
+      "research_metrics": {
+        "publications_per_year": 3,
+        "citations_growth_rate": 0.2,
+        "conference_presentations": 5,
+        "community_contributions": 10
+      }
+    }
+  },
+  "tracking": {
+    "automated_collection": {
+      "enabled": true,
+      "frequency": "daily",
+      "retention_days": 365,
+      "storage_backend": "prometheus"
+    },
+    "alerts": {
+      "enabled": true,
+      "channels": ["slack", "email"],
+      "escalation_policy": "follow-sun",
+      "severity_levels": ["critical", "high", "medium", "low"]
+    },
+    "reporting": {
+      "dashboard_url": "https://metrics.spikeformer.ai",
+      "weekly_reports": true,
+      "monthly_executive_summary": true,
+      "quarterly_review": true
+    }
+  },
+  "data_sources": {
+    "github": {
+      "enabled": true,
+      "metrics": [
+        "commits_per_day",
+        "pull_requests_open",
+        "pull_requests_merged",
+        "issues_open",
+        "issues_closed",
+        "contributors_active",
+        "stars",
+        "forks",
+        "releases"
+      ]
+    },
+    "ci_cd": {
+      "enabled": true,
+      "metrics": [
+        "build_success_rate",
+        "build_duration",
+        "test_pass_rate",
+        "deployment_frequency",
+        "change_failure_rate"
+      ]
+    },
+    "code_quality": {
+      "enabled": true,
+      "tools": ["sonarqube", "codeclimate", "codecov"],
+      "metrics": [
+        "coverage_percentage",
+        "code_smells",
+        "technical_debt",
+        "duplicated_lines",
+        "maintainability_index"
+      ]
+    },
+    "security": {
+      "enabled": true,
+      "tools": ["snyk", "trivy", "bandit", "safety"],
+      "metrics": [
+        "vulnerabilities_by_severity",
+        "security_score",
+        "compliance_status",
+        "secrets_detected"
+      ]
+    },
+    "performance": {
+      "enabled": true,
+      "metrics": [
+        "response_time_p95",
+        "throughput_rps",
+        "error_rate",
+        "resource_utilization",
+        "model_inference_latency"
+      ]
+    },
+    "neuromorphic_hardware": {
+      "enabled": true,
+      "metrics": [
+        "hardware_availability",
+        "power_consumption",
+        "chip_utilization",
+        "spike_rates",
+        "energy_efficiency_ratio",
+        "temperature",
+        "memory_usage"
+      ]
+    }
+  },
+  "benchmarks": {
+    "industry": {
+      "code_coverage": 80,
+      "build_time_minutes": 20,
+      "deployment_frequency": "weekly",
+      "mttr_hours": 8
+    },
+    "neuromorphic_ai": {
+      "energy_efficiency_improvement": 10.0,
+      "accuracy_retention": 0.85,
+      "hardware_utilization": 0.7,
+      "conversion_success_rate": 0.9
+    },
+    "open_source": {
+      "contributor_growth_rate": 0.15,
+      "issue_response_time_hours": 48,
+      "documentation_coverage": 0.9,
+      "community_engagement_score": 7.5
+    }
+  },
+  "goals": {
+    "2024": {
+      "code_coverage": 90,
+      "energy_efficiency_improvement": 15.0,
+      "hardware_platforms_supported": 5,
+      "model_architectures_supported": 20,
+      "community_contributors": 50,
+      "production_deployments": 100
+    },
+    "2025": {
+      "code_coverage": 95,
+      "energy_efficiency_improvement": 25.0,
+      "hardware_platforms_supported": 10,
+      "model_architectures_supported": 50,
+      "community_contributors": 150,
+      "production_deployments": 500
+    }
+  },
+  "automation": {
+    "metric_collection": {
+      "github_actions": true,
+      "prometheus_exporters": true,
+      "custom_scripts": true
+    },
+    "alerting": {
+      "threshold_based": true,
+      "anomaly_detection": true,
+      "trend_analysis": true
+    },
+    "reporting": {
+      "automated_dashboards": true,
+      "scheduled_reports": true,
+      "executive_summaries": true
+    }
+  }
+}

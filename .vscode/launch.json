@@ -1,0 +1,129 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Python: Spikeformer Conversion",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/examples/convert_model.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": ["--model", "vit-tiny", "--hardware", "cpu"],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "NEUROMORPHIC_ENV": "development"
+            }
+        },
+        {
+            "name": "Python: Hardware Test",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/test_hardware.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": ["--hardware", "loihi2"],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "NEUROMORPHIC_ENV": "development"
+            }
+        },
+        {
+            "name": "Python: Run Tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "tests/",
+                "-v",
+                "--tb=short",
+                "--capture=no"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Python: Debug Unit Tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "${file}",
+                "-v",
+                "--tb=short",
+                "--capture=no",
+                "-s"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Python: Performance Benchmark",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/benchmark.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": ["--model", "all", "--hardware", "cpu"],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "NEUROMORPHIC_ENV": "development"
+            }
+        },
+        {
+            "name": "Python: API Server",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/spikeformer/api/app.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": ["--debug", "--port", "5000"],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "FLASK_ENV": "development",
+                "NEUROMORPHIC_ENV": "development"
+            }
+        },
+        {
+            "name": "Python: Attach to Remote",
+            "type": "python",
+            "request": "attach",
+            "port": 5678,
+            "host": "localhost",
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/app"
+                }
+            ]
+        },
+        {
+            "name": "Docker: Run Container",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-build",
+            "python": {
+                "pathMappings": [
+                    {
+                        "localRoot": "${workspaceFolder}",
+                        "remoteRoot": "/app"
+                    }
+                ],
+                "projectType": "general"
+            }
+        }
+    ]
+}

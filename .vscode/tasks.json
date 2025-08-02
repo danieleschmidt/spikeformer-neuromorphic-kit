@@ -1,0 +1,227 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "install-dev",
+            "type": "shell",
+            "command": "pip",
+            "args": ["install", "-e", ".[dev]"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "test",
+            "type": "shell",
+            "command": "python",
+            "args": ["-m", "pytest", "tests/", "-v"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "test-coverage",
+            "type": "shell",
+            "command": "python",
+            "args": ["-m", "pytest", "tests/", "--cov=spikeformer", "--cov-report=html", "--cov-report=term"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "lint",
+            "type": "shell",
+            "command": "ruff",
+            "args": ["check", "spikeformer/", "tests/"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                {
+                    "owner": "python",
+                    "fileLocation": ["relative", "${workspaceFolder}"],
+                    "pattern": {
+                        "regexp": "^(.+?):(\\d+):(\\d+): (.+?) (.+)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "severity": 4,
+                        "message": 5
+                    }
+                }
+            ]
+        },
+        {
+            "label": "format",
+            "type": "shell",
+            "command": "sh",
+            "args": ["-c", "black spikeformer/ tests/ && isort spikeformer/ tests/"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "typecheck",
+            "type": "shell",
+            "command": "mypy",
+            "args": ["spikeformer/"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                {
+                    "owner": "mypy",
+                    "fileLocation": ["relative", "${workspaceFolder}"],
+                    "pattern": {
+                        "regexp": "^(.+?):(\\d+): (error|warning|note): (.+)$",
+                        "file": 1,
+                        "line": 2,
+                        "severity": 3,
+                        "message": 4
+                    }
+                }
+            ]
+        },
+        {
+            "label": "security-check",
+            "type": "shell",
+            "command": "bandit",
+            "args": ["-r", "spikeformer/", "-f", "json", "-o", "security-report.json"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "build-docker",
+            "type": "shell",
+            "command": "docker",
+            "args": ["build", "-t", "spikeformer:dev", "."],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "benchmark",
+            "type": "shell",
+            "command": "python",
+            "args": ["scripts/benchmark.py"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "hardware-test",
+            "type": "shell",
+            "command": "python",
+            "args": ["scripts/test_hardware.py", "--hardware", "all"],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "pre-commit",
+            "type": "shell",
+            "command": "pre-commit",
+            "args": ["run", "--all-files"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "clean",
+            "type": "shell",
+            "command": "sh",
+            "args": ["-c", "find . -type d -name '__pycache__' -exec rm -rf {} + && find . -name '*.pyc' -delete"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "start-jupyter",
+            "type": "shell",
+            "command": "jupyter",
+            "args": ["lab", "--ip", "0.0.0.0", "--port", "8888", "--no-browser", "--allow-root"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": [],
+            "isBackground": true
+        },
+        {
+            "label": "generate-docs",
+            "type": "shell",
+            "command": "sphinx-build",
+            "args": ["-b", "html", "docs/", "docs/_build/"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

@@ -1,0 +1,567 @@
+# Hardware Testing Workflow for Spikeformer
+# Specialized workflow for testing on neuromorphic hardware (Loihi 2, SpiNNaker)
+
+name: Hardware Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'spikeformer/hardware/**'
+      - 'tests/hardware/**'
+      - 'hardware_configs/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'spikeformer/hardware/**'
+      - 'tests/hardware/**'
+  schedule:
+    # Run hardware tests nightly to catch regressions
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      hardware_type:
+        description: 'Hardware type to test'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - loihi2
+          - spinnaker
+          - simulation
+      test_suite:
+        description: 'Test suite to run'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - smoke
+          - integration
+          - performance
+          - full
+      model_size:
+        description: 'Model size for testing'
+        required: false
+        default: 'small'
+        type: choice
+        options:
+          - tiny
+          - small
+          - medium
+          - large
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Check Hardware Availability
+  check-hardware:
+    name: Check Hardware Availability
+    runs-on: [self-hosted, neuromorphic]
+    outputs:
+      loihi2_available: ${{ steps.check.outputs.loihi2_available }}
+      spinnaker_available: ${{ steps.check.outputs.spinnaker_available }}
+      hardware_matrix: ${{ steps.matrix.outputs.hardware_matrix }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check hardware availability
+        id: check
+        run: |
+          # Check Loihi 2 availability
+          if command -v nxsdk &> /dev/null && [ -d "/opt/nxsdk" ]; then
+            echo "loihi2_available=true" >> $GITHUB_OUTPUT
+            echo "✓ Loihi 2 hardware detected"
+          else
+            echo "loihi2_available=false" >> $GITHUB_OUTPUT
+            echo "✗ Loihi 2 hardware not available"
+          fi
+          
+          # Check SpiNNaker availability
+          if command -v spynnaker &> /dev/null && ping -c 1 192.168.1.100 &> /dev/null; then
+            echo "spinnaker_available=true" >> $GITHUB_OUTPUT
+            echo "✓ SpiNNaker hardware detected"
+          else
+            echo "spinnaker_available=false" >> $GITHUB_OUTPUT
+            echo "✗ SpiNNaker hardware not available"
+          fi
+      
+      - name: Generate test matrix
+        id: matrix
+        run: |
+          matrix="["
+          
+          # Always include simulation
+          matrix+="{\"hardware\":\"simulation\",\"runner\":\"ubuntu-latest\"},"
+          
+          # Add hardware-specific configurations
+          if [[ "${{ steps.check.outputs.loihi2_available }}" == "true" ]]; then
+            matrix+="{\"hardware\":\"loihi2\",\"runner\":\"[self-hosted, loihi2]\"},"
+          fi
+          
+          if [[ "${{ steps.check.outputs.spinnaker_available }}" == "true" ]]; then
+            matrix+="{\"hardware\":\"spinnaker\",\"runner\":\"[self-hosted, spinnaker]\"},"
+          fi
+          
+          # Remove trailing comma and close bracket
+          matrix="${matrix%,}]"
+          
+          echo "hardware_matrix=$matrix" >> $GITHUB_OUTPUT
+          echo "Generated matrix: $matrix"
+
+  # Hardware-specific Testing
+  hardware-tests:
+    name: Test on ${{ matrix.hardware }}
+    runs-on: ${{ fromJson(matrix.runner) }}
+    needs: check-hardware
+    if: needs.check-hardware.outputs.hardware_matrix != '[]'
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.check-hardware.outputs.hardware_matrix) }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install base dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test]"
+      
+      - name: Install hardware-specific dependencies
+        run: |
+          case "${{ matrix.hardware }}" in
+            loihi2)
+              pip install -e ".[loihi2]"
+              export NXSDK_ROOT=/opt/nxsdk
+              ;;
+            spinnaker)
+              pip install -e ".[spinnaker]"
+              export SPYNNAKER_IP=192.168.1.100
+              ;;
+            simulation)
+              echo "Using simulation mode - no additional dependencies"
+              ;;
+          esac
+      
+      - name: Run hardware health check
+        run: |
+          python -c "
+          import sys
+          import spikeformer.hardware as hw
+          
+          hardware_type = '${{ matrix.hardware }}'
+          
+          try:
+              if hardware_type == 'loihi2':
+                  from spikeformer.hardware.loihi2 import Loihi2Device
+                  device = Loihi2Device()
+                  print('✓ Loihi 2 device initialized successfully')
+              elif hardware_type == 'spinnaker':
+                  from spikeformer.hardware.spinnaker import SpiNNakerDevice
+                  device = SpiNNakerDevice()
+                  print('✓ SpiNNaker device initialized successfully')
+              elif hardware_type == 'simulation':
+                  print('✓ Simulation mode active')
+              else:
+                  print(f'Unknown hardware type: {hardware_type}')
+                  sys.exit(1)
+          except Exception as e:
+              print(f'✗ Hardware initialization failed: {e}')
+              sys.exit(1)
+          "
+      
+      - name: Run smoke tests
+        if: github.event.inputs.test_suite == 'smoke' || github.event.inputs.test_suite == 'full' || github.event.inputs.test_suite == ''
+        run: |
+          pytest tests/hardware/test_${{ matrix.hardware }}.py::test_basic_connectivity -v \
+            --hardware=${{ matrix.hardware }} \
+            --tb=short
+      
+      - name: Run integration tests
+        if: github.event.inputs.test_suite == 'integration' || github.event.inputs.test_suite == 'full' || github.event.inputs.test_suite == ''
+        run: |
+          pytest tests/hardware/test_${{ matrix.hardware }}.py -v \
+            --hardware=${{ matrix.hardware }} \
+            --model-size=${{ github.event.inputs.model_size || 'small' }} \
+            --tb=short \
+            -k "not performance"
+      
+      - name: Run performance tests
+        if: github.event.inputs.test_suite == 'performance' || github.event.inputs.test_suite == 'full'
+        run: |
+          pytest tests/hardware/test_${{ matrix.hardware }}.py -v \
+            --hardware=${{ matrix.hardware }} \
+            --model-size=${{ github.event.inputs.model_size || 'small' }} \
+            --tb=short \
+            -k "performance" \
+            --benchmark-only
+      
+      - name: Generate hardware report
+        if: always()
+        run: |
+          python scripts/generate_hardware_report.py \
+            --hardware=${{ matrix.hardware }} \
+            --output=hardware-report-${{ matrix.hardware }}.json
+      
+      - name: Upload hardware test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: hardware-test-results-${{ matrix.hardware }}
+          path: |
+            hardware-report-${{ matrix.hardware }}.json
+            pytest-results-${{ matrix.hardware }}.xml
+
+  # Model Conversion Tests
+  model-conversion-tests:
+    name: Model Conversion Tests
+    runs-on: [self-hosted, neuromorphic]
+    needs: check-hardware
+    
+    strategy:
+      matrix:
+        model_type: [vit-tiny, bert-tiny, custom-cnn]
+        hardware: [simulation, loihi2, spinnaker]
+        exclude:
+          # Exclude hardware combinations that aren't available
+          - hardware: loihi2
+            model_type: vit-tiny
+            # This would be dynamically set based on hardware availability
+        include:
+          # Only include combinations where hardware is available
+          - hardware: simulation
+            model_type: vit-tiny
+          - hardware: simulation
+            model_type: bert-tiny
+          - hardware: simulation
+            model_type: custom-cnn
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test,${{ matrix.hardware }}]"
+      
+      - name: Test model conversion
+        run: |
+          python tests/hardware/test_model_conversion.py \
+            --model-type=${{ matrix.model_type }} \
+            --hardware=${{ matrix.hardware }} \
+            --output-dir=conversion-results-${{ matrix.model_type }}-${{ matrix.hardware }}
+      
+      - name: Validate conversion accuracy
+        run: |
+          python scripts/validate_conversion.py \
+            --results-dir=conversion-results-${{ matrix.model_type }}-${{ matrix.hardware }} \
+            --accuracy-threshold=0.9
+      
+      - name: Upload conversion results
+        uses: actions/upload-artifact@v3
+        with:
+          name: conversion-results-${{ matrix.model_type }}-${{ matrix.hardware }}
+          path: conversion-results-${{ matrix.model_type }}-${{ matrix.hardware }}/
+
+  # Energy Efficiency Tests
+  energy-efficiency-tests:
+    name: Energy Efficiency Tests
+    runs-on: [self-hosted, neuromorphic, power-meter]
+    needs: check-hardware
+    if: needs.check-hardware.outputs.loihi2_available == 'true' || needs.check-hardware.outputs.spinnaker_available == 'true'
+    
+    strategy:
+      matrix:
+        hardware: [loihi2, spinnaker]
+        workload: [inference, training, conversion]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test,${{ matrix.hardware }}]"
+      
+      - name: Initialize power monitoring
+        run: |
+          python scripts/init_power_monitor.py --hardware=${{ matrix.hardware }}
+      
+      - name: Run energy efficiency tests
+        run: |
+          pytest tests/hardware/test_energy_efficiency.py \
+            --hardware=${{ matrix.hardware }} \
+            --workload=${{ matrix.workload }} \
+            --power-monitor=true \
+            -v
+      
+      - name: Generate energy report
+        run: |
+          python scripts/generate_energy_report.py \
+            --hardware=${{ matrix.hardware }} \
+            --workload=${{ matrix.workload }} \
+            --output=energy-report-${{ matrix.hardware }}-${{ matrix.workload }}.json
+      
+      - name: Upload energy test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: energy-results-${{ matrix.hardware }}-${{ matrix.workload }}
+          path: energy-report-${{ matrix.hardware }}-${{ matrix.workload }}.json
+
+  # Scalability Tests
+  scalability-tests:
+    name: Scalability Tests
+    runs-on: [self-hosted, neuromorphic-cluster]
+    needs: check-hardware
+    if: needs.check-hardware.outputs.loihi2_available == 'true'
+    
+    strategy:
+      matrix:
+        chip_count: [1, 2, 4, 8]
+        model_size: [small, medium, large]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test,loihi2]"
+      
+      - name: Configure multi-chip setup
+        run: |
+          python scripts/configure_multichip.py \
+            --chip-count=${{ matrix.chip_count }} \
+            --hardware=loihi2
+      
+      - name: Run scalability tests
+        run: |
+          pytest tests/hardware/test_scalability.py \
+            --hardware=loihi2 \
+            --chip-count=${{ matrix.chip_count }} \
+            --model-size=${{ matrix.model_size }} \
+            --timeout=3600 \
+            -v
+      
+      - name: Generate scalability report
+        run: |
+          python scripts/generate_scalability_report.py \
+            --chip-count=${{ matrix.chip_count }} \
+            --model-size=${{ matrix.model_size }} \
+            --output=scalability-report-${{ matrix.chip_count }}chips-${{ matrix.model_size }}.json
+      
+      - name: Upload scalability results
+        uses: actions/upload-artifact@v3
+        with:
+          name: scalability-results-${{ matrix.chip_count }}chips-${{ matrix.model_size }}
+          path: scalability-report-${{ matrix.chip_count }}chips-${{ matrix.model_size }}.json
+
+  # Hardware Stress Tests
+  stress-tests:
+    name: Hardware Stress Tests
+    runs-on: [self-hosted, neuromorphic]
+    needs: check-hardware
+    if: github.event_name == 'schedule' || github.event.inputs.test_suite == 'full'
+    
+    strategy:
+      matrix:
+        hardware: [loihi2, spinnaker]
+        duration: [short, medium, long]  # 1h, 4h, 12h
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test,${{ matrix.hardware }}]"
+      
+      - name: Run stress tests
+        timeout-minutes: ${{ matrix.duration == 'short' && 60 || matrix.duration == 'medium' && 240 || 720 }}
+        run: |
+          pytest tests/hardware/test_stress.py \
+            --hardware=${{ matrix.hardware }} \
+            --duration=${{ matrix.duration }} \
+            --continuous-monitoring=true \
+            -v
+      
+      - name: Generate stress test report
+        if: always()
+        run: |
+          python scripts/generate_stress_report.py \
+            --hardware=${{ matrix.hardware }} \
+            --duration=${{ matrix.duration }} \
+            --output=stress-report-${{ matrix.hardware }}-${{ matrix.duration }}.json
+      
+      - name: Upload stress test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: stress-results-${{ matrix.hardware }}-${{ matrix.duration }}
+          path: stress-report-${{ matrix.hardware }}-${{ matrix.duration }}.json
+
+  # Hardware Compatibility Tests
+  compatibility-tests:
+    name: Hardware Compatibility Tests
+    runs-on: [self-hosted, neuromorphic]
+    needs: check-hardware
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test]"
+      
+      - name: Test hardware detection
+        run: |
+          python tests/hardware/test_detection.py --all-hardware
+      
+      - name: Test cross-hardware model compatibility
+        run: |
+          pytest tests/hardware/test_compatibility.py -v
+      
+      - name: Test hardware driver versions
+        run: |
+          python scripts/check_driver_versions.py \
+            --output=driver-versions.json
+      
+      - name: Upload compatibility results
+        uses: actions/upload-artifact@v3
+        with:
+          name: compatibility-results
+          path: |
+            driver-versions.json
+            compatibility-report.json
+
+  # Generate Hardware Test Summary
+  hardware-test-summary:
+    name: Generate Test Summary
+    runs-on: ubuntu-latest
+    needs: [hardware-tests, model-conversion-tests, energy-efficiency-tests, scalability-tests, stress-tests, compatibility-tests]
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v3
+      
+      - name: Generate comprehensive hardware test report
+        run: |
+          python scripts/generate_hardware_summary.py \
+            --artifacts-dir=. \
+            --output=hardware-test-summary.md
+      
+      - name: Upload test summary
+        uses: actions/upload-artifact@v3
+        with:
+          name: hardware-test-summary
+          path: hardware-test-summary.md
+      
+      - name: Comment PR with hardware test results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            if (fs.existsSync('hardware-test-summary.md')) {
+              const summary = fs.readFileSync('hardware-test-summary.md', 'utf8');
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## Hardware Test Results\n\n${summary}`
+              });
+            }
+
+  # Alert on Hardware Failures
+  alert-failures:
+    name: Alert on Hardware Failures
+    runs-on: ubuntu-latest
+    needs: [hardware-tests, model-conversion-tests, energy-efficiency-tests, scalability-tests, stress-tests]
+    if: failure()
+    
+    steps:
+      - name: Send failure notification
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const failedJobs = [
+              '${{ needs.hardware-tests.result }}',
+              '${{ needs.model-conversion-tests.result }}',
+              '${{ needs.energy-efficiency-tests.result }}',
+              '${{ needs.scalability-tests.result }}',
+              '${{ needs.stress-tests.result }}'
+            ].filter(result => result === 'failure');
+            
+            if (failedJobs.length > 0) {
+              const title = '🚨 Hardware Test Failures Detected';
+              const body = `
+              Hardware testing workflow has detected ${failedJobs.length} failed job(s).
+              
+              **Failed Jobs:**
+              ${failedJobs.map(job => `- ${job}`).join('\n')}
+              
+              **Action Required:**
+              1. Check hardware connectivity and status
+              2. Review test logs for specific failures
+              3. Verify hardware driver versions
+              4. Contact hardware team if needed
+              
+              **Workflow Run:** [${context.runId}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+              `;
+              
+              // Create issue for hardware failures
+              github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['hardware', 'failure', 'urgent']
+              });
+            }
