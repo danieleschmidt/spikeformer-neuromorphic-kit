@@ -1,6 +1,6 @@
 # Multi-stage build for SpikeFormer Neuromorphic Kit
 # Stage 1: Base Python environment
-FROM python:3.11-slim as base
+FROM python:3.13-slim as base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -130,7 +130,7 @@ ENV SPINN_DIRS=/opt/spinnaker
 ENTRYPOINT ["spikeformer", "--backend", "spinnaker"]
 
 # Stage 8: Edge deployment image
-FROM python:3.11-alpine as edge
+FROM python:3.13-alpine as edge
 
 # Install minimal dependencies
 RUN apk add --no-cache \
