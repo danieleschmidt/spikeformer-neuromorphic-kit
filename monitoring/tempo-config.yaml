@@ -1,0 +1,87 @@
+# Tempo configuration for Spikeformer distributed tracing
+server:
+  http_listen_port: 3200
+  grpc_listen_port: 9095
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+        grpc:
+          endpoint: 0.0.0.0:14250
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+ingester:
+  trace_idle_period: 10s
+  max_block_bytes: 1_000_000
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    block_retention: 1h
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /tmp/tempo/traces
+    wal:
+      path: /tmp/tempo/wal
+    pool:
+      max_workers: 100
+      queue_depth: 10000
+
+search_enabled: true
+
+metrics_generator:
+  processor:
+    service_graphs:
+      histogram_buckets: [0.1, 0.2, 0.4, 0.8, 1.6, 3.2, 6.4, 12.8]
+      dimensions: [service.name, service.namespace]
+      peer_attributes: [db.name, db.operation]
+    span_metrics:
+      histogram_buckets: [0.002, 0.004, 0.008, 0.016, 0.032, 0.064, 0.128, 0.256, 0.512, 1.024, 2.048, 4.096, 8.192, 16.384]
+      dimensions:
+        - name: http.method
+          default: GET
+        - name: http.status_code
+        - name: service.version
+        - name: neuromorphic.model_type
+        - name: neuromorphic.hardware_backend
+  storage:
+    path: /tmp/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+
+overrides:
+  defaults:
+    # Global limits
+    max_traces_per_user: 10000
+    max_search_bytes_per_trace: 5000
+    
+    # Ingestion limits
+    ingestion_rate_strategy: global
+    ingestion_rate_limit_bytes: 20000000
+    ingestion_burst_size_bytes: 40000000
+    
+    # Query limits
+    max_bytes_per_trace: 50000000
+    
+    # Search limits
+    max_search_duration: 1h0m0s
+    
+  # Per-tenant overrides for neuromorphic workloads
+  neuromorphic-prod:
+    max_traces_per_user: 50000
+    ingestion_rate_limit_bytes: 50000000
+    ingestion_burst_size_bytes: 100000000

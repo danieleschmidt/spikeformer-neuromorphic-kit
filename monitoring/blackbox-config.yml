@@ -1,0 +1,142 @@
+# Blackbox Exporter configuration for Spikeformer uptime monitoring
+modules:
+  # HTTP checks for web services
+  http_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+      valid_status_codes: [200, 201, 202]
+      method: GET
+      headers:
+        Host: spikeformer.ai
+        Accept-Language: en-US
+      no_follow_redirects: false
+      fail_if_ssl: false
+      fail_if_not_ssl: false
+      preferred_ip_protocol: "ip4"
+
+  # HTTP POST checks for API endpoints
+  http_post_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      method: POST
+      headers:
+        Content-Type: application/json
+      body: '{"health": "check"}'
+      valid_status_codes: [200, 201, 202]
+
+  # HTTPS checks
+  https_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+      method: GET
+      tls_config:
+        insecure_skip_verify: false
+      preferred_ip_protocol: "ip4"
+
+  # TCP connectivity checks
+  tcp_connect:
+    prober: tcp
+    timeout: 10s
+    tcp:
+      preferred_ip_protocol: "ip4"
+
+  # ICMP ping checks
+  icmp:
+    prober: icmp
+    timeout: 10s
+    icmp:
+      preferred_ip_protocol: "ip4"
+
+  # DNS resolution checks
+  dns_spikeformer:
+    prober: dns
+    timeout: 10s
+    dns:
+      query_name: "spikeformer.ai"
+      query_type: "A"
+      valid_rcodes:
+        - NOERROR
+      validate_answer_rrs:
+        fail_if_matches_regexp:
+          - ".*127.0.0.1"
+        fail_if_not_matches_regexp:
+          - ".*"
+
+  # Neuromorphic hardware health checks
+  hardware_loihi2:
+    prober: http
+    timeout: 30s
+    http:
+      method: GET
+      valid_status_codes: [200]
+      headers:
+        Accept: application/json
+      body_size_limit: 1MB
+      preferred_ip_protocol: "ip4"
+
+  hardware_spinnaker:
+    prober: http
+    timeout: 30s
+    http:
+      method: GET
+      valid_status_codes: [200]
+      headers:
+        Accept: application/json
+      preferred_ip_protocol: "ip4"
+
+  # Model conversion service check
+  model_conversion_health:
+    prober: http
+    timeout: 60s  # Longer timeout for model operations
+    http:
+      method: POST
+      headers:
+        Content-Type: application/json
+      body: '{"model": "test", "action": "health_check"}'
+      valid_status_codes: [200, 202]
+
+  # Database connectivity
+  postgres_connect:
+    prober: tcp
+    timeout: 5s
+    tcp:
+      preferred_ip_protocol: "ip4"
+
+  redis_connect:
+    prober: tcp
+    timeout: 5s
+    tcp:
+      preferred_ip_protocol: "ip4"
+
+  # Monitoring stack health
+  prometheus_health:
+    prober: http
+    timeout: 5s
+    http:
+      method: GET
+      valid_status_codes: [200]
+      preferred_ip_protocol: "ip4"
+
+  grafana_health:
+    prober: http
+    timeout: 5s
+    http:
+      method: GET
+      valid_status_codes: [200]
+      preferred_ip_protocol: "ip4"
+
+  # SSL certificate expiry check
+  ssl_expiry:
+    prober: http
+    timeout: 10s
+    http:
+      method: GET
+      fail_if_not_ssl: true
+      tls_config:
+        insecure_skip_verify: false
+      preferred_ip_protocol: "ip4"
