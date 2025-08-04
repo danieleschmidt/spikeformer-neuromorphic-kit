@@ -1,9 +1,9 @@
 # spikeformer-neuromorphic-kit
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/your-org/spikeformer-neuromorphic-kit/ci.yml?branch=main)](https://github.com/your-org/spikeformer-neuromorphic-kit/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/danieleschmidt/spikeformer-neuromorphic-kit/ci.yml?branch=main)](https://github.com/danieleschmidt/spikeformer-neuromorphic-kit/actions)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Hardware](https://img.shields.io/badge/hardware-Loihi2%20|%20SpiNNaker-purple)](https://github.com/your-org/spikeformer-neuromorphic-kit)
+[![Hardware](https://img.shields.io/badge/hardware-Loihi2%20|%20SpiNNaker-purple)](https://github.com/danieleschmidt/spikeformer-neuromorphic-kit)
 
 Complete toolkit for training and deploying spiking transformer networks on neuromorphic hardware. Achieve 10-15× energy reduction vs traditional transformers while maintaining competitive accuracy on vision and language tasks.
 
@@ -49,7 +49,7 @@ pip install spikeformer-neuromorphic-kit
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/spikeformer-neuromorphic-kit
+git clone https://github.com/danieleschmidt/spikeformer-neuromorphic-kit
 cd spikeformer-neuromorphic-kit
 
 # Install with specific hardware backend
@@ -62,10 +62,10 @@ pip install -e ".[all]"  # All backends
 
 ```bash
 # CPU simulation
-docker pull your-org/spikeformer:latest
+docker pull danieleschmidt/spikeformer:latest
 
 # With hardware access
-docker run --privileged -it your-org/spikeformer:loihi2
+docker run --privileged -it danieleschmidt/spikeformer:loihi2
 ```
 
 ## ⚡ Quick Start
@@ -560,7 +560,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/spikeformer-neuromorphic-kit
+git clone https://github.com/danieleschmidt/spikeformer-neuromorphic-kit
 cd spikeformer-neuromorphic-kit
 
 # Install development dependencies
@@ -586,10 +586,10 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## 📞 Support
 
-- 📧 Email: neuromorphic@your-org.com
-- 💬 Discord: [Join our community](https://discord.gg/your-org)
-- 📖 Documentation: [Full docs](https://docs.your-org.com/spikeformer)
-- 🎓 Tutorial: [Neuromorphic AI Course](https://learn.your-org.com/neuromorphic)
+- 📧 Email: neuromorphic@danieleschmidt.com
+- 💬 Discord: [Join our community](https://discord.gg/danieleschmidt)
+- 📖 Documentation: [Full docs](https://docs.danieleschmidt.com/spikeformer)
+- 🎓 Tutorial: [Neuromorphic AI Course](https://learn.danieleschmidt.com/neuromorphic)
 
 ## 📚 References
 
