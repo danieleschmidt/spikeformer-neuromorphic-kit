@@ -1,0 +1,17 @@
+{
+  "spiking_config": {
+    "timesteps": 64,
+    "threshold": 1.5,
+    "tau_mem": 20.0
+  },
+  "original_model": {
+    "input_size": 28,
+    "hidden_sizes": [
+      64,
+      32
+    ],
+    "output_size": 10,
+    "total_parameters": 4160
+  },
+  "conversion_timestamp": 1754341278.945544
+}

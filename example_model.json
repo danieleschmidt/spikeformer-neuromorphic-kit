@@ -1,0 +1,8 @@
+{
+  "input_size": 28,
+  "hidden_sizes": [64, 32],
+  "output_size": 10,
+  "description": "Simple MNIST-like classifier",
+  "activation": "relu",
+  "use_case": "image_classification"
+}

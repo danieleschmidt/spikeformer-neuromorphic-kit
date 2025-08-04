@@ -1,0 +1,14 @@
+{
+  "platform": "loihi2",
+  "num_layers": 3,
+  "total_neurons": 106,
+  "deployment_time_ms": 124,
+  "memory_usage_kb": 848,
+  "benchmark_metrics": {
+    "energy_per_inference_mj": 0.0036129,
+    "latency_ms": 0.006400000000000001,
+    "throughput_inferences_per_sec": 156249.99999999997,
+    "power_consumption_mw": 1.0,
+    "spike_rate": 0.5316185141509434
+  }
+}
