@@ -1,0 +1,707 @@
+# Kubernetes deployment manifests for Neuromorphic Computing Platform
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/instance: production
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/component: namespace
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: neuromorphic-config
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: config
+data:
+  NEUROMORPHIC_ENVIRONMENT: "production"
+  NEUROMORPHIC_PORT: "8080"
+  NEUROMORPHIC_HOST: "0.0.0.0"
+  NEUROMORPHIC_LOG_LEVEL: "INFO"
+  REDIS_URL: "redis://neuromorphic-redis:6379"
+  PROMETHEUS_GATEWAY: "neuromorphic-prometheus:9090"
+  MONITORING_ENABLED: "true"
+  ENABLE_CACHING: "true"
+  ENABLE_COMPRESSION: "true"
+  ENABLE_ENERGY_OPTIMIZATION: "true"
+  MAX_CONCURRENT_REQUESTS: "1000"
+  MAX_BATCH_SIZE: "32"
+  TIMEOUT_SECONDS: "30"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: neuromorphic-secrets
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: secrets
+type: Opaque
+data:
+  # Base64 encoded values - replace with actual values
+  DB_PASSWORD: bmV1cm9tb3JwaGljX3Bhc3N3b3Jk  # neuromorphic_password
+  JWT_SECRET_KEY: c3VwZXJfc2VjcmV0X2p3dF9rZXkx  # super_secret_jwt_key1
+  API_KEY: YWRtaW5fc2VjcmV0X2FwaV9rZXk=    # admin_secret_api_key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: neuromorphic-api
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: api
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neuromorphic-api
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: api
+    app.kubernetes.io/version: "1.0.0"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: neuromorphic
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: neuromorphic
+        app.kubernetes.io/component: api
+        app.kubernetes.io/version: "1.0.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      containers:
+        - name: neuromorphic-api
+          image: neuromorphic/spikeformer:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: NEUROMORPHIC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: neuromorphic-secrets
+                  key: DB_PASSWORD
+            - name: NEUROMORPHIC_JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: neuromorphic-secrets
+                  key: JWT_SECRET_KEY
+            - name: NEUROMORPHIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: neuromorphic-secrets
+                  key: API_KEY
+          envFrom:
+            - configMapRef:
+                name: neuromorphic-config
+          resources:
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+              nvidia.com/gpu: "1"  # If GPU acceleration needed
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 10
+          volumeMounts:
+            - name: models-storage
+              mountPath: /app/models
+            - name: logs-storage
+              mountPath: /app/logs
+            - name: cache-storage
+              mountPath: /app/cache
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+      volumes:
+        - name: models-storage
+          persistentVolumeClaim:
+            claimName: neuromorphic-models
+        - name: logs-storage
+          persistentVolumeClaim:
+            claimName: neuromorphic-logs
+        - name: cache-storage
+          emptyDir:
+            sizeLimit: 1Gi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values:
+                        - neuromorphic
+                    - key: app.kubernetes.io/component
+                      operator: In
+                      values:
+                        - api
+                topologyKey: kubernetes.io/hostname
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: neuromorphic-api-hpa
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: autoscaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: neuromorphic-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 2
+          periodSeconds: 15
+      selectPolicy: Max
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: neuromorphic-postgres
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: database
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+      name: postgres
+  selector:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: database
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: neuromorphic-postgres
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: database
+spec:
+  serviceName: neuromorphic-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: neuromorphic
+      app.kubernetes.io/component: database
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: neuromorphic
+        app.kubernetes.io/component: database
+    spec:
+      securityContext:
+        fsGroup: 999
+        runAsUser: 999
+        runAsGroup: 999
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          env:
+            - name: POSTGRES_DB
+              value: neuromorphic
+            - name: POSTGRES_USER
+              value: neuromorphic_user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: neuromorphic-secrets
+                  key: DB_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U neuromorphic_user -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - exec pg_isready -U neuromorphic_user -h 127.0.0.1 -p 5432
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+            - name: postgres-config
+              mountPath: /etc/postgresql/postgresql.conf
+              subPath: postgresql.conf
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: postgres-config
+          configMap:
+            name: postgres-config
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-storage
+        labels:
+          app.kubernetes.io/name: neuromorphic
+          app.kubernetes.io/component: database-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: neuromorphic-redis
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: cache
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: 6379
+      protocol: TCP
+      name: redis
+  selector:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: cache
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neuromorphic-redis
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: cache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: neuromorphic
+      app.kubernetes.io/component: cache
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: neuromorphic
+        app.kubernetes.io/component: cache
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          command:
+            - redis-server
+            - --appendonly
+            - "yes"
+            - --maxmemory
+            - "1gb"
+            - --maxmemory-policy
+            - "allkeys-lru"
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+            requests:
+              cpu: "100m"
+              memory: "512Mi"
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: redis-storage
+              mountPath: /data
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+      volumes:
+        - name: redis-storage
+          persistentVolumeClaim:
+            claimName: neuromorphic-redis
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: neuromorphic-models
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: nfs-storage
+  resources:
+    requests:
+      storage: 50Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: neuromorphic-logs
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: logs
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: neuromorphic-redis
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: cache-storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: fast-ssd
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: neuromorphic-ingress
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/rate-limit: "1000"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+    - hosts:
+        - neuromorphic.yourdomain.com
+      secretName: neuromorphic-tls
+  rules:
+    - host: neuromorphic.yourdomain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: neuromorphic-api
+                port:
+                  number: 8080
+---
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: neuromorphic-api-monitor
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: neuromorphic
+      app.kubernetes.io/component: api
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: neuromorphic-alerts
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: alerts
+spec:
+  groups:
+    - name: neuromorphic.rules
+      rules:
+        - alert: NeuromorphicAPIDown
+          expr: up{job="neuromorphic-api"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Neuromorphic API is down"
+            description: "Neuromorphic API has been down for more than 1 minute."
+        
+        - alert: NeuromorphicHighLatency
+          expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job="neuromorphic-api"}[5m])) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High latency detected"
+            description: "99th percentile latency is above 1 second for more than 5 minutes."
+        
+        - alert: NeuromorphicHighErrorRate
+          expr: rate(http_requests_total{job="neuromorphic-api",status=~"5.."}[5m]) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High error rate detected"
+            description: "Error rate is above 5% for more than 5 minutes."
+        
+        - alert: NeuromorphicHighCPUUsage
+          expr: rate(container_cpu_usage_seconds_total{container="neuromorphic-api"}[5m]) > 0.8
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage"
+            description: "CPU usage is above 80% for more than 10 minutes."
+        
+        - alert: NeuromorphicHighMemoryUsage
+          expr: container_memory_usage_bytes{container="neuromorphic-api"} / container_spec_memory_limit_bytes > 0.85
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High memory usage"
+            description: "Memory usage is above 85% for more than 10 minutes."
+        
+        - alert: NeuromorphicDatabaseDown
+          expr: up{job="postgres-exporter"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Database is down"
+            description: "PostgreSQL database has been down for more than 1 minute."
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: neuromorphic-api-pdb
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: disruption-budget
+spec:
+  minAvailable: 50%
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: neuromorphic
+      app.kubernetes.io/component: api
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: neuromorphic-network-policy
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: neuromorphic
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8080
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: neuromorphic
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6379
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: neuromorphic
+      ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6379
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80

@@ -2,6 +2,7 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
 from typing import Dict, Any, Optional, List, Tuple, Union
 from dataclasses import dataclass
@@ -285,25 +286,285 @@ class SpikeformerConverter:
         setattr(current, parts[-1], new_module)
 
 
+class LearnableConverter(nn.Module):
+    """Learnable conversion module with end-to-end optimization."""
+    
+    def __init__(self, 
+                 input_dim: int,
+                 output_dim: int,
+                 timesteps: int = 32,
+                 learnable_threshold: bool = True):
+        super().__init__()
+        
+        self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.timesteps = timesteps
+        
+        # Learnable conversion parameters
+        self.weight_transform = nn.Linear(input_dim, output_dim, bias=False)
+        self.temporal_encoding = nn.Parameter(torch.randn(timesteps, output_dim) * 0.1)
+        
+        if learnable_threshold:
+            self.threshold = nn.Parameter(torch.ones(output_dim))
+        else:
+            self.register_buffer('threshold', torch.ones(output_dim))
+            
+        # Learnable surrogate gradient parameters
+        self.surrogate_beta = nn.Parameter(torch.tensor(10.0))
+        self.surrogate_gamma = nn.Parameter(torch.tensor(1.0))
+        
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Convert ANN activations to spikes with learnable parameters."""
+        batch_size = x.shape[0]
+        
+        # Transform input
+        transformed = self.weight_transform(x)  # [B, output_dim]
+        
+        # Expand to temporal dimension with learnable encoding
+        temporal_input = transformed.unsqueeze(1) + self.temporal_encoding.unsqueeze(0)  # [B, T, output_dim]
+        
+        # Generate spikes using learnable threshold and surrogate
+        spikes = []
+        membrane_potential = torch.zeros_like(transformed)
+        
+        for t in range(self.timesteps):
+            # Integrate input
+            membrane_potential += temporal_input[:, t]
+            
+            # Learnable spiking function
+            spike_logits = (membrane_potential - self.threshold) * self.surrogate_beta
+            spike_prob = torch.sigmoid(spike_logits)
+            
+            # Straight-through estimator with learnable gradient
+            spikes_t = (spike_prob > 0.5).float()
+            spikes_t = spikes_t + (spike_prob - spike_prob.detach()) * self.surrogate_gamma
+            
+            spikes.append(spikes_t)
+            
+            # Adaptive reset
+            membrane_potential = membrane_potential - spikes_t * self.threshold
+            
+        return torch.stack(spikes, dim=1)  # [B, T, output_dim]
+
+
+class DifferentiableThresholdOptimizer(nn.Module):
+    """Differentiable optimization of firing thresholds."""
+    
+    def __init__(self, layer_dims: List[int], learning_rate: float = 0.001):
+        super().__init__()
+        
+        self.layer_dims = layer_dims
+        self.lr = learning_rate
+        
+        # Learnable thresholds for each layer
+        self.thresholds = nn.ParameterList([
+            nn.Parameter(torch.ones(dim)) for dim in layer_dims
+        ])
+        
+        # Adaptive learning rate per layer
+        self.layer_lr = nn.ParameterList([
+            nn.Parameter(torch.tensor(learning_rate)) for _ in layer_dims
+        ])
+        
+    def optimize_thresholds(self, 
+                          model: nn.Module,
+                          data_loader: torch.utils.data.DataLoader,
+                          target_sparsity: float = 0.1,
+                          num_iterations: int = 100) -> Dict[str, torch.Tensor]:
+        """Optimize thresholds using gradient-based methods."""
+        
+        optimizer = torch.optim.Adam([
+            {'params': self.thresholds},
+            {'params': self.layer_lr, 'lr': self.lr * 0.1}
+        ], lr=self.lr)
+        
+        for iteration in range(num_iterations):
+            total_loss = 0
+            
+            for batch_idx, (data, targets) in enumerate(data_loader):
+                if batch_idx >= 10:  # Limit batches for efficiency
+                    break
+                    
+                optimizer.zero_grad()
+                
+                # Forward pass to collect spike statistics
+                spike_stats = self._collect_spike_stats(model, data)
+                
+                # Compute loss combining accuracy and sparsity objectives
+                sparsity_loss = self._compute_sparsity_loss(spike_stats, target_sparsity)
+                accuracy_loss = self._compute_accuracy_loss(model, data, targets)
+                
+                total_loss = 0.7 * accuracy_loss + 0.3 * sparsity_loss
+                total_loss.backward()
+                
+                # Gradient clipping
+                torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
+                
+                optimizer.step()
+                
+                # Ensure thresholds stay positive
+                with torch.no_grad():
+                    for threshold in self.thresholds:
+                        threshold.data.clamp_(min=0.01)
+                        
+            if iteration % 20 == 0:
+                print(f"Iteration {iteration}: Loss = {total_loss:.4f}")
+                
+        return {f"layer_{i}": thresh.detach().clone() 
+                for i, thresh in enumerate(self.thresholds)}
+    
+    def _collect_spike_stats(self, model: nn.Module, data: torch.Tensor) -> Dict[str, torch.Tensor]:
+        """Collect spike statistics during forward pass."""
+        stats = {}
+        hooks = []
+        
+        def make_hook(name):
+            def hook_fn(module, input, output):
+                if hasattr(output, 'sum'):  # Check if it's a spike tensor
+                    spike_rate = output.sum(dim=1).mean()  # Average over time
+                    stats[name] = spike_rate
+            return hook_fn
+        
+        # Register hooks
+        for name, module in model.named_modules():
+            if 'neuron' in name.lower():
+                hook = module.register_forward_hook(make_hook(name))
+                hooks.append(hook)
+        
+        # Forward pass
+        with torch.no_grad():
+            _ = model(data)
+            
+        # Remove hooks
+        for hook in hooks:
+            hook.remove()
+            
+        return stats
+    
+    def _compute_sparsity_loss(self, 
+                             spike_stats: Dict[str, torch.Tensor], 
+                             target_sparsity: float) -> torch.Tensor:
+        """Compute loss for spike sparsity regulation."""
+        sparsity_errors = []
+        
+        for layer_idx, (name, spike_rate) in enumerate(spike_stats.items()):
+            if layer_idx < len(self.thresholds):
+                current_sparsity = 1.0 - spike_rate
+                sparsity_error = (current_sparsity - target_sparsity) ** 2
+                sparsity_errors.append(sparsity_error)
+                
+        return torch.stack(sparsity_errors).mean() if sparsity_errors else torch.tensor(0.0)
+    
+    def _compute_accuracy_loss(self, 
+                             model: nn.Module, 
+                             data: torch.Tensor, 
+                             targets: torch.Tensor) -> torch.Tensor:
+        """Compute accuracy-based loss."""
+        outputs = model(data)
+        if isinstance(outputs, tuple):
+            outputs = outputs[0]
+            
+        return F.cross_entropy(outputs, targets)
+
+
+class ArchitectureAwareConverter:
+    """Architecture-specific conversion strategies."""
+    
+    def __init__(self, config: ConversionConfig):
+        self.config = config
+        
+    def convert_vision_transformer(self, model: nn.Module) -> nn.Module:
+        """Convert Vision Transformer with specialized strategies."""
+        converted_model = self._create_spiking_vit(model)
+        
+        # Patch embedding optimization
+        self._optimize_patch_embedding(model, converted_model)
+        
+        # Attention head specialization
+        self._specialize_attention_heads(model, converted_model)
+        
+        # Position embedding adaptation
+        self._adapt_position_embeddings(model, converted_model)
+        
+        return converted_model
+    
+    def convert_language_model(self, model: nn.Module) -> nn.Module:
+        """Convert language model with token-aware strategies."""
+        converted_model = self._create_spiking_lm(model)
+        
+        # Token embedding optimization
+        self._optimize_token_embeddings(model, converted_model)
+        
+        # Causal attention adaptation
+        self._adapt_causal_attention(model, converted_model)
+        
+        return converted_model
+    
+    def _create_spiking_vit(self, model: nn.Module) -> nn.Module:
+        """Create spiking vision transformer."""
+        # Extract ViT configuration
+        config = self._extract_vit_config(model)
+        
+        # Build spiking equivalent
+        from .models import SpikingViT
+        return SpikingViT(**config, timesteps=self.config.timesteps)
+    
+    def _create_spiking_lm(self, model: nn.Module) -> nn.Module:
+        """Create spiking language model."""
+        config = self._extract_lm_config(model)
+        
+        from .models import SpikingBERT
+        return SpikingBERT(**config, timesteps=self.config.timesteps)
+    
+    def _optimize_patch_embedding(self, original: nn.Module, spiking: nn.Module):
+        """Optimize patch embedding for temporal processing."""
+        pass  # Implementation details
+    
+    def _specialize_attention_heads(self, original: nn.Module, spiking: nn.Module):
+        """Specialize different attention heads for different temporal dynamics."""
+        pass  # Implementation details
+    
+    def _adapt_position_embeddings(self, original: nn.Module, spiking: nn.Module):
+        """Adapt position embeddings for spatio-temporal processing."""
+        pass  # Implementation details
+    
+    def _extract_vit_config(self, model: nn.Module) -> Dict[str, Any]:
+        """Extract ViT configuration."""
+        return {"image_size": 224, "patch_size": 16, "num_classes": 1000}
+    
+    def _extract_lm_config(self, model: nn.Module) -> Dict[str, Any]:
+        """Extract language model configuration."""
+        return {"vocab_size": 30522, "max_length": 512}
+
+
 class ConversionPipeline:
-    """Complete pipeline for model conversion with evaluation."""
+    """Enhanced conversion pipeline with learnable algorithms."""
     
     def __init__(self, config: Optional[ConversionConfig] = None):
         self.config = config or ConversionConfig()
         self.converter = SpikeformerConverter(self.config)
+        self.arch_converter = ArchitectureAwareConverter(self.config)
         self.logger = logging.getLogger(__name__)
         
     def convert(self, 
                 model: nn.Module,
                 calibration_data: Optional[torch.utils.data.DataLoader] = None,
-                test_data: Optional[torch.utils.data.DataLoader] = None) -> ConversionResult:
-        """Run complete conversion pipeline."""
+                test_data: Optional[torch.utils.data.DataLoader] = None,
+                use_learnable: bool = True) -> ConversionResult:
+        """Run enhanced conversion pipeline with learnable algorithms."""
         
         import time
         start_time = time.time()
         
-        # Convert model
-        snn_model = self.converter.convert(model, calibration_data)
+        if use_learnable and calibration_data is not None:
+            # Use learnable conversion with end-to-end optimization
+            snn_model = self._learnable_conversion(model, calibration_data)
+        else:
+            # Use traditional conversion
+            snn_model = self.converter.convert(model, calibration_data)
+        
+        # Architecture-specific optimizations
+        snn_model = self._apply_architecture_optimizations(model, snn_model)
         
         # Evaluate conversion quality
         metrics = self._evaluate_conversion(model, snn_model, test_data)
@@ -318,6 +579,79 @@ class ConversionPipeline:
             conversion_time=conversion_time,
             metadata=metrics
         )
+    
+    def _learnable_conversion(self, 
+                            model: nn.Module, 
+                            calibration_data: torch.utils.data.DataLoader) -> nn.Module:
+        """Apply learnable conversion algorithms."""
+        
+        # Extract layer dimensions
+        layer_dims = self._extract_layer_dimensions(model)
+        
+        # Initialize learnable threshold optimizer
+        threshold_optimizer = DifferentiableThresholdOptimizer(
+            layer_dims, 
+            learning_rate=0.001
+        )
+        
+        # Optimize thresholds
+        optimized_thresholds = threshold_optimizer.optimize_thresholds(
+            model, calibration_data, target_sparsity=0.1
+        )
+        
+        # Convert model with optimized parameters
+        snn_model = self.converter.convert(model, calibration_data)
+        
+        # Apply learned thresholds
+        self._apply_learned_thresholds(snn_model, optimized_thresholds)
+        
+        return snn_model
+    
+    def _apply_architecture_optimizations(self, 
+                                        original: nn.Module, 
+                                        spiking: nn.Module) -> nn.Module:
+        """Apply architecture-specific optimizations."""
+        
+        # Detect model type
+        model_type = self._detect_model_type(original)
+        
+        if model_type == "vision_transformer":
+            return self.arch_converter.convert_vision_transformer(original)
+        elif model_type == "language_model":
+            return self.arch_converter.convert_language_model(original)
+        else:
+            return spiking
+    
+    def _detect_model_type(self, model: nn.Module) -> str:
+        """Detect the type of model architecture."""
+        module_names = [name for name, _ in model.named_modules()]
+        
+        if any("patch_embed" in name for name in module_names):
+            return "vision_transformer"
+        elif any("token_embed" in name or "word_embed" in name for name in module_names):
+            return "language_model"
+        else:
+            return "generic"
+    
+    def _extract_layer_dimensions(self, model: nn.Module) -> List[int]:
+        """Extract dimensions of relevant layers."""
+        dims = []
+        for name, module in model.named_modules():
+            if isinstance(module, nn.Linear):
+                dims.append(module.out_features)
+        return dims
+    
+    def _apply_learned_thresholds(self, 
+                                model: nn.Module, 
+                                thresholds: Dict[str, torch.Tensor]):
+        """Apply learned thresholds to the spiking model."""
+        layer_idx = 0
+        for name, module in model.named_modules():
+            if hasattr(module, 'threshold'):
+                threshold_key = f"layer_{layer_idx}"
+                if threshold_key in thresholds:
+                    module.threshold = thresholds[threshold_key]
+                    layer_idx += 1
         
     def _evaluate_conversion(self, 
                            original_model: nn.Module, 

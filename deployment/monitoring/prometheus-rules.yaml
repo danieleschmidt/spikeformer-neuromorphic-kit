@@ -1,0 +1,213 @@
+# Advanced monitoring rules for neuromorphic platform
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: neuromorphic-advanced-rules
+  namespace: neuromorphic
+  labels:
+    app.kubernetes.io/name: neuromorphic
+    app.kubernetes.io/component: monitoring
+spec:
+  groups:
+    - name: neuromorphic.performance
+      interval: 30s
+      rules:
+        # SLA-based alerting
+        - alert: NeuromorphicSLAViolation
+          expr: |
+            (
+              rate(http_requests_total{job="neuromorphic-api",status=~"2.."}[5m]) /
+              rate(http_requests_total{job="neuromorphic-api"}[5m])
+            ) < 0.995
+          for: 2m
+          labels:
+            severity: critical
+            sla: availability
+          annotations:
+            summary: "SLA violation: Availability below 99.5%"
+            description: "Current availability: {{ $value | humanizePercentage }}"
+
+        # Energy efficiency monitoring
+        - alert: EnergyEfficiencyDegraded
+          expr: |
+            increase(neuromorphic_energy_consumption_mj[5m]) /
+            increase(neuromorphic_inferences_total[5m]) > 5.0
+          for: 10m
+          labels:
+            severity: warning
+            category: efficiency
+          annotations:
+            summary: "Energy efficiency degraded"
+            description: "Energy per inference: {{ $value }}mJ (threshold: 5.0mJ)"
+
+        # Spike sparsity monitoring
+        - alert: SpikeSparsityLow
+          expr: neuromorphic_spike_sparsity_ratio < 0.8
+          for: 5m
+          labels:
+            severity: warning
+            category: efficiency
+          annotations:
+            summary: "Low spike sparsity detected"
+            description: "Current sparsity: {{ $value | humanizePercentage }} (target: >80%)"
+
+        # Neuromorphic chip utilization
+        - alert: NeuromorphicChipOverutilization
+          expr: neuromorphic_chip_utilization > 0.95
+          for: 3m
+          labels:
+            severity: critical
+            category: capacity
+          annotations:
+            summary: "Neuromorphic chip overutilized"
+            description: "Chip {{ $labels.chip_id }} utilization: {{ $value | humanizePercentage }}"
+
+        # Model accuracy drift
+        - alert: ModelAccuracyDrift
+          expr: |
+            abs(
+              neuromorphic_model_accuracy - 
+              neuromorphic_baseline_accuracy
+            ) > 0.05
+          for: 15m
+          labels:
+            severity: warning
+            category: quality
+          annotations:
+            summary: "Model accuracy drift detected"
+            description: "Current: {{ $labels.current_accuracy }}, Baseline: {{ $labels.baseline_accuracy }}"
+
+    - name: neuromorphic.capacity
+      interval: 1m
+      rules:
+        # Inference queue depth
+        - alert: InferenceQueueBacklog
+          expr: neuromorphic_inference_queue_depth > 1000
+          for: 2m
+          labels:
+            severity: warning
+            category: capacity
+          annotations:
+            summary: "Inference queue backlog building up"
+            description: "Queue depth: {{ $value }} requests"
+
+        # Auto-scaling prediction
+        - record: neuromorphic:scaling_recommendation
+          expr: |
+            predict_linear(
+              neuromorphic_inference_rate[30m], 
+              3600
+            ) / neuromorphic_max_throughput > 0.8
+
+        # Resource utilization trends
+        - record: neuromorphic:cpu_trend
+          expr: predict_linear(rate(container_cpu_usage_seconds_total[5m])[30m], 1800)
+
+        - record: neuromorphic:memory_trend
+          expr: predict_linear(container_memory_usage_bytes[5m], 1800)
+
+    - name: neuromorphic.hardware
+      interval: 30s
+      rules:
+        # Hardware failure detection
+        - alert: NeuromorphicChipOffline
+          expr: neuromorphic_chip_status != 1
+          for: 30s
+          labels:
+            severity: critical
+            category: hardware
+          annotations:
+            summary: "Neuromorphic chip offline"
+            description: "Chip {{ $labels.chip_id }} ({{ $labels.chip_type }}) is offline"
+
+        # Temperature monitoring for neuromorphic chips
+        - alert: ChipTemperatureHigh
+          expr: neuromorphic_chip_temperature_celsius > 85
+          for: 2m
+          labels:
+            severity: warning
+            category: hardware
+          annotations:
+            summary: "High chip temperature"
+            description: "Chip {{ $labels.chip_id }} temperature: {{ $value }}°C"
+
+        # Power consumption anomaly
+        - alert: PowerConsumptionAnomaly
+          expr: |
+            abs(
+              neuromorphic_power_consumption_watts - 
+              avg_over_time(neuromorphic_power_consumption_watts[1h])
+            ) > (0.3 * avg_over_time(neuromorphic_power_consumption_watts[1h]))
+          for: 5m
+          labels:
+            severity: warning
+            category: hardware
+          annotations:
+            summary: "Abnormal power consumption"
+            description: "Current: {{ $value }}W, Average: {{ $labels.average }}W"
+
+    - name: neuromorphic.research
+      interval: 2m
+      rules:
+        # Research experiment monitoring
+        - alert: ExperimentDivergence
+          expr: neuromorphic_experiment_loss > neuromorphic_baseline_loss * 2
+          for: 10m
+          labels:
+            severity: warning
+            category: research
+          annotations:
+            summary: "Research experiment showing divergence"
+            description: "Loss: {{ $value }}, Baseline: {{ $labels.baseline }}"
+
+        # Model training progress
+        - alert: TrainingStalled
+          expr: |
+            increase(neuromorphic_training_steps_total[30m]) == 0 AND
+            neuromorphic_training_active == 1
+          for: 30m
+          labels:
+            severity: warning
+            category: research
+          annotations:
+            summary: "Model training appears stalled"
+            description: "No training progress in 30 minutes"
+
+        # Research data quality
+        - alert: DataQualityIssue
+          expr: neuromorphic_data_corruption_rate > 0.01
+          for: 5m
+          labels:
+            severity: critical
+            category: research
+          annotations:
+            summary: "Data quality issue detected"
+            description: "Corruption rate: {{ $value | humanizePercentage }}"
+
+    - name: neuromorphic.business
+      interval: 5m
+      rules:
+        # Cost efficiency
+        - record: neuromorphic:cost_per_inference
+          expr: |
+            (
+              neuromorphic_infrastructure_cost_per_hour / 3600
+            ) / rate(neuromorphic_inferences_total[1h])
+
+        # Energy savings vs traditional compute
+        - record: neuromorphic:energy_savings_percentage
+          expr: |
+            (
+              neuromorphic_traditional_energy_mj - 
+              neuromorphic_actual_energy_mj
+            ) / neuromorphic_traditional_energy_mj * 100
+
+        - alert: CostEfficiencyDegraded
+          expr: neuromorphic:cost_per_inference > 0.001  # $0.001 per inference
+          for: 1h
+          labels:
+            severity: warning
+            category: cost
+          annotations:
+            summary: "Cost efficiency degraded"
+            description: "Cost per inference: ${{ $value }}"

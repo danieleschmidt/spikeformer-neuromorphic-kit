@@ -315,13 +315,327 @@ class TemporalBatchNorm(nn.Module):
         return x_norm * self.weight.view(1, 1, -1) + self.bias.view(1, 1, -1)
 
 
-# Factory function for creating neurons
+class AttentionOptimizedNeuron(SpikingNeuron):
+    """Transformer-optimized neuron model with attention-aware dynamics."""
+    
+    def __init__(self, 
+                 threshold: float = 1.0,
+                 tau_mem: float = 20.0,
+                 tau_attention: float = 50.0,
+                 attention_gain: float = 0.2,
+                 reset: str = "subtract",
+                 surrogate_type: str = "fast_sigmoid"):
+        super().__init__(threshold, reset, surrogate_type)
+        self.tau_mem = tau_mem
+        self.tau_attention = tau_attention
+        self.attention_gain = attention_gain
+        self.alpha_mem = torch.exp(torch.tensor(-1.0 / tau_mem))
+        self.alpha_att = torch.exp(torch.tensor(-1.0 / tau_attention))
+        self.register_buffer('attention_trace', None)
+        
+    def forward(self, x: torch.Tensor, attention_weights: Optional[torch.Tensor] = None) -> torch.Tensor:
+        """Forward pass with attention-aware dynamics."""
+        batch_size, seq_len = x.shape[:2]
+        device = x.device
+        
+        # Initialize states
+        if self.membrane_potential is None or self.membrane_potential.shape[0] != batch_size:
+            self.membrane_potential = torch.zeros(batch_size, *x.shape[2:], device=device)
+            self.attention_trace = torch.zeros_like(self.membrane_potential)
+            
+        spikes = []
+        
+        for t in range(seq_len):
+            # Attention modulation
+            if attention_weights is not None:
+                att_weight = attention_weights[:, t] if attention_weights.dim() == 2 else attention_weights[:, t, :]
+                self.attention_trace = self.alpha_att * self.attention_trace + att_weight * self.attention_gain
+            
+            # Attention-modulated integration
+            effective_input = x[:, t] * (1 + self.attention_trace)
+            self.membrane_potential = self.alpha_mem * self.membrane_potential + effective_input
+            
+            # Generate spikes
+            spike = self.spike_function(self.membrane_potential)
+            spikes.append(spike)
+            
+            # Reset mechanism
+            if self.reset == "subtract":
+                self.membrane_potential = self.membrane_potential - spike * self.threshold
+            elif self.reset == "zero":
+                self.membrane_potential = self.membrane_potential * (1 - spike)
+                
+        return torch.stack(spikes, dim=1)
+        
+    def reset_state(self):
+        """Reset neuron state including attention trace."""
+        super().reset_state()
+        self.attention_trace = None
+
+
+class StochasticNeuron(SpikingNeuron):
+    """Stochastic spiking neuron with biological noise for improved robustness."""
+    
+    def __init__(self, 
+                 threshold: float = 1.0,
+                 tau_mem: float = 20.0,
+                 noise_std: float = 0.1,
+                 dropout_p: float = 0.05,
+                 reset: str = "subtract",
+                 surrogate_type: str = "fast_sigmoid"):
+        super().__init__(threshold, reset, surrogate_type)
+        self.tau_mem = tau_mem
+        self.noise_std = noise_std
+        self.dropout_p = dropout_p
+        self.alpha = torch.exp(torch.tensor(-1.0 / tau_mem))
+        
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass with stochastic dynamics."""
+        batch_size, seq_len = x.shape[:2]
+        device = x.device
+        
+        # Initialize membrane potential
+        if self.membrane_potential is None or self.membrane_potential.shape[0] != batch_size:
+            self.membrane_potential = torch.zeros(batch_size, *x.shape[2:], device=device)
+            
+        spikes = []
+        
+        for t in range(seq_len):
+            # Add membrane noise
+            if self.training:
+                noise = torch.randn_like(self.membrane_potential) * self.noise_std
+                dropout_mask = (torch.rand_like(self.membrane_potential) > self.dropout_p).float()
+            else:
+                noise = 0
+                dropout_mask = 1
+                
+            # Leaky integration with noise and dropout
+            self.membrane_potential = (self.alpha * self.membrane_potential + 
+                                     x[:, t] * dropout_mask + noise)
+            
+            # Stochastic spiking (temperature-based)
+            if self.training:
+                # Temperature-scaled sigmoid for stochastic spiking
+                temp = 1.0 + 0.5 * torch.randn_like(self.membrane_potential)
+                spike_prob = torch.sigmoid((self.membrane_potential - self.threshold) / temp)
+                spike = torch.bernoulli(spike_prob)
+            else:
+                # Deterministic for inference
+                spike = self.spike_function(self.membrane_potential)
+                
+            spikes.append(spike)
+            
+            # Reset mechanism
+            if self.reset == "subtract":
+                self.membrane_potential = self.membrane_potential - spike * self.threshold
+            elif self.reset == "zero":
+                self.membrane_potential = self.membrane_potential * (1 - spike)
+                
+        return torch.stack(spikes, dim=1)
+
+
+class MultiCompartmentNeuron(SpikingNeuron):
+    """Multi-compartment neuron with dendritic processing for heterogeneous populations."""
+    
+    def __init__(self, 
+                 threshold: float = 1.0,
+                 num_compartments: int = 3,
+                 tau_soma: float = 20.0,
+                 tau_dendrite: float = 40.0,
+                 coupling_strength: float = 0.3,
+                 reset: str = "subtract",
+                 surrogate_type: str = "fast_sigmoid"):
+        super().__init__(threshold, reset, surrogate_type)
+        self.num_compartments = num_compartments
+        self.tau_soma = tau_soma
+        self.tau_dendrite = tau_dendrite
+        self.coupling_strength = coupling_strength
+        
+        self.alpha_soma = torch.exp(torch.tensor(-1.0 / tau_soma))
+        self.alpha_dend = torch.exp(torch.tensor(-1.0 / tau_dendrite))
+        
+        self.register_buffer('dendritic_potentials', None)
+        
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass with multi-compartment dynamics."""
+        batch_size, seq_len = x.shape[:2]
+        device = x.device
+        
+        # Initialize compartment potentials
+        if self.membrane_potential is None or self.membrane_potential.shape[0] != batch_size:
+            self.membrane_potential = torch.zeros(batch_size, *x.shape[2:], device=device)  # Soma
+            self.dendritic_potentials = torch.zeros(batch_size, self.num_compartments, 
+                                                   *x.shape[2:], device=device)
+            
+        spikes = []
+        
+        for t in range(seq_len):
+            # Split input across dendritic compartments
+            input_per_comp = x[:, t].unsqueeze(1) / self.num_compartments
+            
+            # Update dendritic compartments
+            self.dendritic_potentials = (self.alpha_dend * self.dendritic_potentials + 
+                                       input_per_comp)
+            
+            # Dendritic coupling to soma
+            dendritic_sum = torch.sum(self.dendritic_potentials, dim=1) * self.coupling_strength
+            
+            # Update somatic potential
+            self.membrane_potential = self.alpha_soma * self.membrane_potential + dendritic_sum
+            
+            # Generate spikes at soma
+            spike = self.spike_function(self.membrane_potential)
+            spikes.append(spike)
+            
+            # Reset mechanism affects all compartments
+            if self.reset == "subtract":
+                self.membrane_potential = self.membrane_potential - spike * self.threshold
+                # Partial reset in dendrites
+                reset_factor = spike.unsqueeze(1) * 0.5
+                self.dendritic_potentials = self.dendritic_potentials - reset_factor * self.threshold
+            elif self.reset == "zero":
+                self.membrane_potential = self.membrane_potential * (1 - spike)
+                reset_mask = (1 - spike).unsqueeze(1)
+                self.dendritic_potentials = self.dendritic_potentials * reset_mask
+                
+        return torch.stack(spikes, dim=1)
+        
+    def reset_state(self):
+        """Reset all compartment states."""
+        super().reset_state()
+        self.dendritic_potentials = None
+
+
+class AdaptiveSparsityNeuron(SpikingNeuron):
+    """Neuron with adaptive sparsity control for energy optimization."""
+    
+    def __init__(self, 
+                 threshold: float = 1.0,
+                 tau_mem: float = 20.0,
+                 target_sparsity: float = 0.1,
+                 adaptation_rate: float = 0.01,
+                 reset: str = "subtract",
+                 surrogate_type: str = "fast_sigmoid"):
+        super().__init__(threshold, reset, surrogate_type)
+        self.tau_mem = tau_mem
+        self.target_sparsity = target_sparsity
+        self.adaptation_rate = adaptation_rate
+        self.alpha = torch.exp(torch.tensor(-1.0 / tau_mem))
+        
+        self.register_buffer('dynamic_threshold', None)
+        self.register_buffer('spike_history', None)
+        
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass with adaptive sparsity control."""
+        batch_size, seq_len = x.shape[:2]
+        device = x.device
+        
+        # Initialize states
+        if self.membrane_potential is None or self.membrane_potential.shape[0] != batch_size:
+            self.membrane_potential = torch.zeros(batch_size, *x.shape[2:], device=device)
+            self.dynamic_threshold = torch.full_like(self.membrane_potential, self.threshold)
+            self.spike_history = torch.zeros(batch_size, 10, *x.shape[2:], device=device)  # Last 10 steps
+            
+        spikes = []
+        
+        for t in range(seq_len):
+            # Leaky integration
+            self.membrane_potential = self.alpha * self.membrane_potential + x[:, t]
+            
+            # Generate spikes with dynamic threshold
+            spike = self.spike_function(self.membrane_potential - self.dynamic_threshold)
+            spikes.append(spike)
+            
+            # Update spike history (rolling window)
+            self.spike_history = torch.roll(self.spike_history, -1, dims=1)
+            self.spike_history[:, -1] = spike
+            
+            # Adapt threshold based on recent activity
+            if t > 9:  # Have enough history
+                recent_sparsity = torch.mean(self.spike_history, dim=1)
+                sparsity_error = recent_sparsity - self.target_sparsity
+                
+                # Adaptive threshold update
+                self.dynamic_threshold += self.adaptation_rate * sparsity_error
+                self.dynamic_threshold = torch.clamp(self.dynamic_threshold, 
+                                                   min=0.1 * self.threshold,
+                                                   max=3.0 * self.threshold)
+            
+            # Reset mechanism
+            if self.reset == "subtract":
+                self.membrane_potential = self.membrane_potential - spike * self.dynamic_threshold
+            elif self.reset == "zero":
+                self.membrane_potential = self.membrane_potential * (1 - spike)
+                
+        return torch.stack(spikes, dim=1)
+        
+    def reset_state(self):
+        """Reset neuron state including adaptive components."""
+        super().reset_state()
+        self.dynamic_threshold = None
+        self.spike_history = None
+
+
+class PLIFNeuron(SpikingNeuron):
+    """Parametric Leaky Integrate-and-Fire neuron with learnable time constants."""
+    
+    def __init__(self, 
+                 threshold: float = 1.0,
+                 tau_mem: float = 20.0,
+                 learnable_tau: bool = True,
+                 reset: str = "subtract",
+                 surrogate_type: str = "fast_sigmoid"):
+        super().__init__(threshold, reset, surrogate_type)
+        
+        if learnable_tau:
+            self.log_tau_mem = nn.Parameter(torch.log(torch.tensor(tau_mem)))
+        else:
+            self.register_buffer('log_tau_mem', torch.log(torch.tensor(tau_mem)))
+            
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward pass with learnable dynamics."""
+        batch_size, seq_len = x.shape[:2]
+        device = x.device
+        
+        # Compute decay factor from learnable parameter
+        tau_mem = torch.exp(self.log_tau_mem)
+        alpha = torch.exp(-1.0 / tau_mem)
+        
+        # Initialize membrane potential
+        if self.membrane_potential is None or self.membrane_potential.shape[0] != batch_size:
+            self.membrane_potential = torch.zeros(batch_size, *x.shape[2:], device=device)
+            
+        spikes = []
+        
+        for t in range(seq_len):
+            # Leaky integration with learnable decay
+            self.membrane_potential = alpha * self.membrane_potential + x[:, t]
+            
+            # Generate spikes
+            spike = self.spike_function(self.membrane_potential)
+            spikes.append(spike)
+            
+            # Reset mechanism
+            if self.reset == "subtract":
+                self.membrane_potential = self.membrane_potential - spike * self.threshold
+            elif self.reset == "zero":
+                self.membrane_potential = self.membrane_potential * (1 - spike)
+                
+        return torch.stack(spikes, dim=1)
+
+
+# Enhanced factory function for creating neurons
 def create_neuron(neuron_type: str, **kwargs) -> SpikingNeuron:
-    """Factory function to create neurons by type."""
+    """Enhanced factory function to create neurons by type."""
     neuron_types = {
         "LIF": LifNeuron,
         "ADLIF": AdLifNeuron,
-        "IZHIKEVICH": IzhikevichNeuron
+        "IZHIKEVICH": IzhikevichNeuron,
+        "ATTENTION": AttentionOptimizedNeuron,
+        "STOCHASTIC": StochasticNeuron,
+        "MULTICOMP": MultiCompartmentNeuron,
+        "ADAPTIVE": AdaptiveSparsityNeuron,
+        "PLIF": PLIFNeuron,
     }
     
     if neuron_type.upper() not in neuron_types:

@@ -90,39 +90,52 @@ class SpikingPositionalEncoding(nn.Module):
         return x + pos_spikes
 
 
-class SpikingAttention(nn.Module):
-    """Spiking self-attention mechanism."""
+class SparseSpikingAttention(nn.Module):
+    """Sparse spike-based attention with event-driven computation."""
     
     def __init__(self, embed_dim: int, num_heads: int, timesteps: int = 32,
-                 threshold: float = 1.0, dropout: float = 0.1):
+                 threshold: float = 1.0, dropout: float = 0.1, 
+                 sparsity_ratio: float = 0.1, use_event_driven: bool = True):
         super().__init__()
         self.embed_dim = embed_dim
         self.num_heads = num_heads
         self.timesteps = timesteps
         self.head_dim = embed_dim // num_heads
+        self.sparsity_ratio = sparsity_ratio
+        self.use_event_driven = use_event_driven
         
         assert self.head_dim * num_heads == embed_dim, "embed_dim must be divisible by num_heads"
         
-        # Query, Key, Value projections
-        self.q_proj = SpikingLayer(embed_dim, embed_dim, threshold=threshold)
-        self.k_proj = SpikingLayer(embed_dim, embed_dim, threshold=threshold)
-        self.v_proj = SpikingLayer(embed_dim, embed_dim, threshold=threshold)
+        # Query, Key, Value projections with specialized neurons
+        self.q_proj = SpikingLayer(embed_dim, embed_dim, neuron_type="ATTENTION", threshold=threshold)
+        self.k_proj = SpikingLayer(embed_dim, embed_dim, neuron_type="ATTENTION", threshold=threshold)
+        self.v_proj = SpikingLayer(embed_dim, embed_dim, neuron_type="STOCHASTIC", threshold=threshold)
         
-        # Output projection
-        self.out_proj = SpikingLayer(embed_dim, embed_dim, threshold=threshold)
+        # Sparse attention components
+        self.attention_sparsity = nn.Parameter(torch.tensor(sparsity_ratio))
+        self.spike_threshold_adaptation = nn.Parameter(torch.ones(num_heads))
+        
+        # Temporal attention integration
+        self.temporal_weights = nn.Parameter(torch.randn(timesteps, num_heads) * 0.1)
+        
+        # Event-driven spike accumulator
+        if use_event_driven:
+            self.spike_memory = nn.Parameter(torch.zeros(1, num_heads, 1, embed_dim))
+            self.memory_decay = nn.Parameter(torch.tensor(0.9))
+        
+        # Output projection with adaptive sparsity
+        self.out_proj = SpikingLayer(embed_dim, embed_dim, 
+                                   neuron_type="ADAPTIVE", threshold=threshold)
         
         # Attention computation
         self.scale = math.sqrt(self.head_dim)
         self.dropout = nn.Dropout(dropout)
         
-        # Spiking attention mechanism
-        self.attention_neuron = LifNeuron(threshold=threshold)
-        
     def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
-        """Forward pass through spiking attention."""
+        """Forward pass through sparse spiking attention."""
         batch_size, time_steps, seq_len, embed_dim = x.shape
         
-        # Generate Q, K, V
+        # Generate Q, K, V with spike-based projections
         Q = self.q_proj(x)  # (batch, time, seq, embed_dim)
         K = self.k_proj(x)
         V = self.v_proj(x)
@@ -137,22 +150,53 @@ class SpikingAttention(nn.Module):
         K = K.transpose(2, 3)
         V = V.transpose(2, 3)
         
-        # Compute attention for each timestep
+        # Event-driven sparse attention computation
         attended_values = []
+        spike_events = []
         
         for t in range(time_steps):
-            # Standard attention computation for this timestep
+            # Compute attention scores
             scores = torch.matmul(Q[:, t], K[:, t].transpose(-2, -1)) / self.scale
             
             if mask is not None:
                 scores = scores.masked_fill(mask == 0, -1e9)
+            
+            # Temporal weighting for spiking dynamics
+            temporal_weight = self.temporal_weights[t].view(1, self.num_heads, 1, 1)
+            scores = scores * temporal_weight
+            
+            # Sparse attention: only compute attention for top-k highest scores
+            if self.training and self.use_event_driven:
+                # Dynamic sparsity based on spike activity
+                k = max(1, int(seq_len * self.attention_sparsity))
+                top_k_values, top_k_indices = torch.topk(scores, k, dim=-1)
                 
-            # Apply softmax (spike-based approximation)
-            attn_weights = F.softmax(scores, dim=-1)
+                # Create sparse attention mask
+                sparse_mask = torch.zeros_like(scores)
+                sparse_mask.scatter_(-1, top_k_indices, 1.0)
+                
+                # Apply sparse mask
+                scores = scores * sparse_mask
+                
+            # Spike-based softmax with adaptive thresholds
+            attn_weights = self._spiking_softmax(scores, t)
             attn_weights = self.dropout(attn_weights)
             
             # Apply attention to values
             attended = torch.matmul(attn_weights, V[:, t])  # (batch, heads, seq, head_dim)
+            
+            # Event-driven memory update
+            if self.use_event_driven:
+                spike_event = (attended > self.spike_threshold_adaptation.view(1, -1, 1, 1)).float()
+                spike_events.append(spike_event.sum())
+                
+                # Update spike memory
+                self.spike_memory.data = (self.memory_decay * self.spike_memory.data + 
+                                        (1 - self.memory_decay) * attended.mean(dim=(0, 2), keepdim=True))
+                
+                # Memory-modulated attention
+                attended = attended + self.spike_memory * 0.1
+            
             attended_values.append(attended)
             
         # Stack timesteps and reshape
@@ -162,19 +206,163 @@ class SpikingAttention(nn.Module):
             batch_size, time_steps, seq_len, embed_dim
         )
         
-        # Apply spiking dynamics to attention output
-        spike_output = self.attention_neuron(attended_output)
+        # Adaptive sparsity output projection
+        output = self.out_proj(attended_output)
         
-        # Final projection
-        return self.out_proj(spike_output)
+        # Return output with spike statistics for analysis
+        if self.training and spike_events:
+            self._update_sparsity_stats(spike_events)
+            
+        return output
+    
+    def _spiking_softmax(self, scores: torch.Tensor, timestep: int) -> torch.Tensor:
+        """Spike-based softmax approximation with temporal dynamics."""
+        # Temperature scheduling based on timestep
+        temperature = 1.0 + 0.5 * torch.cos(torch.tensor(timestep / self.timesteps * math.pi))
+        
+        # Spike-based softmax using winner-take-all dynamics
+        max_scores, _ = torch.max(scores, dim=-1, keepdim=True)
+        normalized_scores = (scores - max_scores) / temperature
+        
+        # Probabilistic spiking
+        spike_probs = torch.sigmoid(normalized_scores * 5.0)  # Sharp sigmoid
+        
+        if self.training:
+            # Stochastic spiking during training
+            spikes = torch.bernoulli(spike_probs)
+            # Straight-through estimator
+            attn_weights = spikes + (spike_probs - spike_probs.detach())
+        else:
+            # Deterministic during inference
+            attn_weights = (spike_probs > 0.5).float()
+            
+        # Normalize to maintain attention properties
+        attn_weights = attn_weights / (attn_weights.sum(dim=-1, keepdim=True) + 1e-8)
+        
+        return attn_weights
+    
+    def _update_sparsity_stats(self, spike_events: List[torch.Tensor]):
+        """Update sparsity statistics for adaptive control."""
+        avg_spikes = torch.stack(spike_events).mean()
+        target_spikes = self.sparsity_ratio * self.timesteps * self.num_heads
+        
+        # Adaptive sparsity adjustment
+        if avg_spikes > target_spikes * 1.1:
+            self.attention_sparsity.data *= 0.95  # Increase sparsity
+        elif avg_spikes < target_spikes * 0.9:
+            self.attention_sparsity.data *= 1.05  # Decrease sparsity
+            
+        # Clamp sparsity ratio
+        self.attention_sparsity.data.clamp_(0.01, 0.5)
         
     def reset_state(self):
-        """Reset neuron states."""
+        """Reset neuron states and spike memory."""
         self.q_proj.reset_state()
         self.k_proj.reset_state()
         self.v_proj.reset_state()
         self.out_proj.reset_state()
-        self.attention_neuron.reset_state()
+        
+        if self.use_event_driven:
+            self.spike_memory.data.zero_()
+
+
+class SpikingAttention(SparseSpikingAttention):
+    """Standard spiking attention (alias for backward compatibility)."""
+    
+    def __init__(self, embed_dim: int, num_heads: int, timesteps: int = 32,
+                 threshold: float = 1.0, dropout: float = 0.1):
+        super().__init__(
+            embed_dim=embed_dim,
+            num_heads=num_heads, 
+            timesteps=timesteps,
+            threshold=threshold,
+            dropout=dropout,
+            sparsity_ratio=0.1,
+            use_event_driven=False  # Standard mode
+        )
+
+
+class TemporalSpikingAttention(nn.Module):
+    """Multi-scale temporal attention with spike timing."""
+    
+    def __init__(self, embed_dim: int, num_heads: int, timesteps: int = 32,
+                 threshold: float = 1.0, dropout: float = 0.1,
+                 temporal_scales: List[int] = [1, 2, 4, 8]):
+        super().__init__()
+        self.embed_dim = embed_dim
+        self.num_heads = num_heads
+        self.timesteps = timesteps
+        self.temporal_scales = temporal_scales
+        self.head_dim = embed_dim // num_heads
+        
+        # Multi-scale attention heads
+        self.scale_attentions = nn.ModuleList([
+            SparseSpikingAttention(
+                embed_dim=embed_dim // len(temporal_scales),
+                num_heads=num_heads // len(temporal_scales),
+                timesteps=timesteps,
+                threshold=threshold,
+                dropout=dropout,
+                sparsity_ratio=0.1,
+                use_event_driven=True
+            )
+            for scale in temporal_scales
+        ])
+        
+        # Temporal pooling for different scales
+        self.temporal_pools = nn.ModuleList([
+            nn.AvgPool1d(kernel_size=scale, stride=1, padding=scale//2)
+            for scale in temporal_scales
+        ])
+        
+        # Scale fusion
+        self.scale_fusion = nn.Linear(embed_dim, embed_dim)
+        
+    def forward(self, x: torch.Tensor, mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+        """Forward pass with multi-scale temporal attention."""
+        batch_size, time_steps, seq_len, embed_dim = x.shape
+        
+        # Split input across scales
+        scale_dim = embed_dim // len(self.temporal_scales)
+        scale_outputs = []
+        
+        for i, (attention, pool) in enumerate(zip(self.scale_attentions, self.temporal_pools)):
+            # Extract scale-specific features
+            start_idx = i * scale_dim
+            end_idx = (i + 1) * scale_dim
+            scale_input = x[:, :, :, start_idx:end_idx]
+            
+            # Temporal pooling for this scale
+            if self.temporal_scales[i] > 1:
+                # Reshape for pooling: (batch*seq, features, time)
+                reshaped = scale_input.permute(0, 2, 3, 1).contiguous()
+                reshaped = reshaped.view(batch_size * seq_len, scale_dim, time_steps)
+                
+                pooled = pool(reshaped)
+                pooled = pooled.view(batch_size, seq_len, scale_dim, -1)
+                scale_input = pooled.permute(0, 3, 1, 2).contiguous()
+            
+            # Apply scale-specific attention
+            scale_output = attention(scale_input, mask)
+            
+            # Interpolate back to original temporal resolution if needed
+            if scale_output.shape[1] != time_steps:
+                scale_output = F.interpolate(
+                    scale_output.permute(0, 3, 1, 2).contiguous(),
+                    size=(time_steps, seq_len),
+                    mode='bilinear',
+                    align_corners=False
+                ).permute(0, 2, 3, 1).contiguous()
+                
+            scale_outputs.append(scale_output)
+        
+        # Concatenate scale outputs
+        multi_scale_output = torch.cat(scale_outputs, dim=-1)
+        
+        # Fuse scales
+        fused_output = self.scale_fusion(multi_scale_output)
+        
+        return fused_output
 
 
 class SpikingMLP(nn.Module):
