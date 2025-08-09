@@ -608,7 +608,7 @@ class SecurityValidator(Validator):
 
 
 class ComprehensiveValidator:
-    """Main validator that runs all validation checks."""
+    """Main validator that runs all validation checks with enhanced error handling."""
     
     def __init__(self):
         self.validators = {
@@ -620,6 +620,17 @@ class ComprehensiveValidator:
         }
         
         self.logger = logging.getLogger(__name__)
+        
+        # Enhanced error tracking
+        self.validation_history = []
+        self.error_counts = defaultdict(int)
+        self.recovery_strategies = {
+            'memory_error': self._handle_memory_error,
+            'cuda_error': self._handle_cuda_error,
+            'shape_mismatch': self._handle_shape_error,
+            'threshold_error': self._handle_threshold_error,
+            'convergence_error': self._handle_convergence_error
+        }
     
     def validate_model(self, model: nn.Module, 
                       input_data: Optional[torch.Tensor] = None,
@@ -763,9 +774,235 @@ class ComprehensiveValidator:
         recommendations.extend(unique_fixes[:5])  # Top 5 fixes
         
         return recommendations
+    
+    def _handle_memory_error(self, error: Exception, context: Dict) -> ValidationResult:
+        """Handle out of memory errors with recovery suggestions."""
+        return ValidationResult(
+            check_name="memory_recovery",
+            level=ValidationLevel.ERROR,
+            passed=False,
+            message=f"Memory error: {str(error)}",
+            suggested_fix="Reduce batch size, model size, or use gradient checkpointing"
+        )
+    
+    def _handle_cuda_error(self, error: Exception, context: Dict) -> ValidationResult:
+        """Handle CUDA errors with device fallback."""
+        return ValidationResult(
+            check_name="cuda_recovery", 
+            level=ValidationLevel.WARNING,
+            passed=False,
+            message=f"CUDA error: {str(error)}",
+            suggested_fix="Fallback to CPU execution or check GPU memory"
+        )
+    
+    def _handle_shape_error(self, error: Exception, context: Dict) -> ValidationResult:
+        """Handle tensor shape mismatch errors."""
+        return ValidationResult(
+            check_name="shape_recovery",
+            level=ValidationLevel.ERROR,
+            passed=False,
+            message=f"Shape mismatch: {str(error)}",
+            suggested_fix="Check input dimensions and model architecture compatibility"
+        )
+    
+    def _handle_threshold_error(self, error: Exception, context: Dict) -> ValidationResult:
+        """Handle threshold-related errors."""
+        return ValidationResult(
+            check_name="threshold_recovery",
+            level=ValidationLevel.WARNING,
+            passed=False,
+            message=f"Threshold error: {str(error)}",
+            suggested_fix="Adjust threshold values to be positive and within reasonable range"
+        )
+    
+    def _handle_convergence_error(self, error: Exception, context: Dict) -> ValidationResult:
+        """Handle convergence issues."""
+        return ValidationResult(
+            check_name="convergence_recovery",
+            level=ValidationLevel.WARNING,
+            passed=False,
+            message=f"Convergence error: {str(error)}",
+            suggested_fix="Check learning rate, model initialization, or data preprocessing"
+        )
+    
+    def safe_validate(self, model: nn.Module, **kwargs) -> Tuple[List[ValidationResult], bool]:
+        """Safe validation with automatic error recovery."""
+        try:
+            results = self.validate_model(model, **kwargs)
+            return results, True
+        except Exception as e:
+            self.logger.error(f"Validation failed with exception: {e}")
+            
+            # Classify error and apply recovery
+            error_type = self._classify_error(e)
+            recovery_result = self.recovery_strategies.get(error_type, self._handle_generic_error)(e, kwargs)
+            
+            return [recovery_result], False
+    
+    def _classify_error(self, error: Exception) -> str:
+        """Classify error type for appropriate recovery strategy."""
+        error_str = str(error).lower()
+        
+        if 'out of memory' in error_str or 'cuda out of memory' in error_str:
+            return 'memory_error'
+        elif 'cuda' in error_str:
+            return 'cuda_error' 
+        elif 'shape' in error_str or 'size' in error_str:
+            return 'shape_mismatch'
+        elif 'threshold' in error_str:
+            return 'threshold_error'
+        elif 'nan' in error_str or 'convergence' in error_str:
+            return 'convergence_error'
+        else:
+            return 'generic_error'
+    
+    def _handle_generic_error(self, error: Exception, context: Dict) -> ValidationResult:
+        """Handle generic errors."""
+        return ValidationResult(
+            check_name="generic_error",
+            level=ValidationLevel.ERROR,
+            passed=False,
+            message=f"Validation error: {str(error)}",
+            suggested_fix="Check model implementation and input data"
+        )
 
 
-# Utility functions for easy validation
+class RobustValidator:
+    """Robust validator with enhanced error handling and recovery mechanisms."""
+    
+    def __init__(self):
+        self.base_validator = ComprehensiveValidator()
+        self.retry_attempts = 3
+        self.timeout_seconds = 300  # 5 minutes
+        self.checkpoint_frequency = 100
+        
+    def validate_with_retries(self, model: nn.Module, **kwargs) -> List[ValidationResult]:
+        """Validate with automatic retries on transient failures."""
+        
+        last_exception = None
+        
+        for attempt in range(self.retry_attempts):
+            try:
+                results, success = self.base_validator.safe_validate(model, **kwargs)
+                
+                if success:
+                    return results
+                else:
+                    # Check if error is retryable
+                    if attempt < self.retry_attempts - 1:
+                        self.base_validator.logger.info(f"Retrying validation, attempt {attempt + 2}")
+                        time.sleep(2 ** attempt)  # Exponential backoff
+                        continue
+                    
+            except Exception as e:
+                last_exception = e
+                if attempt < self.retry_attempts - 1:
+                    self.base_validator.logger.warning(f"Validation attempt {attempt + 1} failed: {e}")
+                    time.sleep(2 ** attempt)
+                    continue
+                    
+        # All retries failed
+        error_result = ValidationResult(
+            check_name="retry_exhausted",
+            level=ValidationLevel.CRITICAL,
+            passed=False,
+            message=f"All {self.retry_attempts} validation attempts failed. Last error: {last_exception}",
+            suggested_fix="Check system resources and model configuration"
+        )
+        
+        return [error_result]
+    
+    def validate_incrementally(self, model: nn.Module, **kwargs) -> List[ValidationResult]:
+        """Validate model incrementally to handle large models."""
+        
+        all_results = []
+        
+        # Validate architecture first (lightweight)
+        try:
+            arch_results = self.base_validator.validators['architecture'].validate(model)
+            all_results.extend(arch_results)
+        except Exception as e:
+            all_results.append(ValidationResult(
+                check_name="incremental_arch",
+                level=ValidationLevel.ERROR,
+                passed=False,
+                message=f"Architecture validation failed: {e}",
+                suggested_fix="Fix model architecture before proceeding"
+            ))
+            return all_results
+        
+        # Validate other components if architecture is OK
+        critical_issues = [r for r in arch_results if r.level == ValidationLevel.CRITICAL]
+        if not critical_issues:
+            try:
+                remaining_results = self._validate_remaining_components(model, **kwargs)
+                all_results.extend(remaining_results)
+            except Exception as e:
+                all_results.append(ValidationResult(
+                    check_name="incremental_remaining",
+                    level=ValidationLevel.ERROR,
+                    passed=False,
+                    message=f"Remaining validation failed: {e}",
+                    suggested_fix="Check component-specific issues"
+                ))
+        
+        return all_results
+    
+    def _validate_remaining_components(self, model: nn.Module, **kwargs) -> List[ValidationResult]:
+        """Validate remaining components after architecture check."""
+        results = []
+        
+        # Input data validation
+        if 'input_data' in kwargs and kwargs['input_data'] is not None:
+            try:
+                input_results = self.base_validator.validators['input_data'].validate(
+                    kwargs['input_data'], model
+                )
+                results.extend(input_results)
+            except Exception as e:
+                results.append(ValidationResult(
+                    check_name="input_data_safe",
+                    level=ValidationLevel.WARNING,
+                    passed=False,
+                    message=f"Input validation failed: {e}",
+                    suggested_fix="Check input data format and compatibility"
+                ))
+        
+        # Hardware validation 
+        if 'hardware_target' in kwargs and kwargs['hardware_target'] is not None:
+            try:
+                hw_results = self.base_validator.validators['hardware'].validate(
+                    model, kwargs['hardware_target']
+                )
+                results.extend(hw_results)
+            except Exception as e:
+                results.append(ValidationResult(
+                    check_name="hardware_safe",
+                    level=ValidationLevel.WARNING,
+                    passed=False,
+                    message=f"Hardware validation failed: {e}",
+                    suggested_fix="Check hardware compatibility settings"
+                ))
+        
+        # Security validation (always run but with error handling)
+        try:
+            security_results = self.base_validator.validators['security'].validate(
+                model, kwargs.get('input_data')
+            )
+            results.extend(security_results)
+        except Exception as e:
+            results.append(ValidationResult(
+                check_name="security_safe",
+                level=ValidationLevel.WARNING,
+                passed=False,
+                message=f"Security validation failed: {e}",
+                suggested_fix="Check model security configuration"
+            ))
+        
+        return results
+
+
+# Enhanced utility functions for easy validation
 def validate_model_quick(model: nn.Module) -> bool:
     """Quick validation check - returns True if basic validation passes."""
     validator = ComprehensiveValidator()
