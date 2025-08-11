@@ -20,11 +20,12 @@ from abc import ABC, abstractmethod
 import pickle
 import hashlib
 import time
+import math
+from collections import defaultdict
 
-from .models import SpikingTransformer, SpikingViT, SpikingBERT
-from .benchmarking import NeuromorphicBenchmark, BenchmarkConfig, BenchmarkResult
-from .conversion import ConversionPipeline, ConversionConfig
-from .profiling import EnergyProfiler
+from .models import SpikingTransformer, SpikingAttention
+from .neurons import LifNeuron, SpikingLayer
+from .encoding import RateCoding, PoissonCoding
 
 
 @dataclass
@@ -48,6 +49,52 @@ class ExperimentConfig:
     parameter_space: Dict[str, List[Any]]
     baseline_config: Dict[str, Any]
     sample_size: int
+    num_runs: int = 5
+    statistical_test: str = 'ttest'
+    multiple_comparison_correction: str = 'bonferroni'
+    
+
+class AdaptiveSpikeThreshold(nn.Module):
+    """Adaptive threshold mechanism based on local activity patterns."""
+    
+    def __init__(self, initial_threshold: float = 1.0, adaptation_rate: float = 0.1,
+                 window_size: int = 100, min_threshold: float = 0.1, max_threshold: float = 5.0):
+        super().__init__()
+        self.adaptation_rate = adaptation_rate
+        self.window_size = window_size
+        self.min_threshold = min_threshold
+        self.max_threshold = max_threshold
+        
+        self.register_buffer('threshold', torch.tensor(initial_threshold))
+        self.register_buffer('activity_window', torch.zeros(window_size))
+        self.register_buffer('window_ptr', torch.tensor(0, dtype=torch.long))
+        
+    def forward(self, membrane_potential: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Forward pass with adaptive threshold."""
+        current_threshold = self.threshold.clone()
+        
+        # Compute spikes
+        spikes = (membrane_potential >= current_threshold).float()
+        
+        # Update activity statistics
+        if self.training:
+            activity_rate = spikes.mean().item()
+            
+            # Update circular buffer
+            self.activity_window[self.window_ptr] = activity_rate
+            self.window_ptr = (self.window_ptr + 1) % self.window_size
+            
+            # Adapt threshold based on average activity
+            avg_activity = self.activity_window.mean()
+            target_activity = 0.1  # Target 10% spike rate
+            
+            threshold_adjustment = self.adaptation_rate * (avg_activity - target_activity)
+            new_threshold = current_threshold - threshold_adjustment
+            
+            # Clamp to valid range
+            self.threshold = torch.clamp(new_threshold, self.min_threshold, self.max_threshold)
+        
+        return spikes, current_threshold
     random_seed: int = 42
     stratification_factors: List[str] = None
     blocking_factors: List[str] = None

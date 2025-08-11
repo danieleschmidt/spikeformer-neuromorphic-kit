@@ -66,7 +66,7 @@ class SpikingNeuron(nn.Module, ABC):
     @abstractmethod
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass through neuron."""
-        pass
+        raise NotImplementedError("Subclasses must implement forward method")
         
     def reset_state(self):
         """Reset neuron state between sequences."""

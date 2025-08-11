@@ -1,0 +1,38 @@
+{
+  "system_info": {
+    "cpu_count": 2,
+    "python_version": "3.12.3 (main, Jun 18 2025, 17:59:45) [GCC 13.3.0]",
+    "platform": "linux",
+    "memory_total_gb": "Unknown (psutil not available)",
+    "memory_available_gb": "Unknown (psutil not available)"
+  },
+  "File Operations": {
+    "file_read_speed_mb_per_sec": 46.494483947753906,
+    "total_read_time": 0.0002815723419189453,
+    "total_benchmark_time": 0.0003197193145751953
+  },
+  "String Operations": {
+    "string_concat_time": 0.0028519630432128906,
+    "string_format_time": 0.007745265960693359,
+    "string_parse_time": 0.0003509521484375,
+    "total_benchmark_time": 0.011192798614501953
+  },
+  "Data Structures": {
+    "list_operations_time": 0.07417464256286621,
+    "dict_operations_time": 0.05714559555053711,
+    "total_benchmark_time": 0.1363375186920166
+  },
+  "Computation": {
+    "math_operations_time": 0.3277733325958252,
+    "matrix_operations_time": 0.09553050994873047,
+    "total_benchmark_time": 0.423626184463501
+  },
+  "Memory Operations": {
+    "memory_alloc_time": 0.04567074775695801,
+    "memory_used_mb": "Unknown (psutil not available)",
+    "gc_time": 0.019968748092651367,
+    "total_benchmark_time": 0.06824684143066406
+  },
+  "overall_performance_score": 1.6686291694641113,
+  "total_benchmark_time": 0.6397230625152588
+}
