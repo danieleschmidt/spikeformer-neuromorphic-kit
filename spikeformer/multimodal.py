@@ -35,12 +35,12 @@ class ModalityEncoder(ABC):
     @abstractmethod
     def encode(self, input_data: torch.Tensor) -> torch.Tensor:
         """Encode input data to spike representation."""
-        pass
+        raise NotImplementedError("Subclasses must implement encode method")
     
     @abstractmethod
     def get_output_dim(self) -> int:
         """Get output dimension of encoded spikes."""
-        pass
+        raise NotImplementedError("Subclasses must implement get_output_dim method")
 
 
 class VisionSpikeEncoder(ModalityEncoder):

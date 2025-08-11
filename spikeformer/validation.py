@@ -51,7 +51,7 @@ class Validator(ABC):
     @abstractmethod
     def validate(self, *args, **kwargs) -> List[ValidationResult]:
         """Perform validation and return results."""
-        pass
+        raise NotImplementedError("Subclasses must implement validate method")
 
 
 class ModelArchitectureValidator(Validator):
