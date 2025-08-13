@@ -14,6 +14,8 @@ from abc import ABC, abstractmethod
 from .error_handling import safe_execute, ErrorSeverity, error_handler
 from .validation import Validator, ValidationResult, ValidationLevel
 from .neurons import LifNeuron, SpikingNeuron
+from .security import SecurityConfig, NeuromorphicSecurityManager
+from .monitoring import HealthMonitor, PerformanceProfiler
 
 
 @dataclass
@@ -537,3 +539,595 @@ class HealthMonitor:
                 total_params += param.numel()
         
         return active_params / total_params if total_params > 0 else 0.0
+
+
+# ==============================================================================
+# ADVANCED ROBUSTNESS SYSTEMS - GENERATION 2 ENHANCEMENTS
+# ==============================================================================
+
+class NeuromorphicFailsafeSystem:
+    """Advanced failsafe system for neuromorphic hardware deployment."""
+    
+    def __init__(self, model: nn.Module, backup_models: Optional[List[nn.Module]] = None):
+        self.primary_model = model
+        self.backup_models = backup_models or []
+        self.current_model_index = 0
+        self.failure_count = 0
+        self.max_failures = 3
+        self.health_monitor = HealthMonitor(model)
+        self.security_manager = NeuromorphicSecurityManager(SecurityConfig())
+        self.performance_profiler = PerformanceProfiler()
+        
+    @safe_execute("failsafe_inference", "critical")
+    def resilient_inference(self, inputs: torch.Tensor, 
+                          enable_fallback: bool = True) -> Tuple[torch.Tensor, Dict[str, Any]]:
+        """Perform inference with automatic failover capabilities."""
+        
+        execution_report = {
+            'primary_model_used': True,
+            'fallback_triggered': False,
+            'performance_metrics': {},
+            'security_checks': {},
+            'health_status': {}
+        }
+        
+        # Security pre-checks
+        security_result = self.security_manager.validate_input(inputs)
+        execution_report['security_checks'] = security_result
+        
+        if not security_result.get('valid', True):
+            raise SecurityError(f"Input validation failed: {security_result.get('issues', [])}")
+        
+        # Health check
+        health_status = self.health_monitor.check_health()
+        execution_report['health_status'] = health_status
+        
+        try:
+            # Primary model inference with performance monitoring
+            with self.performance_profiler.profile_context("primary_inference"):
+                current_model = self._get_current_model()
+                outputs = current_model(inputs)
+                
+                # Validate outputs
+                if self._validate_outputs(outputs):
+                    execution_report['performance_metrics'] = self.performance_profiler.get_latest_metrics()
+                    return outputs, execution_report
+                else:
+                    raise ValidationError("Output validation failed")
+                    
+        except Exception as e:
+            self.failure_count += 1
+            execution_report['primary_model_used'] = False
+            execution_report['failure_reason'] = str(e)
+            
+            if enable_fallback and self.failure_count < self.max_failures:
+                # Attempt fallback to backup model
+                fallback_result = self._attempt_fallback(inputs)
+                execution_report['fallback_triggered'] = True
+                execution_report['fallback_result'] = fallback_result
+                return fallback_result['outputs'], execution_report
+            else:
+                # Critical failure - trigger emergency protocols
+                emergency_result = self._emergency_response(inputs, e)
+                execution_report['emergency_response'] = emergency_result
+                return emergency_result['outputs'], execution_report
+    
+    def _get_current_model(self) -> nn.Module:
+        """Get the currently active model."""
+        if self.current_model_index == 0:
+            return self.primary_model
+        elif self.current_model_index - 1 < len(self.backup_models):
+            return self.backup_models[self.current_model_index - 1]
+        else:
+            raise RuntimeError("No available models")
+    
+    def _validate_outputs(self, outputs: torch.Tensor) -> bool:
+        """Validate model outputs for anomalies."""
+        try:
+            # Check for NaN or infinite values
+            if torch.isnan(outputs).any() or torch.isinf(outputs).any():
+                return False
+            
+            # Check output ranges
+            if outputs.abs().max() > 1e6:  # Unreasonably large values
+                return False
+            
+            # Check for zero gradients (if requires_grad)
+            if outputs.requires_grad and outputs.grad is not None:
+                if outputs.grad.abs().max() < 1e-10:
+                    return False
+            
+            return True
+            
+        except Exception:
+            return False
+    
+    def _attempt_fallback(self, inputs: torch.Tensor) -> Dict[str, Any]:
+        """Attempt fallback to backup model."""
+        fallback_result = {
+            'success': False,
+            'model_used': None,
+            'outputs': None,
+            'performance': {}
+        }
+        
+        for i, backup_model in enumerate(self.backup_models):
+            try:
+                self.current_model_index = i + 1
+                
+                with self.performance_profiler.profile_context(f"backup_inference_{i}"):
+                    outputs = backup_model(inputs)
+                    
+                    if self._validate_outputs(outputs):
+                        fallback_result.update({
+                            'success': True,
+                            'model_used': f'backup_{i}',
+                            'outputs': outputs,
+                            'performance': self.performance_profiler.get_latest_metrics()
+                        })
+                        return fallback_result
+                        
+            except Exception as e:
+                continue
+        
+        raise RuntimeError("All backup models failed")
+    
+    def _emergency_response(self, inputs: torch.Tensor, original_error: Exception) -> Dict[str, Any]:
+        """Emergency response when all models fail."""
+        emergency_result = {
+            'mode': 'emergency',
+            'original_error': str(original_error),
+            'outputs': None,
+            'safe_outputs_generated': False
+        }
+        
+        try:
+            # Generate safe default outputs
+            batch_size = inputs.shape[0]
+            output_shape = self._infer_output_shape(inputs)
+            
+            # Create safe neutral outputs (all zeros or uniform distribution)
+            safe_outputs = torch.zeros(batch_size, *output_shape)
+            emergency_result['outputs'] = safe_outputs
+            emergency_result['safe_outputs_generated'] = True
+            
+        except Exception as e:
+            emergency_result['emergency_error'] = str(e)
+            # Final fallback - return minimal tensor
+            emergency_result['outputs'] = torch.zeros(1, 1)
+        
+        return emergency_result
+    
+    def _infer_output_shape(self, inputs: torch.Tensor) -> Tuple[int, ...]:
+        """Infer expected output shape from input."""
+        # This is model-specific and would need to be configured
+        # For now, assume classification output
+        return (10,)  # 10 classes
+
+
+class AdaptiveSecurityLayer:
+    """Adaptive security layer that learns from attack patterns."""
+    
+    def __init__(self, model: nn.Module, learning_rate: float = 0.01):
+        self.model = model
+        self.learning_rate = learning_rate
+        self.attack_history = []
+        self.defense_strategies = {}
+        self.threat_level = 0.0
+        
+    def adaptive_defense(self, inputs: torch.Tensor, 
+                        attack_indicators: Optional[Dict[str, float]] = None) -> torch.Tensor:
+        """Apply adaptive defenses based on threat assessment."""
+        
+        # Threat assessment
+        current_threat = self._assess_threat_level(inputs, attack_indicators)
+        self.threat_level = 0.9 * self.threat_level + 0.1 * current_threat
+        
+        # Apply defenses based on threat level
+        if self.threat_level > 0.7:
+            # High threat - apply strong defenses
+            defended_inputs = self._apply_strong_defense(inputs)
+        elif self.threat_level > 0.3:
+            # Medium threat - apply moderate defenses
+            defended_inputs = self._apply_moderate_defense(inputs)
+        else:
+            # Low threat - minimal defenses
+            defended_inputs = self._apply_light_defense(inputs)
+        
+        return defended_inputs
+    
+    def _assess_threat_level(self, inputs: torch.Tensor, 
+                           indicators: Optional[Dict[str, float]]) -> float:
+        """Assess current threat level based on inputs and indicators."""
+        threat_score = 0.0
+        
+        # Statistical anomaly detection
+        input_stats = {
+            'mean': inputs.mean().item(),
+            'std': inputs.std().item(), 
+            'min': inputs.min().item(),
+            'max': inputs.max().item()
+        }
+        
+        # Compare with expected ranges (simplified)
+        if abs(input_stats['mean']) > 2.0:
+            threat_score += 0.3
+        if input_stats['std'] > 5.0:
+            threat_score += 0.2
+        if input_stats['max'] - input_stats['min'] > 20.0:
+            threat_score += 0.2
+        
+        # External indicators
+        if indicators:
+            threat_score += indicators.get('adversarial_score', 0.0) * 0.4
+            threat_score += indicators.get('anomaly_score', 0.0) * 0.3
+        
+        return min(threat_score, 1.0)
+    
+    def _apply_strong_defense(self, inputs: torch.Tensor) -> torch.Tensor:
+        """Apply strong defensive measures."""
+        # Gaussian noise injection
+        noise_level = 0.1
+        noise = torch.randn_like(inputs) * noise_level
+        defended = inputs + noise
+        
+        # Input smoothing
+        defended = F.avg_pool2d(defended.unsqueeze(1), kernel_size=3, stride=1, padding=1).squeeze(1)
+        
+        # Gradient masking (if requires_grad)
+        if defended.requires_grad:
+            defended = defended + torch.randn_like(defended) * 0.01
+        
+        return defended
+    
+    def _apply_moderate_defense(self, inputs: torch.Tensor) -> torch.Tensor:
+        """Apply moderate defensive measures."""
+        # Light noise injection
+        noise = torch.randn_like(inputs) * 0.05
+        defended = inputs + noise
+        
+        # Slight input perturbation
+        defended = defended + torch.randn_like(defended) * 0.02
+        
+        return defended
+    
+    def _apply_light_defense(self, inputs: torch.Tensor) -> torch.Tensor:
+        """Apply light defensive measures."""
+        # Minimal noise injection for robustness
+        noise = torch.randn_like(inputs) * 0.01
+        return inputs + noise
+    
+    def learn_from_attack(self, attack_pattern: Dict[str, Any]):
+        """Learn from observed attack patterns to improve defenses."""
+        self.attack_history.append(attack_pattern)
+        
+        # Update defense strategies based on attack patterns
+        attack_type = attack_pattern.get('type', 'unknown')
+        
+        if attack_type not in self.defense_strategies:
+            self.defense_strategies[attack_type] = {
+                'frequency': 0,
+                'severity': 0.0,
+                'countermeasures': []
+            }
+        
+        strategy = self.defense_strategies[attack_type]
+        strategy['frequency'] += 1
+        strategy['severity'] = max(strategy['severity'], attack_pattern.get('severity', 0.0))
+        
+        # Adaptive learning of countermeasures
+        if attack_pattern.get('severity', 0.0) > 0.5:
+            new_countermeasure = self._derive_countermeasure(attack_pattern)
+            if new_countermeasure not in strategy['countermeasures']:
+                strategy['countermeasures'].append(new_countermeasure)
+
+
+class SelfHealingNeuromorphicSystem:
+    """Self-healing system that can recover from hardware and software failures."""
+    
+    def __init__(self, model: nn.Module):
+        self.model = model
+        self.baseline_weights = self._save_baseline_weights()
+        self.performance_baseline = None
+        self.healing_strategies = {
+            'weight_corruption': self._heal_weight_corruption,
+            'dead_neurons': self._heal_dead_neurons,
+            'gradient_explosion': self._heal_gradient_explosion,
+            'memory_leak': self._heal_memory_leak
+        }
+        
+    def _save_baseline_weights(self) -> Dict[str, torch.Tensor]:
+        """Save baseline weights for recovery."""
+        baseline = {}
+        for name, param in self.model.named_parameters():
+            baseline[name] = param.data.clone()
+        return baseline
+    
+    def diagnose_and_heal(self) -> Dict[str, Any]:
+        """Diagnose issues and apply appropriate healing strategies."""
+        
+        diagnosis = self._diagnose_system_health()
+        healing_report = {
+            'diagnosis': diagnosis,
+            'healing_actions': [],
+            'success': True
+        }
+        
+        for issue_type, severity in diagnosis['issues'].items():
+            if severity > 0.5:  # Significant issue
+                try:
+                    healing_strategy = self.healing_strategies.get(issue_type)
+                    if healing_strategy:
+                        result = healing_strategy(severity)
+                        healing_report['healing_actions'].append({
+                            'issue': issue_type,
+                            'severity': severity,
+                            'action': result,
+                            'success': result.get('success', False)
+                        })
+                except Exception as e:
+                    healing_report['healing_actions'].append({
+                        'issue': issue_type,
+                        'severity': severity,
+                        'error': str(e),
+                        'success': False
+                    })
+                    healing_report['success'] = False
+        
+        return healing_report
+    
+    def _diagnose_system_health(self) -> Dict[str, Any]:
+        """Diagnose system health issues."""
+        diagnosis = {
+            'overall_health': 1.0,
+            'issues': {},
+            'metrics': {}
+        }
+        
+        # Check for weight corruption
+        weight_corruption = self._check_weight_corruption()
+        diagnosis['issues']['weight_corruption'] = weight_corruption
+        
+        # Check for dead neurons
+        dead_neuron_ratio = self._check_dead_neurons()
+        diagnosis['issues']['dead_neurons'] = dead_neuron_ratio
+        
+        # Check for gradient issues
+        gradient_health = self._check_gradient_health()
+        diagnosis['issues']['gradient_explosion'] = gradient_health
+        
+        # Check memory usage
+        memory_health = self._check_memory_health()
+        diagnosis['issues']['memory_leak'] = memory_health
+        
+        # Calculate overall health
+        issue_scores = list(diagnosis['issues'].values())
+        diagnosis['overall_health'] = 1.0 - (sum(issue_scores) / len(issue_scores))
+        
+        return diagnosis
+    
+    def _check_weight_corruption(self) -> float:
+        """Check for weight corruption compared to baseline."""
+        corruption_score = 0.0
+        total_params = 0
+        
+        for name, param in self.model.named_parameters():
+            if name in self.baseline_weights:
+                baseline = self.baseline_weights[name]
+                
+                # Check for NaN or infinite values
+                if torch.isnan(param).any() or torch.isinf(param).any():
+                    corruption_score += param.numel()
+                
+                # Check for extreme deviations
+                deviation = (param - baseline).abs()
+                extreme_deviations = (deviation > baseline.abs() * 10).sum()
+                corruption_score += extreme_deviations.item()
+                
+                total_params += param.numel()
+        
+        return corruption_score / max(total_params, 1)
+    
+    def _check_dead_neurons(self) -> float:
+        """Check for dead neurons (always zero output)."""
+        dead_neurons = 0
+        total_neurons = 0
+        
+        for module in self.model.modules():
+            if isinstance(module, nn.Linear):
+                # Check for zero weights
+                zero_weights = (module.weight.abs() < 1e-8).all(dim=1).sum()
+                dead_neurons += zero_weights.item()
+                total_neurons += module.weight.shape[0]
+        
+        return dead_neurons / max(total_neurons, 1)
+    
+    def _check_gradient_health(self) -> float:
+        """Check for gradient explosion or vanishing."""
+        gradient_norms = []
+        
+        for param in self.model.parameters():
+            if param.grad is not None:
+                gradient_norms.append(param.grad.norm().item())
+        
+        if not gradient_norms:
+            return 0.0
+        
+        max_norm = max(gradient_norms)
+        min_norm = min(gradient_norms)
+        
+        # Score based on extreme gradients
+        explosion_score = min(max_norm / 10.0, 1.0)  # >10 is considered explosion
+        vanishing_score = max(0.0, (1e-8 - min_norm) / 1e-8)  # <1e-8 is vanishing
+        
+        return max(explosion_score, vanishing_score)
+    
+    def _check_memory_health(self) -> float:
+        """Check for memory leaks or excessive usage."""
+        try:
+            import psutil
+            import gc
+            
+            # Force garbage collection
+            gc.collect()
+            
+            # Check memory usage
+            process = psutil.Process()
+            memory_info = process.memory_info()
+            memory_percent = process.memory_percent()
+            
+            # Score based on memory usage (>80% is concerning)
+            return max(0.0, (memory_percent - 80) / 20.0)
+            
+        except ImportError:
+            return 0.0  # Can't check without psutil
+    
+    def _heal_weight_corruption(self, severity: float) -> Dict[str, Any]:
+        """Heal weight corruption by restoring from baseline."""
+        restoration_count = 0
+        
+        for name, param in self.model.named_parameters():
+            if name in self.baseline_weights:
+                baseline = self.baseline_weights[name]
+                
+                # Detect corrupted weights
+                corrupted_mask = torch.isnan(param) | torch.isinf(param)
+                extreme_deviation = (param - baseline).abs() > baseline.abs() * 10
+                
+                corruption_mask = corrupted_mask | extreme_deviation
+                
+                if corruption_mask.any():
+                    # Restore corrupted weights
+                    param.data[corruption_mask] = baseline[corruption_mask]
+                    restoration_count += corruption_mask.sum().item()
+        
+        return {
+            'success': True,
+            'weights_restored': restoration_count,
+            'method': 'baseline_restoration'
+        }
+    
+    def _heal_dead_neurons(self, severity: float) -> Dict[str, Any]:
+        """Heal dead neurons by reinitializing weights."""
+        reinitialized_neurons = 0
+        
+        for name, module in self.model.named_modules():
+            if isinstance(module, nn.Linear):
+                # Find dead neurons (zero weights)
+                dead_mask = (module.weight.abs() < 1e-8).all(dim=1)
+                
+                if dead_mask.any():
+                    # Reinitialize dead neurons
+                    dead_indices = dead_mask.nonzero().squeeze()
+                    if dead_indices.numel() > 0:
+                        nn.init.xavier_normal_(module.weight[dead_indices])
+                        reinitialized_neurons += dead_indices.numel()
+        
+        return {
+            'success': True,
+            'neurons_reinitialized': reinitialized_neurons,
+            'method': 'xavier_reinitialization'
+        }
+    
+    def _heal_gradient_explosion(self, severity: float) -> Dict[str, Any]:
+        """Heal gradient explosion by clipping."""
+        clipped_params = 0
+        
+        for param in self.model.parameters():
+            if param.grad is not None:
+                grad_norm = param.grad.norm()
+                if grad_norm > 10.0:  # Explosion threshold
+                    # Clip gradients
+                    param.grad.data = param.grad.data / grad_norm * 1.0
+                    clipped_params += 1
+        
+        return {
+            'success': True,
+            'parameters_clipped': clipped_params,
+            'method': 'gradient_clipping'
+        }
+    
+    def _heal_memory_leak(self, severity: float) -> Dict[str, Any]:
+        """Heal memory leaks by forcing cleanup."""
+        import gc
+        
+        # Force garbage collection
+        collected = gc.collect()
+        
+        # Clear cache if using CUDA
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        
+        return {
+            'success': True,
+            'objects_collected': collected,
+            'method': 'garbage_collection_and_cache_clear'
+        }
+
+
+class SecurityError(Exception):
+    """Custom security exception."""
+    pass
+
+
+class ValidationError(Exception):
+    """Custom validation exception."""
+    pass
+
+
+# Example usage and testing
+if __name__ == "__main__":
+    print("🛡️ Advanced Neuromorphic Robustness Suite")
+    print("=" * 60)
+    
+    # Create test model
+    test_model = nn.Sequential(
+        nn.Linear(784, 256),
+        nn.ReLU(),
+        nn.Linear(256, 128),
+        nn.ReLU(),
+        nn.Linear(128, 10)
+    )
+    
+    # Test failsafe system
+    print("\n1. Testing Neuromorphic Failsafe System:")
+    failsafe = NeuromorphicFailsafeSystem(test_model)
+    test_input = torch.randn(32, 784)
+    
+    try:
+        outputs, report = failsafe.resilient_inference(test_input)
+        print(f"   ✅ Inference successful: {outputs.shape}")
+        print(f"   📊 Primary model used: {report['primary_model_used']}")
+        print(f"   🔒 Security checks passed: {report['security_checks'].get('valid', True)}")
+    except Exception as e:
+        print(f"   ❌ Failsafe test failed: {e}")
+    
+    # Test adaptive security
+    print("\n2. Testing Adaptive Security Layer:")
+    security_layer = AdaptiveSecurityLayer(test_model)
+    
+    # Simulate different threat levels
+    for threat_name, threat_input in [
+        ("Normal", torch.randn(32, 784) * 0.5),
+        ("Suspicious", torch.randn(32, 784) * 2.0),
+        ("Adversarial", torch.randn(32, 784) * 5.0)
+    ]:
+        defended_input = security_layer.adaptive_defense(threat_input)
+        print(f"   🔍 {threat_name} input: threat level {security_layer.threat_level:.3f}")
+    
+    # Test self-healing system
+    print("\n3. Testing Self-Healing System:")
+    healing_system = SelfHealingNeuromorphicSystem(test_model)
+    
+    # Simulate some corruption
+    with torch.no_grad():
+        for param in test_model.parameters():
+            param[0] = float('nan')  # Introduce corruption
+            break
+    
+    healing_report = healing_system.diagnose_and_heal()
+    print(f"   🔧 Overall health: {healing_report['diagnosis']['overall_health']:.3f}")
+    print(f"   🩹 Healing actions taken: {len(healing_report['healing_actions'])}")
+    print(f"   ✅ Healing successful: {healing_report['success']}")
+    
+    print("\n🛡️ Advanced Robustness Suite Complete!")

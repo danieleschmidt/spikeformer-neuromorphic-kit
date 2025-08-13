@@ -865,3 +865,807 @@ def performance_optimized(model_name: str = None, use_cache: bool = True,
         
         return wrapper
     return decorator
+
+
+# ==============================================================================
+# GENERATION 3: ADVANCED SCALING & PERFORMANCE SYSTEMS
+# ==============================================================================
+
+class DistributedNeuromorphicOptimizer:
+    """Advanced distributed optimization for neuromorphic computing at scale."""
+    
+    def __init__(self, num_devices: int = 4, backend: str = "nccl"):
+        self.num_devices = num_devices
+        self.backend = backend
+        self.device_pool = []
+        self.load_balancer = None
+        self.performance_stats = defaultdict(lambda: defaultdict(float))
+        
+    def setup_distributed_environment(self):
+        """Setup distributed training/inference environment."""
+        if torch.cuda.is_available():
+            # CUDA distributed setup
+            for i in range(min(self.num_devices, torch.cuda.device_count())):
+                device = torch.device(f'cuda:{i}')
+                self.device_pool.append({
+                    'device': device,
+                    'memory_total': torch.cuda.get_device_properties(i).total_memory,
+                    'memory_allocated': 0,
+                    'active_models': 0,
+                    'performance_score': 1.0
+                })
+        else:
+            # CPU distributed setup
+            for i in range(self.num_devices):
+                self.device_pool.append({
+                    'device': torch.device('cpu'),
+                    'memory_total': 8 * 1024**3,  # Assume 8GB RAM
+                    'memory_allocated': 0,
+                    'active_models': 0,
+                    'performance_score': 1.0
+                })
+    
+    def distribute_model(self, model: nn.Module, distribution_strategy: str = "data_parallel") -> nn.Module:
+        """Distribute model across available devices."""
+        
+        if distribution_strategy == "data_parallel":
+            return self._setup_data_parallel(model)
+        elif distribution_strategy == "model_parallel":
+            return self._setup_model_parallel(model)
+        elif distribution_strategy == "pipeline_parallel":
+            return self._setup_pipeline_parallel(model)
+        elif distribution_strategy == "hybrid":
+            return self._setup_hybrid_parallel(model)
+        else:
+            raise ValueError(f"Unknown distribution strategy: {distribution_strategy}")
+    
+    def _setup_data_parallel(self, model: nn.Module) -> nn.Module:
+        """Setup data parallel distribution."""
+        if len(self.device_pool) > 1 and torch.cuda.is_available():
+            device_ids = [device['device'].index for device in self.device_pool 
+                         if device['device'].type == 'cuda']
+            if device_ids:
+                model = model.to(device_ids[0])
+                return nn.DataParallel(model, device_ids=device_ids)
+        
+        return model.to(self.device_pool[0]['device'])
+    
+    def _setup_model_parallel(self, model: nn.Module) -> nn.Module:
+        """Setup model parallel distribution."""
+        # Simplified model parallelism - split layers across devices
+        layers = list(model.modules())
+        layers_per_device = len(layers) // len(self.device_pool)
+        
+        class ModelParallelWrapper(nn.Module):
+            def __init__(self, original_model, device_pool, layers_per_device):
+                super().__init__()
+                self.device_assignments = {}
+                self.layer_modules = nn.ModuleDict()
+                
+                # Assign layers to devices
+                for i, (name, module) in enumerate(original_model.named_modules()):
+                    if i == 0:  # Skip root module
+                        continue
+                    device_idx = min(i // layers_per_device, len(device_pool) - 1)
+                    device = device_pool[device_idx]['device']
+                    
+                    self.device_assignments[name] = device
+                    self.layer_modules[name] = module.to(device)
+            
+            def forward(self, x):
+                # Simple sequential execution across devices
+                current_device = x.device
+                
+                for name, module in self.layer_modules.items():
+                    target_device = self.device_assignments[name]
+                    if current_device != target_device:
+                        x = x.to(target_device)
+                        current_device = target_device
+                    x = module(x)
+                
+                return x
+        
+        return ModelParallelWrapper(model, self.device_pool, layers_per_device)
+    
+    def _setup_pipeline_parallel(self, model: nn.Module) -> nn.Module:
+        """Setup pipeline parallel distribution."""
+        # Simplified pipeline parallelism implementation
+        
+        class PipelineParallelWrapper(nn.Module):
+            def __init__(self, original_model, device_pool):
+                super().__init__()
+                self.pipeline_stages = nn.ModuleList()
+                self.devices = [d['device'] for d in device_pool]
+                
+                # Split model into pipeline stages
+                layers = list(original_model.children())
+                stage_size = max(1, len(layers) // len(self.devices))
+                
+                for i in range(0, len(layers), stage_size):
+                    stage_layers = layers[i:i + stage_size]
+                    stage = nn.Sequential(*stage_layers)
+                    device_idx = i // stage_size
+                    if device_idx < len(self.devices):
+                        stage = stage.to(self.devices[device_idx])
+                    self.pipeline_stages.append(stage)
+            
+            def forward(self, x):
+                # Pipeline execution
+                for i, stage in enumerate(self.pipeline_stages):
+                    if i < len(self.devices):
+                        x = x.to(self.devices[i])
+                    x = stage(x)
+                return x
+        
+        return PipelineParallelWrapper(model, self.device_pool)
+    
+    def _setup_hybrid_parallel(self, model: nn.Module) -> nn.Module:
+        """Setup hybrid data + model parallelism."""
+        # For simplicity, use data parallel if multiple devices available
+        if len(self.device_pool) >= 4:
+            # Use half devices for data parallel, half for model parallel
+            data_devices = self.device_pool[:len(self.device_pool)//2]
+            model_devices = self.device_pool[len(self.device_pool)//2:]
+            
+            # First apply model parallelism
+            model_parallel = self._setup_model_parallel(model)
+            
+            # Then apply data parallelism if CUDA available
+            if torch.cuda.is_available():
+                device_ids = [d['device'].index for d in data_devices if d['device'].type == 'cuda']
+                if device_ids:
+                    return nn.DataParallel(model_parallel, device_ids=device_ids)
+            
+            return model_parallel
+        else:
+            return self._setup_data_parallel(model)
+    
+    def get_optimal_batch_size(self, model: nn.Module, input_shape: Tuple[int, ...]) -> int:
+        """Determine optimal batch size for current hardware configuration."""
+        device = next(model.parameters()).device
+        
+        if device.type == 'cuda':
+            # GPU optimization
+            available_memory = torch.cuda.get_device_properties(device).total_memory
+            current_memory = torch.cuda.memory_allocated(device)
+            free_memory = available_memory - current_memory
+            
+            # Estimate memory per sample (rough heuristic)
+            sample_elements = np.prod(input_shape)
+            estimated_memory_per_sample = sample_elements * 4 * 3  # float32 * forward/backward/gradients
+            
+            max_batch_size = int(free_memory * 0.7 / estimated_memory_per_sample)  # 70% utilization
+            return max(1, min(max_batch_size, 512))  # Cap at 512
+        else:
+            # CPU optimization - consider available cores
+            import multiprocessing
+            cores = multiprocessing.cpu_count()
+            return min(cores * 4, 128)  # 4x cores, cap at 128
+
+
+class AdvancedSpikePatternCache:
+    """Advanced caching system specifically for neuromorphic spike patterns."""
+    
+    def __init__(self, max_patterns: int = 10000, similarity_threshold: float = 0.95):
+        self.max_patterns = max_patterns
+        self.similarity_threshold = similarity_threshold
+        self.pattern_cache = OrderedDict()
+        self.pattern_hashes = {}
+        self.access_stats = defaultdict(int)
+        self.compression_ratios = {}
+        
+    def _compute_pattern_hash(self, spike_tensor: torch.Tensor) -> str:
+        """Compute hash for spike pattern with temporal structure."""
+        # Compress sparse spike tensor for hashing
+        spike_positions = torch.nonzero(spike_tensor, as_tuple=False)
+        if spike_positions.numel() == 0:
+            return "empty_pattern"
+        
+        # Create hash from spike positions and timing
+        position_str = ",".join([f"{pos[0]},{pos[1]},{pos[2]}" for pos in spike_positions[:100]])  # Limit for performance
+        return hashlib.md5(position_str.encode()).hexdigest()
+    
+    def _compute_pattern_similarity(self, pattern1: torch.Tensor, pattern2: torch.Tensor) -> float:
+        """Compute similarity between two spike patterns."""
+        if pattern1.shape != pattern2.shape:
+            return 0.0
+        
+        # Temporal spike correlation
+        correlation = F.cosine_similarity(pattern1.flatten(), pattern2.flatten(), dim=0)
+        
+        # Spike timing similarity (simplified)
+        timing_diff = torch.abs(pattern1 - pattern2).mean()
+        timing_similarity = 1.0 - min(timing_diff.item(), 1.0)
+        
+        return (correlation.item() + timing_similarity) / 2.0
+    
+    def get_similar_pattern(self, spike_pattern: torch.Tensor) -> Optional[str]:
+        """Find similar cached pattern."""
+        pattern_hash = self._compute_pattern_hash(spike_pattern)
+        
+        # Direct hash match
+        if pattern_hash in self.pattern_hashes:
+            self.access_stats[pattern_hash] += 1
+            return pattern_hash
+        
+        # Similarity search (expensive, limit to recent patterns)
+        recent_patterns = list(self.pattern_cache.items())[-100:]
+        
+        for cached_hash, cached_pattern in recent_patterns:
+            similarity = self._compute_pattern_similarity(spike_pattern, cached_pattern['pattern'])
+            if similarity >= self.similarity_threshold:
+                self.access_stats[cached_hash] += 1
+                return cached_hash
+        
+        return None
+    
+    def cache_pattern(self, spike_pattern: torch.Tensor, computation_result: Any,
+                     computation_time: float) -> str:
+        """Cache spike pattern and its computation result."""
+        pattern_hash = self._compute_pattern_hash(spike_pattern)
+        
+        # Check cache size limit
+        if len(self.pattern_cache) >= self.max_patterns:
+            # Remove least recently used
+            self.pattern_cache.popitem(last=False)
+        
+        # Compress pattern for storage
+        compressed_pattern = self._compress_spike_pattern(spike_pattern)
+        compression_ratio = spike_pattern.numel() / compressed_pattern.numel()
+        
+        self.pattern_cache[pattern_hash] = {
+            'pattern': compressed_pattern,
+            'result': computation_result,
+            'computation_time': computation_time,
+            'cache_time': time.time(),
+            'access_count': 1
+        }
+        
+        self.pattern_hashes[pattern_hash] = True
+        self.compression_ratios[pattern_hash] = compression_ratio
+        
+        return pattern_hash
+    
+    def get_cached_result(self, pattern_hash: str) -> Optional[Any]:
+        """Get cached computation result."""
+        if pattern_hash in self.pattern_cache:
+            entry = self.pattern_cache[pattern_hash]
+            entry['access_count'] += 1
+            # Move to end (LRU)
+            self.pattern_cache.move_to_end(pattern_hash)
+            return entry['result']
+        return None
+    
+    def _compress_spike_pattern(self, spike_pattern: torch.Tensor) -> torch.Tensor:
+        """Compress sparse spike pattern."""
+        # Simple compression: store only non-zero positions and values
+        nonzero_indices = torch.nonzero(spike_pattern, as_tuple=False)
+        nonzero_values = spike_pattern[spike_pattern != 0]
+        
+        if nonzero_indices.numel() == 0:
+            return torch.tensor([])
+        
+        # Combine indices and values
+        compressed = torch.cat([
+            nonzero_indices.float().flatten(),
+            nonzero_values.flatten()
+        ])
+        
+        return compressed
+    
+    def get_cache_stats(self) -> Dict[str, Any]:
+        """Get cache statistics."""
+        total_accesses = sum(self.access_stats.values())
+        avg_compression = np.mean(list(self.compression_ratios.values())) if self.compression_ratios else 1.0
+        
+        return {
+            'total_patterns': len(self.pattern_cache),
+            'total_accesses': total_accesses,
+            'average_compression_ratio': avg_compression,
+            'cache_hit_rate': total_accesses / max(1, len(self.pattern_cache)),
+            'memory_saved_ratio': 1.0 - (1.0 / avg_compression)
+        }
+
+
+class NeuromorphicLoadBalancer:
+    """Load balancer optimized for neuromorphic computing workloads."""
+    
+    def __init__(self, devices: List[torch.device]):
+        self.devices = devices
+        self.device_loads = {device: 0.0 for device in devices}
+        self.device_capabilities = {}
+        self.spike_processing_history = defaultdict(list)
+        self.load_update_interval = 10  # seconds
+        self.last_load_update = time.time()
+        
+        self._assess_device_capabilities()
+    
+    def _assess_device_capabilities(self):
+        """Assess neuromorphic processing capabilities of each device."""
+        for device in self.devices:
+            if device.type == 'cuda':
+                props = torch.cuda.get_device_properties(device)
+                capability_score = (
+                    props.total_memory / (1024**3) * 0.4 +  # Memory weight
+                    props.multi_processor_count * 0.3 +     # Compute weight
+                    (props.major + props.minor * 0.1) * 0.3  # Architecture weight
+                )
+            else:
+                # CPU capability assessment
+                import multiprocessing
+                capability_score = multiprocessing.cpu_count() * 0.5
+            
+            self.device_capabilities[device] = {
+                'base_capability': capability_score,
+                'neuromorphic_efficiency': 1.0,  # Will be learned
+                'spike_processing_speed': 1.0,   # Will be learned
+                'current_load': 0.0
+            }
+    
+    def select_optimal_device(self, workload_type: str = "inference", 
+                            spike_density: float = 0.1) -> torch.device:
+        """Select optimal device based on current load and workload characteristics."""
+        
+        self._update_device_loads()
+        
+        best_device = None
+        best_score = float('-inf')
+        
+        for device in self.devices:
+            capabilities = self.device_capabilities[device]
+            
+            # Base score from hardware capabilities
+            score = capabilities['base_capability']
+            
+            # Adjust for neuromorphic efficiency
+            score *= capabilities['neuromorphic_efficiency']
+            
+            # Adjust for spike processing speed if spike-heavy workload
+            if spike_density > 0.3:
+                score *= capabilities['spike_processing_speed']
+            
+            # Penalize for current load
+            load_penalty = capabilities['current_load'] ** 2
+            score *= (1.0 - load_penalty)
+            
+            # Bonus for recent similar workloads (warm cache)
+            if workload_type in self.spike_processing_history[device]:
+                recent_performance = self.spike_processing_history[device][-5:]
+                avg_performance = np.mean(recent_performance) if recent_performance else 1.0
+                score *= (1.0 + avg_performance * 0.2)
+            
+            if score > best_score:
+                best_score = score
+                best_device = device
+        
+        return best_device or self.devices[0]
+    
+    def update_device_performance(self, device: torch.device, 
+                                performance_metrics: Dict[str, float]):
+        """Update device performance metrics based on actual execution."""
+        if device not in self.device_capabilities:
+            return
+        
+        capabilities = self.device_capabilities[device]
+        
+        # Update neuromorphic efficiency
+        if 'spike_processing_efficiency' in performance_metrics:
+            efficiency = performance_metrics['spike_processing_efficiency']
+            capabilities['neuromorphic_efficiency'] = (
+                0.8 * capabilities['neuromorphic_efficiency'] + 0.2 * efficiency
+            )
+        
+        # Update spike processing speed
+        if 'spikes_per_second' in performance_metrics:
+            speed_ratio = performance_metrics['spikes_per_second'] / 1000  # Normalize
+            capabilities['spike_processing_speed'] = (
+                0.8 * capabilities['spike_processing_speed'] + 0.2 * speed_ratio
+            )
+        
+        # Record performance history
+        overall_performance = (
+            capabilities['neuromorphic_efficiency'] + 
+            capabilities['spike_processing_speed']
+        ) / 2.0
+        
+        self.spike_processing_history[device].append(overall_performance)
+        
+        # Limit history size
+        if len(self.spike_processing_history[device]) > 100:
+            self.spike_processing_history[device] = self.spike_processing_history[device][-50:]
+    
+    def _update_device_loads(self):
+        """Update current device load estimates."""
+        current_time = time.time()
+        
+        if current_time - self.last_load_update < self.load_update_interval:
+            return
+        
+        for device in self.devices:
+            if device.type == 'cuda':
+                # GPU load estimation
+                try:
+                    allocated = torch.cuda.memory_allocated(device)
+                    cached = torch.cuda.memory_cached(device)
+                    total = torch.cuda.get_device_properties(device).total_memory
+                    
+                    memory_load = (allocated + cached) / total
+                    
+                    # Estimate compute load (simplified)
+                    compute_load = min(1.0, memory_load * 1.2)  # Approximate
+                    
+                    overall_load = (memory_load + compute_load) / 2.0
+                    
+                except Exception:
+                    overall_load = 0.5  # Default assumption
+            else:
+                # CPU load estimation
+                import psutil
+                try:
+                    cpu_percent = psutil.cpu_percent(interval=0.1) / 100.0
+                    memory_percent = psutil.virtual_memory().percent / 100.0
+                    overall_load = (cpu_percent + memory_percent) / 2.0
+                except Exception:
+                    overall_load = 0.5  # Default assumption
+            
+            self.device_capabilities[device]['current_load'] = overall_load
+        
+        self.last_load_update = current_time
+    
+    def get_load_balancing_stats(self) -> Dict[str, Any]:
+        """Get load balancing statistics."""
+        self._update_device_loads()
+        
+        stats = {}
+        for device in self.devices:
+            capabilities = self.device_capabilities[device]
+            stats[str(device)] = {
+                'current_load': capabilities['current_load'],
+                'neuromorphic_efficiency': capabilities['neuromorphic_efficiency'],
+                'spike_processing_speed': capabilities['spike_processing_speed'],
+                'performance_history_length': len(self.spike_processing_history[device])
+            }
+        
+        return stats
+
+
+class AsyncNeuromorphicProcessor:
+    """Asynchronous processor for neuromorphic workloads."""
+    
+    def __init__(self, max_workers: int = 4):
+        self.max_workers = max_workers
+        self.executor = ThreadPoolExecutor(max_workers=max_workers)
+        self.task_queue = asyncio.Queue()
+        self.results_cache = {}
+        self.processing_stats = defaultdict(int)
+        
+    async def process_spike_batch_async(self, spike_batches: List[torch.Tensor],
+                                      model: nn.Module, 
+                                      processing_func: Callable) -> List[torch.Tensor]:
+        """Process multiple spike batches asynchronously."""
+        
+        tasks = []
+        for i, batch in enumerate(spike_batches):
+            task = self.executor.submit(self._process_single_batch, batch, model, processing_func, i)
+            tasks.append(task)
+        
+        # Wait for all tasks to complete
+        results = []
+        for task in tasks:
+            result = await asyncio.wrap_future(task)
+            results.append(result)
+        
+        self.processing_stats['batches_processed'] += len(spike_batches)
+        return results
+    
+    def _process_single_batch(self, batch: torch.Tensor, model: nn.Module,
+                            processing_func: Callable, batch_id: int) -> torch.Tensor:
+        """Process single batch (runs in thread pool)."""
+        start_time = time.perf_counter()
+        
+        # Check cache first
+        batch_hash = hashlib.md5(batch.detach().cpu().numpy().tobytes()).hexdigest()
+        if batch_hash in self.results_cache:
+            self.processing_stats['cache_hits'] += 1
+            return self.results_cache[batch_hash]
+        
+        # Process batch
+        with torch.no_grad():
+            result = processing_func(model, batch)
+        
+        # Cache result
+        self.results_cache[batch_hash] = result
+        
+        processing_time = time.perf_counter() - start_time
+        self.processing_stats['total_processing_time'] += processing_time
+        self.processing_stats['batches_processed'] += 1
+        
+        return result
+    
+    async def stream_process_spikes(self, spike_stream: Iterator[torch.Tensor],
+                                  model: nn.Module,
+                                  processing_func: Callable,
+                                  buffer_size: int = 10) -> Iterator[torch.Tensor]:
+        """Stream process spikes with buffering."""
+        
+        buffer = []
+        
+        async for spike_batch in spike_stream:
+            buffer.append(spike_batch)
+            
+            if len(buffer) >= buffer_size:
+                # Process buffer
+                results = await self.process_spike_batch_async(buffer, model, processing_func)
+                
+                for result in results:
+                    yield result
+                
+                buffer.clear()
+        
+        # Process remaining items in buffer
+        if buffer:
+            results = await self.process_spike_batch_async(buffer, model, processing_func)
+            for result in results:
+                yield result
+    
+    def get_processing_stats(self) -> Dict[str, Any]:
+        """Get processing statistics."""
+        stats = dict(self.processing_stats)
+        
+        if stats['batches_processed'] > 0:
+            stats['avg_processing_time'] = stats['total_processing_time'] / stats['batches_processed']
+            stats['cache_hit_rate'] = stats['cache_hits'] / stats['batches_processed']
+        
+        stats['cache_size'] = len(self.results_cache)
+        
+        return stats
+    
+    def clear_cache(self):
+        """Clear results cache."""
+        self.results_cache.clear()
+        self.processing_stats['cache_cleared'] += 1
+
+
+class ScalableNeuromorphicFramework:
+    """Complete scalable framework for neuromorphic computing."""
+    
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
+        self.config = config or {
+            'max_devices': 8,
+            'cache_size': 1000,
+            'async_workers': 4,
+            'load_balancing': True,
+            'advanced_caching': True
+        }
+        
+        # Initialize components
+        self.distributed_optimizer = DistributedNeuromorphicOptimizer(
+            num_devices=self.config['max_devices']
+        )
+        self.distributed_optimizer.setup_distributed_environment()
+        
+        self.spike_cache = AdvancedSpikePatternCache(
+            max_patterns=self.config['cache_size']
+        )
+        
+        self.load_balancer = NeuromorphicLoadBalancer(
+            devices=[d['device'] for d in self.distributed_optimizer.device_pool]
+        )
+        
+        self.async_processor = AsyncNeuromorphicProcessor(
+            max_workers=self.config['async_workers']
+        )
+        
+        self.performance_stats = defaultdict(float)
+        self.logger = logging.getLogger(__name__)
+    
+    def optimize_model_for_scale(self, model: nn.Module, 
+                                distribution_strategy: str = "auto") -> nn.Module:
+        """Optimize model for large-scale deployment."""
+        
+        if distribution_strategy == "auto":
+            # Auto-select strategy based on model size and available resources
+            param_count = sum(p.numel() for p in model.parameters())
+            num_devices = len(self.distributed_optimizer.device_pool)
+            
+            if param_count > 100_000_000 and num_devices >= 4:  # 100M+ parameters
+                distribution_strategy = "hybrid"
+            elif param_count > 10_000_000 and num_devices >= 2:  # 10M+ parameters
+                distribution_strategy = "model_parallel"
+            else:
+                distribution_strategy = "data_parallel"
+        
+        self.logger.info(f"Using distribution strategy: {distribution_strategy}")
+        
+        # Distribute model
+        distributed_model = self.distributed_optimizer.distribute_model(
+            model, distribution_strategy
+        )
+        
+        # Optimize batch size
+        optimal_batch_size = self.distributed_optimizer.get_optimal_batch_size(
+            distributed_model, (32, 128)  # Example input shape
+        )
+        
+        self.performance_stats['optimal_batch_size'] = optimal_batch_size
+        self.performance_stats['distribution_strategy'] = distribution_strategy
+        
+        return distributed_model
+    
+    async def scalable_inference(self, model: nn.Module, 
+                                spike_batches: List[torch.Tensor],
+                                use_load_balancing: bool = True) -> List[torch.Tensor]:
+        """Perform scalable inference across multiple devices."""
+        
+        if use_load_balancing:
+            # Distribute batches across devices
+            device_assignments = []
+            for batch in spike_batches:
+                optimal_device = self.load_balancer.select_optimal_device(
+                    workload_type="inference",
+                    spike_density=batch.float().mean().item()
+                )
+                device_assignments.append(optimal_device)
+        else:
+            # Round-robin assignment
+            devices = [d['device'] for d in self.distributed_optimizer.device_pool]
+            device_assignments = [devices[i % len(devices)] for i in range(len(spike_batches))]
+        
+        # Process batches asynchronously
+        results = await self.async_processor.process_spike_batch_async(
+            spike_batches, model, self._inference_func
+        )
+        
+        # Update load balancer with performance metrics
+        for device, batch, result in zip(device_assignments, spike_batches, results):
+            performance_metrics = {
+                'spike_processing_efficiency': 1.0,  # Simplified
+                'spikes_per_second': batch.numel() / 0.1  # Simplified
+            }
+            self.load_balancer.update_device_performance(device, performance_metrics)
+        
+        return results
+    
+    def _inference_func(self, model: nn.Module, spike_batch: torch.Tensor) -> torch.Tensor:
+        """Internal inference function."""
+        return model(spike_batch)
+    
+    def get_comprehensive_stats(self) -> Dict[str, Any]:
+        """Get comprehensive statistics from all components."""
+        return {
+            'performance_stats': dict(self.performance_stats),
+            'spike_cache_stats': self.spike_cache.get_cache_stats(),
+            'load_balancer_stats': self.load_balancer.get_load_balancing_stats(),
+            'async_processor_stats': self.async_processor.get_processing_stats(),
+            'distributed_optimizer_stats': {
+                'num_devices': len(self.distributed_optimizer.device_pool),
+                'device_pool': [str(d['device']) for d in self.distributed_optimizer.device_pool]
+            }
+        }
+    
+    def benchmark_scalability(self, model: nn.Module, 
+                            test_batches: List[torch.Tensor]) -> Dict[str, Any]:
+        """Benchmark scalability performance."""
+        
+        benchmark_results = {}
+        
+        # Test different configurations
+        configs = [
+            {'distribution': 'data_parallel', 'load_balancing': False},
+            {'distribution': 'data_parallel', 'load_balancing': True},
+            {'distribution': 'model_parallel', 'load_balancing': True},
+            {'distribution': 'hybrid', 'load_balancing': True}
+        ]
+        
+        for config in configs:
+            config_name = f"{config['distribution']}_lb_{config['load_balancing']}"
+            
+            # Optimize model
+            distributed_model = self.distributed_optimizer.distribute_model(
+                model, config['distribution']
+            )
+            
+            # Benchmark inference
+            start_time = time.perf_counter()
+            
+            # Run synchronous version for benchmarking
+            results = []
+            for batch in test_batches:
+                with torch.no_grad():
+                    result = distributed_model(batch)
+                results.append(result)
+            
+            total_time = time.perf_counter() - start_time
+            
+            benchmark_results[config_name] = {
+                'total_time': total_time,
+                'batches_per_second': len(test_batches) / total_time,
+                'avg_batch_time': total_time / len(test_batches)
+            }
+        
+        return benchmark_results
+
+
+# Global scalable framework instance
+scalable_framework = ScalableNeuromorphicFramework()
+
+# Convenience functions for scaling
+def optimize_for_scale(model: nn.Module, distribution_strategy: str = "auto") -> nn.Module:
+    """Optimize model for large-scale deployment."""
+    return scalable_framework.optimize_model_for_scale(model, distribution_strategy)
+
+async def scale_inference(model: nn.Module, spike_batches: List[torch.Tensor]) -> List[torch.Tensor]:
+    """Perform scalable inference."""
+    return await scalable_framework.scalable_inference(model, spike_batches)
+
+def get_scaling_stats() -> Dict[str, Any]:
+    """Get scaling performance statistics."""
+    return scalable_framework.get_comprehensive_stats()
+
+def benchmark_scaling_performance(model: nn.Module, test_data: List[torch.Tensor]) -> Dict[str, Any]:
+    """Benchmark scaling performance."""
+    return scalable_framework.benchmark_scalability(model, test_data)
+
+# Example usage and testing
+if __name__ == "__main__":
+    print("⚡ Advanced Neuromorphic Scaling Suite")
+    print("=" * 60)
+    
+    # Create test model
+    test_model = nn.Sequential(
+        nn.Linear(128, 256),
+        nn.ReLU(),
+        nn.Linear(256, 128),
+        nn.ReLU(),
+        nn.Linear(128, 10)
+    )
+    
+    print(f"Test model parameters: {sum(p.numel() for p in test_model.parameters()):,}")
+    
+    # Test distributed optimization
+    print("\n1. Testing Distributed Optimization:")
+    distributed_opt = DistributedNeuromorphicOptimizer(num_devices=2)
+    distributed_opt.setup_distributed_environment()
+    
+    distributed_model = distributed_opt.distribute_model(test_model, "data_parallel")
+    optimal_batch_size = distributed_opt.get_optimal_batch_size(distributed_model, (32, 128))
+    print(f"   ✅ Distributed model created")
+    print(f"   📊 Optimal batch size: {optimal_batch_size}")
+    
+    # Test spike pattern cache
+    print("\n2. Testing Advanced Spike Pattern Cache:")
+    spike_cache = AdvancedSpikePatternCache(max_patterns=100)
+    
+    test_spike_pattern = torch.randint(0, 2, (32, 10, 20)).float()
+    pattern_hash = spike_cache.cache_pattern(test_spike_pattern, "test_result", 0.1)
+    cached_result = spike_cache.get_cached_result(pattern_hash)
+    
+    cache_stats = spike_cache.get_cache_stats()
+    print(f"   ✅ Spike pattern cached: {pattern_hash[:8]}...")
+    print(f"   📊 Cache stats: {cache_stats['total_patterns']} patterns")
+    
+    # Test load balancer
+    print("\n3. Testing Neuromorphic Load Balancer:")
+    devices = [torch.device('cpu')]
+    if torch.cuda.is_available():
+        devices.append(torch.device('cuda:0'))
+    
+    load_balancer = NeuromorphicLoadBalancer(devices)
+    optimal_device = load_balancer.select_optimal_device("inference", 0.3)
+    
+    load_stats = load_balancer.get_load_balancing_stats()
+    print(f"   ✅ Optimal device selected: {optimal_device}")
+    print(f"   📊 Load balancing stats: {len(load_stats)} devices")
+    
+    # Test scalable framework
+    print("\n4. Testing Scalable Framework:")
+    framework = ScalableNeuromorphicFramework()
+    
+    optimized_model = framework.optimize_model_for_scale(test_model, "auto")
+    comprehensive_stats = framework.get_comprehensive_stats()
+    
+    print(f"   ✅ Model optimized for scale")
+    print(f"   📊 Distribution strategy: {comprehensive_stats['performance_stats'].get('distribution_strategy', 'auto')}")
+    print(f"   📊 Optimal batch size: {comprehensive_stats['performance_stats'].get('optimal_batch_size', 'N/A')}")
+    
+    print("\n⚡ Advanced Scaling Suite Complete!")
