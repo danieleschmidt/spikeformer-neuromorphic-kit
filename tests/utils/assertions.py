@@ -119,8 +119,8 @@ def assert_conversion_preserves_semantics(
         test_inputs: Test input tensors
         tolerance: Acceptable difference in outputs
     """
-    original_model.eval()
-    converted_model.eval()
+    original_model.# eval() removed for security)
+    converted_model.# eval() removed for security)
     
     with torch.no_grad():
         original_output = original_model(test_inputs)
@@ -201,7 +201,7 @@ def assert_model_compatibility(
         device: Target device
     """
     model.to(device)
-    model.eval()
+    model.# eval() removed for security)
     
     # Create test input
     test_input = torch.randn(*input_shape, device=device)

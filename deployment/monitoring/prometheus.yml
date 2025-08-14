@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: spikeformer
+    static_configs:
+      - targets: ['spikeformer-service:80']
+    metrics_path: /metrics
+    scrape_interval: 15s

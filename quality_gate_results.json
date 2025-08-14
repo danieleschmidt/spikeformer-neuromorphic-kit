@@ -1,0 +1,78 @@
+{
+  "overall_status": "FAIL",
+  "overall_score": 71.51929490040082,
+  "metrics": [
+    {
+      "name": "Code Structure",
+      "status": "PASS",
+      "score": 80.95238095238095,
+      "details": "Dir structure: 100.0%, Init files: 42.9%, Modules: 100.0%",
+      "critical": true
+    },
+    {
+      "name": "Security Compliance",
+      "status": "FAIL",
+      "score": 0,
+      "details": "Found 36 potential security issues",
+      "critical": true
+    },
+    {
+      "name": "Performance Patterns",
+      "status": "PASS",
+      "score": 100,
+      "details": "Performance indicators found: caching: 21, async_patterns: 21, optimization_classes: 12, memory_management: 57, parallel_processing: 22",
+      "critical": false
+    },
+    {
+      "name": "Documentation Quality",
+      "status": "PASS",
+      "score": 95.77202072538861,
+      "details": "README: True, Docstrings: 1265/1544, Docs: 9",
+      "critical": false
+    },
+    {
+      "name": "Code Quality",
+      "status": "WARN",
+      "score": 53.46153846153846,
+      "details": "Complexity: 18.5%, Maintainability: 10.8%, Readability: 84.6%, Style: 100.0%",
+      "critical": false
+    },
+    {
+      "name": "Architecture Patterns",
+      "status": "PASS",
+      "score": 110,
+      "details": "Design patterns: 5, Modules: 5, Abstractions: 39",
+      "critical": false
+    },
+    {
+      "name": "Test Coverage",
+      "status": "FAIL",
+      "score": 61.806256306760844,
+      "details": "Functions: 234, Coverage: 23.6%, Types: {'unit': 11, 'integration': 0, 'performance': 4, 'hardware': 5}",
+      "critical": true
+    },
+    {
+      "name": "Research Implementation",
+      "status": "PASS",
+      "score": 100,
+      "details": "Indicators: {'quantum_algorithms': 14, 'adaptive_systems': 43, 'meta_learning': 17, 'neuromorphic_patterns': 130, 'self_improvement': 11}, Modules: 4/4",
+      "critical": false
+    },
+    {
+      "name": "Scalability Features",
+      "status": "PASS",
+      "score": 100,
+      "details": "Features: {'distributed_processing': 15, 'parallel_execution': 81, 'resource_optimization': 40, 'load_balancing': 18, 'auto_scaling': 12}, Modules: 4/4",
+      "critical": false
+    },
+    {
+      "name": "Production Readiness",
+      "status": "PASS",
+      "score": 85,
+      "details": "Config: True, Deploy: 12, Monitoring: 1973, Errors: 1425",
+      "critical": false
+    }
+  ],
+  "execution_time": 1.0681064128875732,
+  "timestamp": "2025-08-14 20:10:31"
+}

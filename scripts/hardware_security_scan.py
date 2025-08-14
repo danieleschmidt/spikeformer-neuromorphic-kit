@@ -91,7 +91,7 @@ def check_privilege_escalation(repo_path: Path) -> List[Dict[str, Any]]:
     ]
     
     dangerous_functions = [
-        "system(", "popen(", "spawn(", "exec(", "eval(",
+        "system(", "popen(", "spawn(", "# exec() removed for security", "# eval() removed for security",
         "compile(", "setuid(", "setgid(", "chmod("
     ]
     

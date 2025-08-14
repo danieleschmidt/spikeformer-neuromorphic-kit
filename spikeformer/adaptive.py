@@ -612,3 +612,178 @@ if __name__ == "__main__":
             summary = adaptive_model.get_adaptation_summary()
             print(f"Step {step}: Accuracy={performance['accuracy']:.3f}, "
                   f"Adaptation trend={summary['adaptation_trend']}")
+
+
+class RobustAdaptiveSystem:
+    """Robust adaptive system with comprehensive error handling and self-recovery."""
+    
+    def __init__(self, config: AdaptationConfig):
+        self.config = config
+        self.adaptation_mechanisms = {
+            "threshold": AdaptiveThresholdController(config),
+            "plasticity": AdaptiveSynapticPlasticity(config),
+            "architecture": AdaptiveArchitectureController(config)
+        }
+        self.health_monitor = AdaptationHealthMonitor()
+        self.recovery_manager = SelfRecoveryManager()
+        self.logger = logging.getLogger(__name__)
+        
+    def robust_adapt(self, performance_metrics: Dict[str, float], 
+                    model_state: Dict[str, Any]) -> Dict[str, Any]:
+        """Perform robust adaptation with error handling and recovery."""
+        
+        all_adaptations = {}
+        
+        for mechanism_name, mechanism in self.adaptation_mechanisms.items():
+            try:
+                # Monitor health before adaptation
+                health_status = self.health_monitor.check_mechanism_health(mechanism_name, performance_metrics)
+                
+                if health_status["healthy"]:
+                    adaptations = mechanism.adapt(performance_metrics, model_state)
+                    all_adaptations[mechanism_name] = adaptations
+                    
+                    # Validate adaptations
+                    if self._validate_adaptations(adaptations):
+                        self.logger.info(f"✅ {mechanism_name} adaptation successful")
+                    else:
+                        self.logger.warning(f"⚠️ {mechanism_name} adaptation validation failed")
+                        all_adaptations[mechanism_name] = self._get_safe_adaptations(mechanism_name)
+                        
+                else:
+                    self.logger.warning(f"🏥 {mechanism_name} unhealthy, initiating recovery")
+                    recovery_actions = self.recovery_manager.recover_mechanism(mechanism_name, health_status)
+                    all_adaptations[mechanism_name] = recovery_actions
+                    
+            except Exception as e:
+                self.logger.error(f"❌ Error in {mechanism_name} adaptation: {e}")
+                # Graceful degradation
+                all_adaptations[mechanism_name] = self._get_emergency_adaptations(mechanism_name)
+                
+        return all_adaptations
+    
+    def _validate_adaptations(self, adaptations: Dict[str, Any]) -> bool:
+        """Validate that adaptations are within safe bounds."""
+        for param_name, adaptation in adaptations.items():
+            if isinstance(adaptation, dict) and "delta" in adaptation:
+                delta = adaptation["delta"]
+                if hasattr(delta, "item"):
+                    delta = delta.item()
+                if abs(delta) > 1.0:  # Safety threshold
+                    return False
+        return True
+    
+    def _get_safe_adaptations(self, mechanism_name: str) -> Dict[str, Any]:
+        """Get conservative safe adaptations."""
+        return {"status": "safe_mode", "delta": 0.0}
+    
+    def _get_emergency_adaptations(self, mechanism_name: str) -> Dict[str, Any]:
+        """Get emergency fallback adaptations."""
+        return {"status": "emergency_mode", "action": "reset_to_default"}
+
+
+class AdaptationHealthMonitor:
+    """Monitors health of adaptation mechanisms."""
+    
+    def __init__(self):
+        self.health_history = {}
+        
+    def check_mechanism_health(self, mechanism_name: str, 
+                             performance_metrics: Dict[str, float]) -> Dict[str, Any]:
+        """Check health status of adaptation mechanism."""
+        
+        health_score = 1.0
+        issues = []
+        
+        # Check for performance degradation
+        current_accuracy = performance_metrics.get("accuracy", 0.8)
+        if current_accuracy < 0.7:
+            health_score *= 0.3
+            issues.append("performance_degradation")
+            
+        # Check for instability
+        if mechanism_name not in self.health_history:
+            self.health_history[mechanism_name] = []
+            
+        self.health_history[mechanism_name].append(current_accuracy)
+        
+        if len(self.health_history[mechanism_name]) >= 5:
+            recent_variance = np.var(self.health_history[mechanism_name][-5:])
+            if recent_variance > 0.1:
+                health_score *= 0.5
+                issues.append("high_variance")
+                
+        return {
+            "healthy": health_score > 0.5,
+            "score": health_score,
+            "issues": issues
+        }
+
+
+class SelfRecoveryManager:
+    """Manages self-recovery of adaptation mechanisms."""
+    
+    def recover_mechanism(self, mechanism_name: str, health_status: Dict[str, Any]) -> Dict[str, Any]:
+        """Implement recovery actions for unhealthy mechanisms."""
+        
+        recovery_actions = {
+            "status": "recovering",
+            "actions": []
+        }
+        
+        for issue in health_status["issues"]:
+            if issue == "performance_degradation":
+                recovery_actions["actions"].append({
+                    "type": "reset",
+                    "method": "restore_checkpoint"
+                })
+            elif issue == "high_variance":
+                recovery_actions["actions"].append({
+                    "type": "stabilize",
+                    "method": "reduce_adaptation_rate"
+                })
+                
+        return recovery_actions
+
+
+class CriticalPointDetector:
+    """Detects critical points in neuromorphic system behavior."""
+    
+    def __init__(self, window_size: int = 100):
+        self.performance_history = deque(maxlen=window_size)
+        self.energy_history = deque(maxlen=window_size)
+        self.spike_history = deque(maxlen=window_size)
+        
+    def detect_critical_transitions(self, metrics: Dict[str, float]) -> Dict[str, bool]:
+        """Detect phase transitions and critical points."""
+        
+        self.performance_history.append(metrics.get("accuracy", 0.8))
+        self.energy_history.append(metrics.get("energy_mj", 50.0))
+        self.spike_history.append(metrics.get("spike_rate", 0.1))
+        
+        critical_points = {
+            "performance_cliff": False,
+            "energy_spike": False,
+            "neural_avalanche": False,
+            "system_instability": False
+        }
+        
+        if len(self.performance_history) >= 10:
+            # Detect performance cliff
+            recent_perf = list(self.performance_history)[-5:]
+            if max(recent_perf) - min(recent_perf) > 0.2:
+                critical_points["performance_cliff"] = True
+                
+            # Detect energy spike
+            recent_energy = list(self.energy_history)[-5:]
+            if len(self.energy_history) > 10:
+                avg_energy = np.mean(list(self.energy_history)[:-5])
+                if max(recent_energy) > avg_energy * 2:
+                    critical_points["energy_spike"] = True
+                
+            # Detect neural avalanche (spike rate explosion)
+            recent_spikes = list(self.spike_history)[-5:]
+            if max(recent_spikes) > 0.8:  # Very high activity
+                critical_points["neural_avalanche"] = True
+                
+        return critical_points

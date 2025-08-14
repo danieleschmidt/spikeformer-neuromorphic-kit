@@ -619,3 +619,490 @@ class MultiModalEncoder(nn.Module):
                     import logging
                     logger = logging.getLogger(__name__)
                     logger.warning(f"Failed to reset state for encoder '{name}': {e}")
+
+
+class AdaptiveOptimalEncoder:
+    """Adaptive encoding optimization for maximum efficiency and accuracy."""
+    
+    def __init__(self, timesteps: int = 32):
+        self.timesteps = timesteps
+        self.encoding_strategies = {
+            "rate": RateCoding(timesteps),
+            "temporal": TemporalCoding(timesteps),
+            "poisson": PoissonCoding(timesteps),
+            "delta": DeltaCoding(timesteps),
+            "rank_order": RankOrderCoding(timesteps),
+            "latency": LatencyCoding(timesteps)
+        }
+        
+        # Adaptive optimization components
+        self.performance_tracker = EncodingPerformanceTracker()
+        self.strategy_selector = StrategySelector()
+        self.meta_optimizer = EncodingMetaOptimizer()
+        
+        # Learning and adaptation
+        from collections import deque
+        self.encoding_history = deque(maxlen=1000)
+        self.adaptation_frequency = 100
+        self.step_counter = 0
+        
+    def encode_adaptively(self, data: torch.Tensor, context: Dict[str, Any] = None) -> torch.Tensor:
+        """Encode data using adaptive strategy selection."""
+        
+        import time
+        self.step_counter += 1
+        
+        # Analyze input characteristics
+        input_analysis = self._analyze_input(data)
+        
+        # Select optimal encoding strategy
+        strategy_name = self.strategy_selector.select_strategy(
+            input_analysis, context or {}, self.performance_tracker.get_strategy_performance()
+        )
+        
+        # Apply selected encoding
+        encoded_data = self.encoding_strategies[strategy_name].forward(data)
+        
+        # Track performance
+        encoding_result = {
+            "strategy": strategy_name,
+            "input_analysis": input_analysis,
+            "encoded_sparsity": self._calculate_sparsity(encoded_data),
+            "information_preservation": self._estimate_information_preservation(data, encoded_data),
+            "timestamp": time.time()
+        }
+        
+        self.encoding_history.append(encoding_result)
+        
+        # Periodic adaptation
+        if self.step_counter % self.adaptation_frequency == 0:
+            self._adapt_encoding_strategies()
+            
+        return encoded_data
+    
+    def _analyze_input(self, data: torch.Tensor) -> Dict[str, float]:
+        """Analyze input data characteristics."""
+        
+        return {
+            "mean_amplitude": data.mean().item(),
+            "std_amplitude": data.std().item(),
+            "sparsity": (data == 0).float().mean().item(),
+            "dynamic_range": (data.max() - data.min()).item(),
+            "entropy": self._calculate_entropy(data),
+            "temporal_correlation": self._calculate_temporal_correlation(data),
+            "frequency_content": self._analyze_frequency_content(data)
+        }
+    
+    def _calculate_entropy(self, data: torch.Tensor) -> float:
+        """Calculate information entropy of the data."""
+        
+        # Discretize data for entropy calculation
+        bins = 256
+        hist = torch.histc(data.flatten(), bins=bins)
+        hist = hist[hist > 0]  # Remove zero bins
+        
+        if len(hist) == 0:
+            return 0.0
+            
+        # Normalize to probabilities
+        probs = hist / hist.sum()
+        
+        # Calculate entropy
+        entropy = -(probs * torch.log2(probs + 1e-10)).sum().item()
+        
+        return entropy
+    
+    def _calculate_temporal_correlation(self, data: torch.Tensor) -> float:
+        """Calculate temporal correlation in the data."""
+        
+        if data.dim() < 2:
+            return 0.0
+            
+        # Calculate autocorrelation
+        flat_data = data.flatten()
+        if len(flat_data) < 2:
+            return 0.0
+            
+        # Simple lag-1 autocorrelation
+        try:
+            correlation = torch.corrcoef(torch.stack([
+                flat_data[:-1], flat_data[1:]
+            ]))[0, 1].item()
+            return correlation if not torch.isnan(torch.tensor(correlation)) else 0.0
+        except:
+            return 0.0
+    
+    def _analyze_frequency_content(self, data: torch.Tensor) -> float:
+        """Analyze frequency content of the data."""
+        
+        # FFT to analyze frequency content
+        fft_data = torch.fft.fft(data.flatten())
+        power_spectrum = torch.abs(fft_data) ** 2
+        
+        # Calculate spectral centroid (frequency focus)
+        freqs = torch.arange(len(power_spectrum), dtype=torch.float32)
+        spectral_centroid = (freqs * power_spectrum).sum() / (power_spectrum.sum() + 1e-10)
+        
+        return spectral_centroid.item() / len(power_spectrum)  # Normalized
+    
+    def _calculate_sparsity(self, encoded_data: torch.Tensor) -> float:
+        """Calculate sparsity of encoded data."""
+        
+        return (encoded_data == 0).float().mean().item()
+    
+    def _estimate_information_preservation(self, original: torch.Tensor, encoded: torch.Tensor) -> float:
+        """Estimate how much information is preserved in encoding."""
+        
+        # Simple correlation-based measure
+        orig_flat = original.flatten()
+        enc_flat = encoded.flatten()
+        
+        if len(orig_flat) != len(enc_flat):
+            # Reshape to match if needed
+            min_len = min(len(orig_flat), len(enc_flat))
+            orig_flat = orig_flat[:min_len]
+            enc_flat = enc_flat[:min_len]
+            
+        if len(orig_flat) < 2:
+            return 0.5  # Default value
+            
+        try:
+            correlation = torch.corrcoef(torch.stack([orig_flat, enc_flat]))[0, 1]
+            return correlation.item() if not torch.isnan(correlation) else 0.5
+        except:
+            return 0.5
+    
+    def _adapt_encoding_strategies(self):
+        """Adapt encoding strategies based on performance history."""
+        
+        if len(self.encoding_history) < 50:
+            return
+            
+        # Analyze recent performance
+        recent_results = list(self.encoding_history)[-50:]
+        
+        # Update strategy selector
+        self.strategy_selector.update_from_history(recent_results)
+        
+        # Meta-optimize encoding parameters
+        self.meta_optimizer.optimize_parameters(recent_results, self.encoding_strategies)
+
+
+class StrategySelector:
+    """Intelligent strategy selection for encoding optimization."""
+    
+    def __init__(self):
+        from collections import defaultdict
+        self.strategy_scores = defaultdict(lambda: {"successes": 0, "attempts": 0, "avg_performance": 0.5})
+        self.context_patterns = {}
+        
+    def select_strategy(self, input_analysis: Dict[str, float], 
+                      context: Dict[str, Any], 
+                      performance_history: Dict[str, List[float]]) -> str:
+        """Select optimal encoding strategy based on analysis and history."""
+        
+        # Rule-based selection with learning
+        strategy_preferences = self._calculate_strategy_preferences(
+            input_analysis, context, performance_history
+        )
+        
+        # Add exploration noise
+        exploration_noise = {k: 0.1 * torch.randn(1).item() for k in strategy_preferences}
+        
+        final_scores = {
+            k: strategy_preferences[k] + exploration_noise[k] 
+            for k in strategy_preferences
+        }
+        
+        # Select best strategy
+        best_strategy = max(final_scores.keys(), key=lambda k: final_scores[k])
+        
+        # Update attempt count
+        self.strategy_scores[best_strategy]["attempts"] += 1
+        
+        return best_strategy
+    
+    def _calculate_strategy_preferences(self, input_analysis: Dict[str, float],
+                                      context: Dict[str, Any],
+                                      performance_history: Dict[str, List[float]]) -> Dict[str, float]:
+        """Calculate preference scores for each strategy."""
+        
+        preferences = {}
+        
+        # Rate coding preference
+        preferences["rate"] = (
+            0.8 - input_analysis.get("sparsity", 0.5) +  # Prefer for dense data
+            0.3 * (1.0 - input_analysis.get("temporal_correlation", 0.5))  # Prefer for low temporal correlation
+        )
+        
+        # Temporal coding preference
+        preferences["temporal"] = (
+            0.7 + 0.5 * input_analysis.get("temporal_correlation", 0.0) +  # Prefer for temporal patterns
+            0.3 * input_analysis.get("entropy", 0.5) / 8.0  # Prefer for high entropy
+        )
+        
+        # Poisson coding preference
+        preferences["poisson"] = (
+            0.6 + 0.4 * input_analysis.get("sparsity", 0.0) +  # Prefer for sparse data
+            0.2 * (1.0 - input_analysis.get("frequency_content", 0.5))  # Prefer for low frequency
+        )
+        
+        # Delta coding preference
+        preferences["delta"] = (
+            0.5 + 0.6 * input_analysis.get("temporal_correlation", 0.0) +  # Prefer for correlated data
+            0.3 * (input_analysis.get("dynamic_range", 1.0) / 10.0)  # Prefer for large dynamic range
+        )
+        
+        # Rank order coding preference
+        preferences["rank_order"] = (
+            0.6 + 0.4 * (input_analysis.get("entropy", 4.0) / 8.0) +  # Prefer for medium entropy
+            0.2 * input_analysis.get("sparsity", 0.0)
+        )
+        
+        # Latency coding preference
+        preferences["latency"] = (
+            0.7 + 0.3 * (1.0 - input_analysis.get("sparsity", 0.5)) +  # Prefer for dense data
+            0.2 * input_analysis.get("frequency_content", 0.0)  # Prefer for high frequency
+        )
+        
+        # Adjust based on historical performance
+        for strategy, perf_list in performance_history.items():
+            if perf_list:
+                recent_performance = np.mean(perf_list[-10:])  # Last 10 performances
+                preferences[strategy] = preferences.get(strategy, 0.5) * (0.7 + 0.6 * recent_performance)
+        
+        return preferences
+    
+    def update_from_history(self, results: List[Dict[str, Any]]):
+        """Update strategy selector from performance history."""
+        
+        from collections import defaultdict
+        strategy_performances = defaultdict(list)
+        
+        for result in results:
+            strategy = result["strategy"]
+            performance = result["information_preservation"]
+            
+            strategy_performances[strategy].append(performance)
+            
+        # Update average performances
+        for strategy, performances in strategy_performances.items():
+            if performances:
+                current_score = self.strategy_scores[strategy]
+                current_score["successes"] += sum(1 for p in performances if p > 0.7)
+                current_score["avg_performance"] = np.mean(performances)
+
+
+class EncodingPerformanceTracker:
+    """Tracks performance of different encoding strategies."""
+    
+    def __init__(self):
+        from collections import defaultdict
+        self.performance_history = defaultdict(list)
+        self.efficiency_metrics = defaultdict(list)
+        
+    def track_performance(self, strategy: str, metrics: Dict[str, float]):
+        """Track performance metrics for a strategy."""
+        
+        self.performance_history[strategy].append(metrics)
+        
+        # Calculate efficiency score
+        efficiency = (
+            metrics.get("information_preservation", 0.5) * 0.4 +
+            (1.0 - metrics.get("encoded_sparsity", 0.5)) * 0.3 +
+            (1.0 / (metrics.get("encoding_time", 1.0) + 0.1)) * 0.3
+        )
+        
+        self.efficiency_metrics[strategy].append(efficiency)
+        
+    def get_strategy_performance(self) -> Dict[str, List[float]]:
+        """Get performance history for all strategies."""
+        
+        return {k: [m.get("information_preservation", 0.5) for m in v] 
+                for k, v in self.performance_history.items()}
+    
+    def get_best_strategy(self) -> str:
+        """Get currently best performing strategy."""
+        
+        if not self.efficiency_metrics:
+            return "rate"  # Default
+            
+        avg_efficiencies = {}
+        for strategy, efficiencies in self.efficiency_metrics.items():
+            if efficiencies:
+                avg_efficiencies[strategy] = np.mean(efficiencies[-10:])  # Recent average
+                
+        if avg_efficiencies:
+            return max(avg_efficiencies.keys(), key=lambda k: avg_efficiencies[k])
+        else:
+            return "rate"
+
+
+class EncodingMetaOptimizer:
+    """Meta-optimizer for encoding parameters."""
+    
+    def __init__(self):
+        self.parameter_history = {}
+        self.optimization_steps = 0
+        
+    def optimize_parameters(self, results: List[Dict[str, Any]], 
+                          encoding_strategies: Dict[str, Any]):
+        """Optimize encoding parameters based on results."""
+        
+        self.optimization_steps += 1
+        
+        # Analyze which parameters correlate with good performance
+        for strategy_name, strategy in encoding_strategies.items():
+            strategy_results = [r for r in results if r["strategy"] == strategy_name]
+            
+            if len(strategy_results) >= 5:  # Need sufficient data
+                self._optimize_strategy_parameters(strategy, strategy_results)
+                
+    def _optimize_strategy_parameters(self, strategy: Any, results: List[Dict[str, Any]]):
+        """Optimize parameters for a specific strategy."""
+        
+        # Extract performance scores
+        performances = [r["information_preservation"] for r in results]
+        avg_performance = np.mean(performances)
+        
+        # Adapt strategy parameters based on performance
+        if hasattr(strategy, 'timesteps'):
+            # Optimize timesteps
+            if avg_performance < 0.6:  # Poor performance
+                strategy.timesteps = min(64, int(strategy.timesteps * 1.1))  # Increase timesteps
+            elif avg_performance > 0.8:  # Good performance
+                strategy.timesteps = max(8, int(strategy.timesteps * 0.95))  # Slightly reduce for efficiency
+                
+        # Optimize threshold parameters if available
+        if hasattr(strategy, 'threshold'):
+            sparsity_scores = [r["encoded_sparsity"] for r in results]
+            avg_sparsity = np.mean(sparsity_scores)
+            
+            if avg_sparsity < 0.3:  # Too dense
+                strategy.threshold *= 1.05  # Increase threshold
+            elif avg_sparsity > 0.8:  # Too sparse
+                strategy.threshold *= 0.95  # Decrease threshold
+
+
+class DeltaCoding(SpikeEncoder):
+    """Delta (difference) encoding for temporal sequences."""
+    
+    def __init__(self, timesteps: int = 32, threshold: float = 0.1):
+        super().__init__(timesteps)
+        self.threshold = threshold
+        
+    def forward(self, data: torch.Tensor) -> torch.Tensor:
+        """Encode using delta/difference method."""
+        
+        batch_size = data.size(0) if data.dim() > 1 else 1
+        
+        if data.dim() == 1:
+            data = data.unsqueeze(0)
+            
+        # Calculate differences
+        import torch.nn.functional as F
+        padded_data = F.pad(data, (1, 0), value=0)  # Pad with zero at beginning
+        differences = data - padded_data[:, :-1]
+        
+        # Generate spike train based on differences
+        spike_train = torch.zeros(batch_size, self.timesteps, *data.shape[1:])
+        
+        for t in range(self.timesteps):
+            # Threshold differences to create spikes
+            spikes = (torch.abs(differences) > self.threshold).float()
+            spikes *= torch.sign(differences)  # Preserve sign
+            
+            spike_train[:, t] = spikes
+            
+            # Update data for next timestep
+            differences = differences * 0.9  # Decay
+            
+        return spike_train
+
+
+class RankOrderCoding(SpikeEncoder):
+    """Rank order encoding based on input magnitude ordering."""
+    
+    def __init__(self, timesteps: int = 32):
+        super().__init__(timesteps)
+        
+    def forward(self, data: torch.Tensor) -> torch.Tensor:
+        """Encode using rank order method."""
+        
+        batch_size = data.size(0) if data.dim() > 1 else 1
+        
+        if data.dim() == 1:
+            data = data.unsqueeze(0)
+            
+        spike_train = torch.zeros(batch_size, self.timesteps, *data.shape[1:])
+        
+        for b in range(batch_size):
+            # Get ranking of input values
+            flat_data = data[b].flatten()
+            _, indices = torch.sort(torch.abs(flat_data), descending=True)
+            
+            # Assign spike times based on rank
+            spike_times = torch.zeros_like(flat_data)
+            
+            for rank, idx in enumerate(indices):
+                if rank < self.timesteps:
+                    spike_time = rank
+                else:
+                    spike_time = self.timesteps - 1
+                    
+                spike_times[idx] = spike_time
+                
+            # Create spike train
+            for i, spike_time in enumerate(spike_times):
+                if spike_time < self.timesteps:
+                    # Calculate position in original tensor
+                    unravel_idx = np.unravel_index(i, data[b].shape)
+                    spike_train[b, int(spike_time)][unravel_idx] = 1.0
+                    
+        return spike_train
+
+
+class LatencyCoding(SpikeEncoder):
+    """Latency-based encoding where timing encodes information."""
+    
+    def __init__(self, timesteps: int = 32, max_latency: float = 1.0):
+        super().__init__(timesteps)
+        self.max_latency = max_latency
+        
+    def forward(self, data: torch.Tensor) -> torch.Tensor:
+        """Encode using latency-based method."""
+        
+        batch_size = data.size(0) if data.dim() > 1 else 1
+        
+        if data.dim() == 1:
+            data = data.unsqueeze(0)
+            
+        spike_train = torch.zeros(batch_size, self.timesteps, *data.shape[1:])
+        
+        # Normalize data to [0, 1]
+        data_min = data.min()
+        data_max = data.max()
+        
+        if data_max > data_min:
+            normalized_data = (data - data_min) / (data_max - data_min)
+        else:
+            normalized_data = torch.ones_like(data) * 0.5
+            
+        # Convert to latency (higher values = earlier spikes)
+        latencies = (1.0 - normalized_data) * self.max_latency
+        
+        # Convert latencies to spike times
+        spike_times = (latencies * (self.timesteps - 1)).long()
+        spike_times = torch.clamp(spike_times, 0, self.timesteps - 1)
+        
+        # Generate spikes at calculated times
+        for b in range(batch_size):
+            for i in range(spike_times[b].numel()):
+                # Calculate position in tensor
+                flat_idx = i
+                unravel_idx = np.unravel_index(flat_idx, spike_times[b].shape)
+                spike_time = spike_times[b][unravel_idx].item()
+                
+                spike_train[b, spike_time][unravel_idx] = 1.0
+                
+        return spike_train

@@ -1,0 +1,37 @@
+{
+  "dashboard": {
+    "title": "Spikeformer Neuromorphic Metrics",
+    "panels": [
+      {
+        "title": "Spike Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "spikeformer_spike_rate",
+            "legendFormat": "{{instance}}"
+          }
+        ]
+      },
+      {
+        "title": "Energy Consumption",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "spikeformer_energy_consumption_mj",
+            "legendFormat": "{{instance}}"
+          }
+        ]
+      },
+      {
+        "title": "Processing Latency",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "spikeformer_processing_latency_ms",
+            "legendFormat": "{{instance}}"
+          }
+        ]
+      }
+    ]
+  }
+}

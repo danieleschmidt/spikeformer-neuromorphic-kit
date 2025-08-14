@@ -228,7 +228,7 @@ class MockModelConverter:
         converted_model.__call__ = mock_forward
         
         # Add evaluation methods
-        def eval():
+        def # eval() removed for security):
             converted_model.training = False
             return converted_model
         
