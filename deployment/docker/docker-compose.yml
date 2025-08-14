@@ -1,358 +1,61 @@
-# Docker Compose for Neuromorphic Computing Production Deployment
 version: '3.8'
 
 services:
-  # Main neuromorphic inference service
-  neuromorphic-api:
+  spikeformer:
     build:
       context: ../../
       dockerfile: deployment/docker/Dockerfile
-      target: production
-    container_name: neuromorphic-api
+    container_name: spikeformer-app
     restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
-      - NEUROMORPHIC_ENVIRONMENT=production
-      - NEUROMORPHIC_PORT=8080
-      - NEUROMORPHIC_HOST=0.0.0.0
-      - NEUROMORPHIC_DB_HOST=postgres
-      - NEUROMORPHIC_DB_PORT=5432
-      - NEUROMORPHIC_DB_NAME=neuromorphic
-      - NEUROMORPHIC_DB_USER=neuromorphic_user
-      - NEUROMORPHIC_DB_PASSWORD_FILE=/run/secrets/db_password
-      - NEUROMORPHIC_JWT_SECRET_KEY_FILE=/run/secrets/jwt_secret
-      - REDIS_URL=redis://redis:6379
-      - MONITORING_ENABLED=true
-      - PROMETHEUS_GATEWAY=prometheus-pushgateway:9091
+      - NEUROMORPHIC_ENV=development
+      - PYTHONPATH=/app
     volumes:
-      - neuromorphic_models:/app/models
-      - neuromorphic_logs:/app/logs
-      - neuromorphic_cache:/app/cache
-      - neuromorphic_data:/app/data
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    secrets:
-      - db_password
-      - jwt_secret
+      - spikeformer-data:/app/data
+      - spikeformer-logs:/app/logs
     networks:
-      - neuromorphic_network
-    deploy:
-      resources:
-        limits:
-          memory: 8G
-          cpus: '4'
-        reservations:
-          memory: 4G
-          cpus: '2'
+      - spikeformer-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 40s
 
-  # Load balancer (NGINX)
-  nginx:
-    image: nginx:alpine
-    container_name: neuromorphic-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - neuromorphic_logs:/var/log/nginx
-    depends_on:
-      - neuromorphic-api
-    networks:
-      - neuromorphic_network
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-
-  # PostgreSQL database
-  postgres:
-    image: postgres:15-alpine
-    container_name: neuromorphic-postgres
-    restart: unless-stopped
-    environment:
-      - POSTGRES_DB=neuromorphic
-      - POSTGRES_USER=neuromorphic_user
-      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
-      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    secrets:
-      - db_password
-    networks:
-      - neuromorphic_network
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-          cpus: '1'
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U neuromorphic_user -d neuromorphic"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  # Redis cache
-  redis:
-    image: redis:7-alpine
-    container_name: neuromorphic-redis
-    restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy allkeys-lru
-    volumes:
-      - redis_data:/data
-    networks:
-      - neuromorphic_network
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '0.5'
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-
-  # Monitoring: Prometheus
-  prometheus:
+  spikeformer-monitoring:
     image: prom/prometheus:latest
-    container_name: neuromorphic-prometheus
+    container_name: spikeformer-prometheus
     restart: unless-stopped
     ports:
       - "9090:9090"
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=30d'
-      - '--web.enable-lifecycle'
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
     networks:
-      - neuromorphic_network
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-          cpus: '1'
+      - spikeformer-network
 
-  # Monitoring: Grafana
-  grafana:
+  spikeformer-grafana:
     image: grafana/grafana:latest
-    container_name: neuromorphic-grafana
+    container_name: spikeformer-grafana
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD_FILE=/run/secrets/grafana_password
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_DOMAIN=localhost
-      - GF_SMTP_ENABLED=false
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
     volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-    secrets:
-      - grafana_password
-    depends_on:
-      - prometheus
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning
     networks:
-      - neuromorphic_network
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '0.5'
+      - spikeformer-network
 
-  # Log aggregation: Loki
-  loki:
-    image: grafana/loki:latest
-    container_name: neuromorphic-loki
-    restart: unless-stopped
-    ports:
-      - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
-    volumes:
-      - ./monitoring/loki-config.yaml:/etc/loki/local-config.yaml:ro
-      - loki_data:/tmp/loki
-    networks:
-      - neuromorphic_network
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '0.5'
-
-  # Log collection: Promtail
-  promtail:
-    image: grafana/promtail:latest
-    container_name: neuromorphic-promtail
-    restart: unless-stopped
-    volumes:
-      - ./monitoring/promtail-config.yaml:/etc/promtail/config.yml:ro
-      - neuromorphic_logs:/var/log/neuromorphic:ro
-      - /var/log:/var/log:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-    command: -config.file=/etc/promtail/config.yml
-    depends_on:
-      - loki
-    networks:
-      - neuromorphic_network
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.25'
-
-  # Tracing: Jaeger
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    container_name: neuromorphic-jaeger
-    restart: unless-stopped
-    ports:
-      - "16686:16686"
-      - "14268:14268"
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
-    volumes:
-      - jaeger_data:/tmp
-    networks:
-      - neuromorphic_network
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '0.5'
-
-  # Message queue: RabbitMQ (for async processing)
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    container_name: neuromorphic-rabbitmq
-    restart: unless-stopped
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      - RABBITMQ_DEFAULT_USER=neuromorphic
-      - RABBITMQ_DEFAULT_PASS_FILE=/run/secrets/rabbitmq_password
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    secrets:
-      - rabbitmq_password
-    networks:
-      - neuromorphic_network
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-          cpus: '0.5'
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  # Background worker for async tasks
-  neuromorphic-worker:
-    build:
-      context: ../../
-      dockerfile: deployment/docker/Dockerfile
-      target: production
-    container_name: neuromorphic-worker
-    restart: unless-stopped
-    command: ["worker"]
-    environment:
-      - NEUROMORPHIC_ENVIRONMENT=production
-      - NEUROMORPHIC_DB_HOST=postgres
-      - NEUROMORPHIC_DB_PORT=5432
-      - NEUROMORPHIC_DB_NAME=neuromorphic
-      - NEUROMORPHIC_DB_USER=neuromorphic_user
-      - NEUROMORPHIC_DB_PASSWORD_FILE=/run/secrets/db_password
-      - REDIS_URL=redis://redis:6379
-      - RABBITMQ_URL=amqp://neuromorphic@rabbitmq:5672
-    volumes:
-      - neuromorphic_models:/app/models
-      - neuromorphic_logs:/app/logs
-      - neuromorphic_data:/app/data
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    secrets:
-      - db_password
-    networks:
-      - neuromorphic_network
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-          cpus: '2'
-
-# Networks
-networks:
-  neuromorphic_network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-
-# Volumes
 volumes:
-  # Application data
-  neuromorphic_models:
-    driver: local
-  neuromorphic_logs:
-    driver: local
-  neuromorphic_cache:
-    driver: local
-  neuromorphic_data:
-    driver: local
-  
-  # Database data
-  postgres_data:
-    driver: local
-  redis_data:
-    driver: local
-  
-  # Monitoring data
-  prometheus_data:
-    driver: local
-  grafana_data:
-    driver: local
-  loki_data:
-    driver: local
-  jaeger_data:
-    driver: local
-  
-  # Message queue data
-  rabbitmq_data:
-    driver: local
+  spikeformer-data:
+  spikeformer-logs:
+  prometheus-data:
+  grafana-data:
 
-# Secrets
-secrets:
-  db_password:
-    file: ./secrets/db_password.txt
-  jwt_secret:
-    file: ./secrets/jwt_secret.txt
-  grafana_password:
-    file: ./secrets/grafana_password.txt
-  rabbitmq_password:
-    file: ./secrets/rabbitmq_password.txt
+networks:
+  spikeformer-network:
+    driver: bridge

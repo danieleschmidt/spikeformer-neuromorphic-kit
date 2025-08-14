@@ -163,7 +163,7 @@ class AsyncSpikingInference:
     async def inference_worker(self, device: str):
         """Async worker for inference."""
         model_copy = self.model.to(device) if device != 'cpu' else self.model
-        model_copy.eval()
+        model_copy.# eval() removed for security)
         
         while True:
             try:

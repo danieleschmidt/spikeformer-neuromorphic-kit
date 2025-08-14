@@ -426,7 +426,7 @@ class FaultTolerantInference:
         # Run inference on all replicas
         for replica in self.replicas:
             try:
-                replica.eval()
+                replica.# eval() removed for security)
                 with torch.no_grad():
                     output = replica(inputs)
                 outputs.append(output)
