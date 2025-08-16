@@ -1,0 +1,19 @@
+{
+  "app.name": "Spikeformer \u795e\u7ecf\u5f62\u6001\u5de5\u5177\u5305",
+  "app.description": "\u8109\u51b2\u795e\u7ecf\u7f51\u7edc\u5b8c\u6574\u5de5\u5177\u5305",
+  "menu.home": "\u9996\u9875",
+  "menu.documentation": "\u6587\u6863",
+  "menu.api": "API\u53c2\u8003",
+  "menu.examples": "\u793a\u4f8b",
+  "button.convert": "\u8f6c\u6362\u6a21\u578b",
+  "button.train": "\u8bad\u7ec3\u7f51\u7edc",
+  "button.deploy": "\u90e8\u7f72",
+  "status.processing": "\u5904\u7406\u4e2d...",
+  "status.complete": "\u5b8c\u6210",
+  "status.error": "\u9519\u8bef",
+  "error.invalid_input": "\u63d0\u4f9b\u4e86\u65e0\u6548\u8f93\u5165",
+  "error.network_error": "\u53d1\u751f\u7f51\u7edc\u9519\u8bef",
+  "success.model_converted": "\u6a21\u578b\u8f6c\u6362\u6210\u529f",
+  "success.training_complete": "\u8bad\u7ec3\u5b8c\u6210",
+  "info.energy_efficiency": "\u80fd\u6548: {efficiency}\u00d7\u6539\u8fdb"
+}

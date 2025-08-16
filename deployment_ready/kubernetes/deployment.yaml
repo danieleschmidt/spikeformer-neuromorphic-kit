@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spikeformer-deployment
+  namespace: spikeformer
+  labels:
+    app: spikeformer
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spikeformer
+  template:
+    metadata:
+      labels:
+        app: spikeformer
+    spec:
+      containers:
+      - name: spikeformer
+        image: spikeformer-neuromorphic-kit:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: SPIKEFORMER_ENV
+          value: "production"
+        - name: REDIS_URL
+          value: "redis://redis-service:6379"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5

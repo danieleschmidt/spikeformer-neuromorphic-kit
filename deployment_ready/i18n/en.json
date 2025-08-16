@@ -1,0 +1,19 @@
+{
+  "app.name": "Spikeformer Neuromorphic Kit",
+  "app.description": "Complete toolkit for spiking neural networks",
+  "menu.home": "Home",
+  "menu.documentation": "Documentation",
+  "menu.api": "API Reference",
+  "menu.examples": "Examples",
+  "button.convert": "Convert Model",
+  "button.train": "Train Network",
+  "button.deploy": "Deploy",
+  "status.processing": "Processing...",
+  "status.complete": "Complete",
+  "status.error": "Error",
+  "error.invalid_input": "Invalid input provided",
+  "error.network_error": "Network error occurred",
+  "success.model_converted": "Model converted successfully",
+  "success.training_complete": "Training completed",
+  "info.energy_efficiency": "Energy efficiency: {efficiency}\u00d7 improvement"
+}

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: spikeformer
+  labels:
+    name: spikeformer
+    environment: production

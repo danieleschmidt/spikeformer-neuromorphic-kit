@@ -1,0 +1,19 @@
+{
+  "app.name": "Spikeformer Neuromorphes Kit",
+  "app.description": "Vollst\u00e4ndiges Toolkit f\u00fcr Spiking Neural Networks",
+  "menu.home": "Startseite",
+  "menu.documentation": "Dokumentation",
+  "menu.api": "API-Referenz",
+  "menu.examples": "Beispiele",
+  "button.convert": "Modell Konvertieren",
+  "button.train": "Netzwerk Trainieren",
+  "button.deploy": "Bereitstellen",
+  "status.processing": "Verarbeitung...",
+  "status.complete": "Abgeschlossen",
+  "status.error": "Fehler",
+  "error.invalid_input": "Ung\u00fcltige Eingabe bereitgestellt",
+  "error.network_error": "Netzwerkfehler aufgetreten",
+  "success.model_converted": "Modell erfolgreich konvertiert",
+  "success.training_complete": "Training abgeschlossen",
+  "info.energy_efficiency": "Energieeffizienz: {efficiency}\u00d7 Verbesserung"
+}
