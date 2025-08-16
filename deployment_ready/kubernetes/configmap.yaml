@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spikeformer-config
+  namespace: spikeformer
+data:
+  config.yaml: |
+    spikeformer:
+      log_level: "INFO"
+      max_workers: 4
+      cache_size: 10000
+      quantum_factor: 2.5
+      regions:
+        - us-east-1
+        - eu-west-1
+        - ap-southeast-1

@@ -1,0 +1,78 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Spikeformer Neuromorphic Performance",
+    "tags": [
+      "neuromorphic",
+      "ai",
+      "performance"
+    ],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Neural Network Throughput",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(spikeformer_inferences_total[5m])",
+            "legendFormat": "Inferences/sec"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Energy Efficiency",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "spikeformer_energy_efficiency_ratio",
+            "legendFormat": "Energy Efficiency Ratio"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Spike Rate Distribution",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "spikeformer_spike_rate_histogram",
+            "legendFormat": "Spike Rate"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Hardware Utilization",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "spikeformer_hardware_utilization",
+            "legendFormat": "{{hardware_type}}"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Response Time Percentiles",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, spikeformer_request_duration_seconds_bucket)",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.99, spikeformer_request_duration_seconds_bucket)",
+            "legendFormat": "99th percentile"
+          }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s"
+  }
+}

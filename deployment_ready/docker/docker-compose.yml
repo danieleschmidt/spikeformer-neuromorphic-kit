@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  spikeformer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: spikeformer-neuromorphic-kit:latest
+    container_name: spikeformer-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - SPIKEFORMER_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://postgres:password@postgres:5432/spikeformer
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - spikeformer-network
+    
+  redis:
+    image: redis:7-alpine
+    container_name: spikeformer-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - spikeformer-network
+      
+  postgres:
+    image: postgres:15-alpine
+    container_name: spikeformer-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=spikeformer
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - spikeformer-network
+      
+  nginx:
+    image: nginx:alpine
+    container_name: spikeformer-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/ssl/certs
+    depends_on:
+      - spikeformer
+    networks:
+      - spikeformer-network
+
+volumes:
+  redis_data:
+  postgres_data:
+
+networks:
+  spikeformer-network:
+    driver: bridge

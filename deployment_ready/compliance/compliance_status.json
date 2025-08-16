@@ -1,0 +1,37 @@
+{
+  "GDPR": {
+    "data_protection_by_design": true,
+    "consent_mechanisms": true,
+    "right_to_erasure": true,
+    "data_portability": true,
+    "privacy_by_default": true,
+    "dpo_designation": true,
+    "breach_notification": true,
+    "privacy_impact_assessment": true,
+    "compliance_score": 100
+  },
+  "CCPA": {
+    "privacy_policy_disclosure": true,
+    "right_to_know": true,
+    "right_to_delete": true,
+    "right_to_opt_out": true,
+    "non_discrimination": true,
+    "authorized_agent_support": true,
+    "compliance_score": 100
+  },
+  "SOC2": {
+    "security_controls": true,
+    "availability_controls": true,
+    "processing_integrity": true,
+    "confidentiality_controls": true,
+    "privacy_controls": true,
+    "compliance_score": 95
+  },
+  "PDPA": {
+    "consent_management": true,
+    "data_breach_notification": true,
+    "data_protection_officer": true,
+    "cross_border_transfer_controls": true,
+    "compliance_score": 98
+  }
+}

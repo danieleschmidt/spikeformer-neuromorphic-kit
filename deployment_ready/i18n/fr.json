@@ -1,0 +1,19 @@
+{
+  "app.name": "Kit Neuromorphique Spikeformer",
+  "app.description": "Kit complet pour les r\u00e9seaux de neurones \u00e0 pointes",
+  "menu.home": "Accueil",
+  "menu.documentation": "Documentation",
+  "menu.api": "R\u00e9f\u00e9rence API",
+  "menu.examples": "Exemples",
+  "button.convert": "Convertir le Mod\u00e8le",
+  "button.train": "Entra\u00eener le R\u00e9seau",
+  "button.deploy": "D\u00e9ployer",
+  "status.processing": "Traitement...",
+  "status.complete": "Termin\u00e9",
+  "status.error": "Erreur",
+  "error.invalid_input": "Entr\u00e9e invalide fournie",
+  "error.network_error": "Erreur r\u00e9seau survenue",
+  "success.model_converted": "Mod\u00e8le converti avec succ\u00e8s",
+  "success.training_complete": "Entra\u00eenement termin\u00e9",
+  "info.energy_efficiency": "Efficacit\u00e9 \u00e9nerg\u00e9tique: am\u00e9lioration de {efficiency}\u00d7"
+}

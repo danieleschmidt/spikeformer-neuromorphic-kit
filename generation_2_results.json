@@ -1,0 +1,275 @@
+{
+  "generation": 2,
+  "status": "completed",
+  "robustness_tests": {
+    "basic_test": true,
+    "validation_test": true,
+    "security_test": true,
+    "diagnostics_test": true,
+    "recovery_test": true,
+    "validation_score": "4/5",
+    "network_diagnostics": {
+      "architecture": {
+        "input_size": 5,
+        "hidden_size": 8,
+        "output_size": 3
+      },
+      "performance": {
+        "forward_calls": 6,
+        "total_computation_time": 0.0049915313720703125,
+        "avg_computation_time": 0.0008319218953450521,
+        "last_forward_time": 1755318966.808795,
+        "estimated_memory_mb": 0.08650970458984375
+      },
+      "health": {
+        "status": "healthy",
+        "uptime_seconds": 0.008237838745117188,
+        "error_count": 4,
+        "warning_count": 0,
+        "memory_usage_mb": 0.08650970458984375,
+        "cpu_usage_percent": 0.0,
+        "last_health_check": 1755318966.8007395,
+        "errors_per_hour": 1748031.3035424866
+      },
+      "neurons": {
+        "hidden_neurons": [
+          {
+            "name": "hidden_0",
+            "threshold": 1.0,
+            "decay": 0.9,
+            "membrane_potential": 0.18364286063575275,
+            "spike_count": 6,
+            "forward_calls": 25,
+            "spike_rate_recent": 0.2,
+            "history_length": 25,
+            "last_spike_time": 1755318966.808411,
+            "health": {
+              "status": "healthy",
+              "uptime_seconds": 0.008125543594360352,
+              "error_count": 0,
+              "warning_count": 0,
+              "memory_usage_mb": 0.0,
+              "cpu_usage_percent": 0.0,
+              "last_health_check": 1755318966.8007839,
+              "errors_per_hour": 0.0
+            }
+          },
+          {
+            "name": "hidden_1",
+            "threshold": 1.0,
+            "decay": 0.9,
+            "membrane_potential": -2.5189318383596158,
+            "spike_count": 0,
+            "forward_calls": 25,
+            "spike_rate_recent": 0.0,
+            "history_length": 25,
+            "last_spike_time": null,
+            "health": {
+              "status": "healthy",
+              "uptime_seconds": 0.0077130794525146484,
+              "error_count": 0,
+              "warning_count": 0,
+              "memory_usage_mb": 0.0,
+              "cpu_usage_percent": 0.0,
+              "last_health_check": 1755318966.8012068,
+              "errors_per_hour": 0.0
+            }
+          },
+          {
+            "name": "hidden_2",
+            "threshold": 1.0,
+            "decay": 0.9,
+            "membrane_potential": -5.622425717798311,
+            "spike_count": 0,
+            "forward_calls": 25,
+            "spike_rate_recent": 0.0,
+            "history_length": 25,
+            "last_spike_time": null,
+            "health": {
+              "status": "healthy",
+              "uptime_seconds": 0.007617473602294922,
+              "error_count": 0,
+              "warning_count": 0,
+              "memory_usage_mb": 0.0,
+              "cpu_usage_percent": 0.0,
+              "last_health_check": 1755318966.801308,
+              "errors_per_hour": 0.0
+            }
+          },
+          {
+            "name": "hidden_3",
+            "threshold": 1.0,
+            "decay": 0.9,
+            "membrane_potential": 0.43555185635800264,
+            "spike_count": 0,
+            "forward_calls": 25,
+            "spike_rate_recent": 0.0,
+            "history_length": 25,
+            "last_spike_time": null,
+            "health": {
+              "status": "healthy",
+              "uptime_seconds": 0.007560014724731445,
+              "error_count": 0,
+              "warning_count": 0,
+              "memory_usage_mb": 0.0,
+              "cpu_usage_percent": 0.0,
+              "last_health_check": 1755318966.8013704,
+              "errors_per_hour": 0.0
+            }
+          },
+          {
+            "name": "hidden_4",
+            "threshold": 1.0,
+            "decay": 0.9,
+            "membrane_potential": 0.6584825627187142,
+            "spike_count": 3,
+            "forward_calls": 25,
+            "spike_rate_recent": 0.1,
+            "history_length": 25,
+            "last_spike_time": 1755318966.8060303,
+            "health": {
+              "status": "healthy",
+              "uptime_seconds": 0.0075054168701171875,
+              "error_count": 0,
+              "warning_count": 0,
+              "memory_usage_mb": 0.0,
+              "cpu_usage_percent": 0.0,
+              "last_health_check": 1755318966.80143,
+              "errors_per_hour": 0.0
+            }
+          },
+          {
+            "name": "hidden_5",
+            "threshold": 1.0,
+            "decay": 0.9,
+            "membrane_potential": -10.958593558224202,
+            "spike_count": 0,
+            "forward_calls": 25,
+            "spike_rate_recent": 0.0,
+            "history_length": 25,
+            "last_spike_time": null,
+            "health": {
+              "status": "healthy",
+              "uptime_seconds": 0.0074536800384521484,
+              "error_count": 0,
+              "warning_count": 0,
+              "memory_usage_mb": 0.0,
+              "cpu_usage_percent": 0.0,
+              "last_health_check": 1755318966.8014863,
+              "errors_per_hour": 0.0
+            }
+          },
+          {
+            "name": "hidden_6",
+            "threshold": 1.0,
+            "decay": 0.9,
+            "membrane_potential": -0.8804031678837474,
+            "spike_count": 0,
+            "forward_calls": 25,
+            "spike_rate_recent": 0.0,
+            "history_length": 25,
+            "last_spike_time": null,
+            "health": {
+              "status": "healthy",
+              "uptime_seconds": 0.007366657257080078,
+              "error_count": 0,
+              "warning_count": 0,
+              "memory_usage_mb": 0.0,
+              "cpu_usage_percent": 0.0,
+              "last_health_check": 1755318966.8015778,
+              "errors_per_hour": 0.0
+            }
+          },
+          {
+            "name": "hidden_7",
+            "threshold": 1.0,
+            "decay": 0.9,
+            "membrane_potential": 0.2701569200434448,
+            "spike_count": 14,
+            "forward_calls": 25,
+            "spike_rate_recent": 0.4,
+            "history_length": 25,
+            "last_spike_time": 1755318966.8084402,
+            "health": {
+              "status": "healthy",
+              "uptime_seconds": 0.007283210754394531,
+              "error_count": 0,
+              "warning_count": 0,
+              "memory_usage_mb": 0.0,
+              "cpu_usage_percent": 0.0,
+              "last_health_check": 1755318966.8016655,
+              "errors_per_hour": 0.0
+            }
+          }
+        ],
+        "output_neurons": [
+          {
+            "name": "output_0",
+            "threshold": 1.0,
+            "decay": 0.9,
+            "membrane_potential": 0.664321030896307,
+            "spike_count": 6,
+            "forward_calls": 25,
+            "spike_rate_recent": 0.1,
+            "history_length": 25,
+            "last_spike_time": 1755318966.8059084,
+            "health": {
+              "status": "healthy",
+              "uptime_seconds": 0.007208347320556641,
+              "error_count": 0,
+              "warning_count": 0,
+              "memory_usage_mb": 0.0,
+              "cpu_usage_percent": 0.0,
+              "last_health_check": 1755318966.8017452,
+              "errors_per_hour": 0.0
+            }
+          },
+          {
+            "name": "output_1",
+            "threshold": 1.0,
+            "decay": 0.9,
+            "membrane_potential": 0.5783330091542338,
+            "spike_count": 4,
+            "forward_calls": 25,
+            "spike_rate_recent": 0.1,
+            "history_length": 25,
+            "last_spike_time": 1755318966.806068,
+            "health": {
+              "status": "healthy",
+              "uptime_seconds": 0.007133960723876953,
+              "error_count": 0,
+              "warning_count": 0,
+              "memory_usage_mb": 0.0,
+              "cpu_usage_percent": 0.0,
+              "last_health_check": 1755318966.80183,
+              "errors_per_hour": 0.0
+            }
+          },
+          {
+            "name": "output_2",
+            "threshold": 1.0,
+            "decay": 0.9,
+            "membrane_potential": 0.0,
+            "spike_count": 6,
+            "forward_calls": 25,
+            "spike_rate_recent": 0.2,
+            "history_length": 25,
+            "last_spike_time": 1755318966.8084536,
+            "health": {
+              "status": "healthy",
+              "uptime_seconds": 0.00699925422668457,
+              "error_count": 0,
+              "warning_count": 0,
+              "memory_usage_mb": 0.0,
+              "cpu_usage_percent": 0.0,
+              "last_health_check": 1755318966.8019683,
+              "errors_per_hour": 0.0
+            }
+          }
+        ]
+      }
+    }
+  },
+  "security_level": "high",
+  "timestamp": "1755318966.810485"
+}

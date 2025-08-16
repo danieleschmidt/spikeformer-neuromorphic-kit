@@ -1,0 +1,32 @@
+{
+  "overall_score": 84.41331147867466,
+  "security_score": 98.5780305723427,
+  "performance_score": 95.16487121582031,
+  "code_quality_score": 68.88793015816948,
+  "documentation_score": 80.0,
+  "deployment_readiness_score": 68.0,
+  "test_coverage_percent": 48.45070422535211,
+  "passed_gates": [
+    "Performance Testing",
+    "Documentation",
+    "Deployment Readiness"
+  ],
+  "failed_gates": [
+    "Security Scanning",
+    "Code Quality"
+  ],
+  "issues_found": [
+    "Security: unsafe_functions in /root/repo/demo_advanced.py:311",
+    "Security: weak_crypto in /root/repo/demo_basic.py:109",
+    "Security: weak_crypto in /root/repo/optimized_spikeformer.py:128",
+    "Security: weak_crypto in /root/repo/robust_spikeformer.py:588",
+    "Security: weak_crypto in /root/repo/robust_spikeformer.py:716",
+    "Code Quality: Score 68.9 below threshold"
+  ],
+  "recommendations": [
+    "Improve code structure and add documentation",
+    "Address failing quality gates before production deployment"
+  ],
+  "gates_passed": false,
+  "timestamp": 1755319300.0648203
+}

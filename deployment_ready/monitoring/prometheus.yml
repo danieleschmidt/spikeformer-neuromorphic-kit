@@ -1,0 +1,37 @@
+# Prometheus Configuration for Spikeformer
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "spikeformer_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Spikeformer application metrics
+  - job_name: 'spikeformer'
+    static_configs:
+      - targets: ['spikeformer:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    
+  # Hardware metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+      
+  # Neuromorphic hardware metrics
+  - job_name: 'neuromorphic-hardware'
+    static_configs:
+      - targets: ['hardware-monitor:9200']
+    metrics_path: '/neuromorphic/metrics'
+    
+  # Performance metrics
+  - job_name: 'performance-monitor'
+    static_configs:
+      - targets: ['perf-monitor:9300']
