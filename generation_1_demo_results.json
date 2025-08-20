@@ -1,0 +1,41 @@
+{
+  "demo_type": "basic_functionality",
+  "generation": "1_make_it_work",
+  "timestamp": 1755650148.2587473,
+  "model_config": {
+    "timesteps": 16,
+    "threshold": 0.5,
+    "neuron_model": "LIF",
+    "spike_encoding": "rate",
+    "dropout": 0.1
+  },
+  "inference_result": {
+    "output": 0.4,
+    "total_spikes": 18,
+    "sparsity": 0.859375,
+    "inference_time_ms": 0.0400543212890625,
+    "energy_estimate_mj": 1.8
+  },
+  "energy_profile": {
+    "spiking_energy_mj": 1.8,
+    "gpu_baseline_mj": 100.0,
+    "energy_reduction_factor": 55.55555555555556,
+    "inference_time_ms": 0.03528594970703125,
+    "sparsity": 0.859375
+  },
+  "deployment_info": {
+    "target_hardware": "loihi2",
+    "model_config": {
+      "timesteps": 16,
+      "threshold": 0.5,
+      "neuron_model": "LIF",
+      "spike_encoding": "rate",
+      "dropout": 0.1
+    },
+    "deployment_time": 1755650148.2587397,
+    "status": "deployed",
+    "estimated_power_mw": 50.0,
+    "estimated_latency_ms": 5.0
+  },
+  "status": "success"
+}

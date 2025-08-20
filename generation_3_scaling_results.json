@@ -1,0 +1,113 @@
+{
+  "demo_type": "high_performance_scaling",
+  "generation": "3_make_it_scale",
+  "timestamp": 1755650317.5373418,
+  "model_config": {
+    "timesteps": 16,
+    "threshold": 0.3,
+    "neuron_model": "LIF",
+    "spike_encoding": "rate",
+    "dropout": 0.1,
+    "batch_size": 32,
+    "max_concurrent_requests": 50,
+    "enable_caching": true,
+    "cache_size": 500,
+    "enable_prefetching": true,
+    "enable_batching": true,
+    "optimization_level": 3,
+    "max_memory_gb": 8.0,
+    "max_cpu_cores": 2,
+    "enable_gpu_acceleration": false,
+    "enable_distributed": false,
+    "enable_auto_scaling": true,
+    "scale_up_threshold": 0.8,
+    "scale_down_threshold": 0.2,
+    "min_replicas": 1,
+    "max_replicas": 5
+  },
+  "single_request_result": {
+    "output": 0.425,
+    "confidence": 0.8375,
+    "total_spikes": 40,
+    "sparsity": 0.6875,
+    "inference_time_ms": 0.08654594421386719,
+    "energy_estimate_mj": 3.2,
+    "cache_hit": false,
+    "optimization_level": 3
+  },
+  "cache_test_time_ms": 0.07939338684082031,
+  "batch_results": {
+    "batch_size": 16,
+    "batch_time_ms": 106.52518272399902,
+    "throughput_items_per_sec": 150.19922605019258
+  },
+  "load_test_results": {
+    "total_requests": 50,
+    "successful_requests": 50,
+    "failed_requests": 0,
+    "total_time_s": 0.013542890548706055,
+    "avg_inference_time_ms": 0.053844451904296875,
+    "throughput_rps": 3691.97401545693,
+    "success_rate": 1.0,
+    "performance_stats": {
+      "requests_processed": 62,
+      "total_time": 3.1948089599609375,
+      "cache_hits": 15,
+      "cache_misses": 62,
+      "batch_count": 1,
+      "scale_events": 0,
+      "avg_inference_time_ms": 0.05152917677356351,
+      "throughput_rps": 19406.48119402985,
+      "resource_usage": {
+        "cpu_usage": 64.82998085021973,
+        "memory_usage": 29.872508883476257,
+        "avg_cpu": 64.82998085021973,
+        "avg_memory": 29.872508883476257
+      },
+      "cache_stats": {
+        "size": 62,
+        "max_size": 500,
+        "hits": 15,
+        "misses": 62,
+        "hit_rate": 0.19480519480519481,
+        "memory_efficiency": 0.124
+      },
+      "current_replicas": 1,
+      "scaling_history": []
+    }
+  },
+  "final_performance_stats": {
+    "requests_processed": 62,
+    "total_time": 3.1948089599609375,
+    "cache_hits": 15,
+    "cache_misses": 62,
+    "batch_count": 1,
+    "scale_events": 0,
+    "avg_inference_time_ms": 0.05152917677356351,
+    "throughput_rps": 19406.48119402985,
+    "resource_usage": {
+      "cpu_usage": 64.82998085021973,
+      "memory_usage": 29.872508883476257,
+      "avg_cpu": 64.82998085021973,
+      "avg_memory": 29.872508883476257
+    },
+    "cache_stats": {
+      "size": 62,
+      "max_size": 500,
+      "hits": 15,
+      "misses": 62,
+      "hit_rate": 0.19480519480519481,
+      "memory_efficiency": 0.124
+    },
+    "current_replicas": 1,
+    "scaling_history": []
+  },
+  "features_enabled": {
+    "caching": true,
+    "batching": true,
+    "auto_scaling": true,
+    "concurrent_processing": true,
+    "optimization_level": 3
+  },
+  "status": "success"
+}

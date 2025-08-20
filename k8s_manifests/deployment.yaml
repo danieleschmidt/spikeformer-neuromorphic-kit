@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spikeformer-deployment
+  namespace: spikeformer-prod
+  labels:
+    app: spikeformer
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: spikeformer
+  template:
+    metadata:
+      labels:
+        app: spikeformer
+    spec:
+      containers:
+      - name: spikeformer
+        image: docker.io/spikeformer:spikeformer-v1755650607
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: spikeformer-config
+              key: environment
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+---

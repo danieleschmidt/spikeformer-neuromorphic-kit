@@ -1,0 +1,39 @@
+# SpikeFormer Neuromorphic Kit - Production Image
+FROM python:3.11-slim AS base
+
+# Security and performance optimizations
+RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --shell /bin/bash spikeformer
+
+# Multi-stage build for smaller image
+FROM base AS builder
+WORKDIR /build
+COPY requirements.txt pyproject.toml ./
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+FROM base AS production
+WORKDIR /app
+
+# Copy application files
+COPY --from=builder /root/.local /home/spikeformer/.local
+COPY --chown=spikeformer:spikeformer . .
+
+# Environment variables
+ENV PATH="/home/spikeformer/.local/bin:$PATH"
+ENV PYTHONPATH="/app"
+ENV ENVIRONMENT=production
+ENV SPIKEFORMER_LOG_LEVEL=INFO
+
+# Security
+USER spikeformer
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Entry point
+CMD ["python", "-m", "spikeformer.cli.main", "--serve", "--port", "8080"]
