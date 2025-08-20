@@ -1,0 +1,152 @@
+{
+  "demo_type": "robust_functionality",
+  "generation": "2_make_it_robust",
+  "timestamp": 1755650227.6168227,
+  "model_config": {
+    "timesteps": 24,
+    "threshold": 0.4,
+    "neuron_model": "LIF",
+    "spike_encoding": "rate",
+    "dropout": 0.1,
+    "max_inference_time_ms": 1000.0,
+    "enable_monitoring": true,
+    "fallback_enabled": true,
+    "security_check": true
+  },
+  "session_id": "8699fba39b3112a1",
+  "inference_results": [
+    {
+      "inference": {
+        "output": 0.4,
+        "confidence": 0.88125,
+        "total_spikes": 42,
+        "sparsity": 0.78125,
+        "inference_time_ms": 0.156402587890625,
+        "energy_estimate_mj": 4.2,
+        "session_id": "8699fba39b3112a1",
+        "status": "primary_success",
+        "model_checksum": "8b67f133013a563f0b62abd0ffb40d7f"
+      },
+      "energy": {
+        "spiking_energy_mj": 4.2,
+        "gpu_baseline_mj": 98.0,
+        "energy_reduction_factor": 23.333333333333332,
+        "energy_per_spike": 0.1,
+        "inference_time_ms": 0.13828277587890625,
+        "throughput_ips": 7231558.620689655,
+        "sparsity": 0.78125,
+        "confidence": 0.88125,
+        "status": "primary_success",
+        "timestamp": 1755650227.1129346,
+        "calibrated": true
+      }
+    },
+    {
+      "inference": {
+        "output": 0.4,
+        "confidence": 0.88125,
+        "total_spikes": 42,
+        "sparsity": 0.78125,
+        "inference_time_ms": 0.179290771484375,
+        "energy_estimate_mj": 4.2,
+        "session_id": "8699fba39b3112a1",
+        "status": "primary_success",
+        "model_checksum": "8b67f133013a563f0b62abd0ffb40d7f"
+      },
+      "energy": {
+        "spiking_energy_mj": 4.2,
+        "gpu_baseline_mj": 98.0,
+        "energy_reduction_factor": 23.333333333333332,
+        "energy_per_spike": 0.1,
+        "inference_time_ms": 0.13780593872070312,
+        "throughput_ips": 7256581.314878893,
+        "sparsity": 0.78125,
+        "confidence": 0.88125,
+        "status": "primary_success",
+        "timestamp": 1755650227.1132777,
+        "calibrated": true
+      }
+    },
+    {
+      "inference": {
+        "output": 0.4,
+        "confidence": 0.88125,
+        "total_spikes": 42,
+        "sparsity": 0.78125,
+        "inference_time_ms": 0.1518726348876953,
+        "energy_estimate_mj": 4.2,
+        "session_id": "8699fba39b3112a1",
+        "status": "primary_success",
+        "model_checksum": "8b67f133013a563f0b62abd0ffb40d7f"
+      },
+      "energy": {
+        "spiking_energy_mj": 4.2,
+        "gpu_baseline_mj": 98.0,
+        "energy_reduction_factor": 23.333333333333332,
+        "energy_per_spike": 0.1,
+        "inference_time_ms": 0.1347064971923828,
+        "throughput_ips": 7423546.902654868,
+        "sparsity": 0.78125,
+        "confidence": 0.88125,
+        "status": "primary_success",
+        "timestamp": 1755650227.1135852,
+        "calibrated": true
+      }
+    }
+  ],
+  "health_status": {
+    "status": "healthy",
+    "metrics": {
+      "cpu_usage": 0.0,
+      "memory_usage": 0.0,
+      "error_count": 0,
+      "success_count": 6,
+      "avg_response_time": 0.14690558115641275
+    },
+    "error_rate": 0.0,
+    "recent_alerts": []
+  },
+  "deployment_info": {
+    "deployment_id": "7f2b56ef309177cc",
+    "target_hardware": "loihi2",
+    "model_session_id": "8699fba39b3112a1",
+    "model_config": {
+      "timesteps": 24,
+      "threshold": 0.4,
+      "neuron_model": "LIF",
+      "spike_encoding": "rate",
+      "dropout": 0.1,
+      "max_inference_time_ms": 1000.0,
+      "enable_monitoring": true,
+      "fallback_enabled": true,
+      "security_check": true
+    },
+    "deployment_time_s": 0.5025718212127686,
+    "status": "deployed",
+    "estimated_power_mw": 50,
+    "estimated_latency_ms": 5,
+    "reliability_score": 0.99,
+    "timestamp": 1755650227.6162803,
+    "health_status": {
+      "status": "healthy",
+      "metrics": {
+        "cpu_usage": 0.0,
+        "memory_usage": 0.0,
+        "error_count": 0,
+        "success_count": 6,
+        "avg_response_time": 0.14690558115641275
+      },
+      "error_rate": 0.0,
+      "recent_alerts": []
+    },
+    "verification_passed": true
+  },
+  "profiler_calibrated": true,
+  "security_features": {
+    "input_validation": true,
+    "circuit_breaker": true,
+    "fallback_enabled": true,
+    "monitoring": true
+  },
+  "status": "success"
+}
