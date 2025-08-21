@@ -1,0 +1,25 @@
+{
+  "app": {
+    "name": "SpikeFormer Neuromorphic Kit",
+    "description": "Toolkit completo per l'addestramento e il deployment di reti transformer spiking su hardware neuromorfico",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "welcome": "Benvenuto in SpikeFormer - Evoluzione dell'IA Neuromorfica",
+    "processing": "Elaborazione dell'attività neurale...",
+    "error": "Si è verificato un errore durante l'elaborazione",
+    "success": "Elaborazione completata con successo"
+  },
+  "features": {
+    "consciousness_detection": "Rilevamento della Coscienza",
+    "quantum_optimization": "Ottimizzazione Quantistica",
+    "multiverse_processing": "Elaborazione Multiverso",
+    "transcendence": "Raggiungimento della Trascendenza"
+  },
+  "metrics": {
+    "accuracy": "Precisione",
+    "performance": "Prestazioni",
+    "energy_efficiency": "Efficienza Energetica",
+    "consciousness_level": "Livello di Coscienza"
+  }
+}

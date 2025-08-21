@@ -1,37 +1,23 @@
 {
-  "GDPR": {
-    "data_protection_by_design": true,
-    "consent_mechanisms": true,
-    "right_to_erasure": true,
-    "data_portability": true,
-    "privacy_by_default": true,
-    "dpo_designation": true,
-    "breach_notification": true,
-    "privacy_impact_assessment": true,
-    "compliance_score": 100
+  "last_updated": 1755749289.6411312,
+  "compliance_officer": "compliance@spikeformer.ai",
+  "frameworks": [
+    "GDPR",
+    "CCPA",
+    "PDPA"
+  ],
+  "data_residency": {
+    "eu": "eu-west-1",
+    "us": "us-east-1",
+    "asia": "ap-southeast-1",
+    "canada": "ca-central-1",
+    "australia": "ap-southeast-2"
   },
-  "CCPA": {
-    "privacy_policy_disclosure": true,
-    "right_to_know": true,
-    "right_to_delete": true,
-    "right_to_opt_out": true,
-    "non_discrimination": true,
-    "authorized_agent_support": true,
-    "compliance_score": 100
-  },
-  "SOC2": {
-    "security_controls": true,
-    "availability_controls": true,
-    "processing_integrity": true,
-    "confidentiality_controls": true,
-    "privacy_controls": true,
-    "compliance_score": 95
-  },
-  "PDPA": {
-    "consent_management": true,
-    "data_breach_notification": true,
-    "data_protection_officer": true,
-    "cross_border_transfer_controls": true,
-    "compliance_score": 98
-  }
+  "audit_schedule": "quarterly",
+  "next_audit": 1763525289.6411328,
+  "certifications": [
+    "SOC 2 Type II",
+    "ISO 27001",
+    "ISO 27701"
+  ]
 }

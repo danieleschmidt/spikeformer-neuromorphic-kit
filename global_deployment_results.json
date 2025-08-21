@@ -1,55 +1,463 @@
 {
-  "deployment_id": "a44e49b5-f206-43ea-b589-f3feca279007",
-  "timestamp": "2025-08-16T04:44:23.957595+00:00",
-  "regions": [
-    "us-east-1",
-    "eu-west-1",
-    "ap-southeast-1"
-  ],
-  "environments": [
-    "development",
-    "staging",
-    "production"
-  ],
-  "infrastructure": {
-    "status": "completed",
-    "artifacts": [
-      "docker",
-      "kubernetes",
-      "terraform"
-    ],
-    "regions_deployed": 3
+  "setup_id": "48d548da-30a0-4eb3-8e69-02f5334da2ab",
+  "timestamp": 1755749289.6366656,
+  "components": {
+    "internationalization": {
+      "languages_configured": [
+        "en",
+        "es",
+        "fr",
+        "de",
+        "ja",
+        "zh",
+        "ko",
+        "pt",
+        "it",
+        "ru"
+      ],
+      "translation_files": [
+        "deployment_ready/i18n/en.json",
+        "deployment_ready/i18n/es.json",
+        "deployment_ready/i18n/fr.json",
+        "deployment_ready/i18n/de.json",
+        "deployment_ready/i18n/ja.json",
+        "deployment_ready/i18n/zh.json",
+        "deployment_ready/i18n/ko.json",
+        "deployment_ready/i18n/pt.json",
+        "deployment_ready/i18n/it.json",
+        "deployment_ready/i18n/ru.json"
+      ],
+      "locale_data": {
+        "en": {
+          "language": "en",
+          "direction": "ltr",
+          "date_format": "MM/DD/YYYY",
+          "number_format": "1,234.56",
+          "currency": "USD",
+          "timezone": "UTC"
+        },
+        "es": {
+          "language": "es",
+          "direction": "ltr",
+          "date_format": "DD/MM/YYYY",
+          "number_format": "1.234,56",
+          "currency": "EUR",
+          "timezone": "Europe/Madrid"
+        },
+        "fr": {
+          "language": "fr",
+          "direction": "ltr",
+          "date_format": "DD/MM/YYYY",
+          "number_format": "1 234,56",
+          "currency": "EUR",
+          "timezone": "Europe/Paris"
+        },
+        "de": {
+          "language": "de",
+          "direction": "ltr",
+          "date_format": "DD.MM.YYYY",
+          "number_format": "1.234,56",
+          "currency": "EUR",
+          "timezone": "Europe/Berlin"
+        },
+        "ja": {
+          "language": "ja",
+          "direction": "ltr",
+          "date_format": "YYYY/MM/DD",
+          "number_format": "1,234.56",
+          "currency": "JPY",
+          "timezone": "Asia/Tokyo"
+        },
+        "zh": {
+          "language": "zh",
+          "direction": "ltr",
+          "date_format": "YYYY-MM-DD",
+          "number_format": "1,234.56",
+          "currency": "CNY",
+          "timezone": "Asia/Shanghai"
+        },
+        "ko": {
+          "language": "ko",
+          "direction": "ltr",
+          "date_format": "YYYY.MM.DD",
+          "number_format": "1,234.56",
+          "currency": "KRW",
+          "timezone": "Asia/Seoul"
+        },
+        "pt": {
+          "language": "pt",
+          "direction": "ltr",
+          "date_format": "DD/MM/YYYY",
+          "number_format": "1.234,56",
+          "currency": "BRL",
+          "timezone": "America/Sao_Paulo"
+        },
+        "it": {
+          "language": "it",
+          "direction": "ltr",
+          "date_format": "DD/MM/YYYY",
+          "number_format": "1.234,56",
+          "currency": "EUR",
+          "timezone": "Europe/Rome"
+        },
+        "ru": {
+          "language": "ru",
+          "direction": "ltr",
+          "date_format": "DD.MM.YYYY",
+          "number_format": "1 234,56",
+          "currency": "RUB",
+          "timezone": "Europe/Moscow"
+        }
+      }
+    },
+    "compliance": {
+      "compliance_frameworks": [
+        "GDPR",
+        "CCPA",
+        "PDPA"
+      ],
+      "privacy_policies": [
+        "deployment_ready/compliance/gdpr_policy.md",
+        "deployment_ready/compliance/ccpa_policy.md",
+        "deployment_ready/compliance/pdpa_policy.md"
+      ],
+      "data_handling": {
+        "data_minimization": true,
+        "purpose_limitation": true,
+        "storage_limitation": true,
+        "accuracy_requirement": true,
+        "security_measures": true,
+        "consent_management": true,
+        "right_to_access": true,
+        "right_to_rectification": true,
+        "right_to_erasure": true,
+        "right_to_portability": true,
+        "data_breach_notification": true
+      },
+      "audit_trails": {
+        "compliance_status": "deployment_ready/compliance/compliance_status.json"
+      }
+    },
+    "deployment": {
+      "regions_configured": [
+        "us-east-1",
+        "us-west-2",
+        "eu-west-1",
+        "eu-central-1",
+        "ap-southeast-1",
+        "ap-northeast-1",
+        "ap-south-1"
+      ],
+      "deployment_configs": {
+        "us-east-1": {
+          "region": "us-east-1",
+          "availability_zones": [
+            "us-east-1a",
+            "us-east-1b",
+            "us-east-1c"
+          ],
+          "instance_type": "c5.xlarge",
+          "min_capacity": 2,
+          "max_capacity": 20,
+          "auto_scaling": true,
+          "health_check": {
+            "enabled": true,
+            "interval": 30,
+            "timeout": 5,
+            "healthy_threshold": 2,
+            "unhealthy_threshold": 3
+          },
+          "monitoring": {
+            "cloudwatch": true,
+            "prometheus": true,
+            "custom_metrics": [
+              "consciousness_level",
+              "transcendence_score"
+            ]
+          },
+          "backup": {
+            "enabled": true,
+            "schedule": "0 2 * * *",
+            "retention_days": 30
+          }
+        },
+        "us-west-2": {
+          "region": "us-west-2",
+          "availability_zones": [
+            "us-west-2a",
+            "us-west-2b",
+            "us-west-2c"
+          ],
+          "instance_type": "c5.large",
+          "min_capacity": 1,
+          "max_capacity": 10,
+          "auto_scaling": true,
+          "health_check": {
+            "enabled": true,
+            "interval": 30,
+            "timeout": 5,
+            "healthy_threshold": 2,
+            "unhealthy_threshold": 3
+          },
+          "monitoring": {
+            "cloudwatch": true,
+            "prometheus": true,
+            "custom_metrics": [
+              "consciousness_level",
+              "transcendence_score"
+            ]
+          },
+          "backup": {
+            "enabled": true,
+            "schedule": "0 2 * * *",
+            "retention_days": 30
+          }
+        },
+        "eu-west-1": {
+          "region": "eu-west-1",
+          "availability_zones": [
+            "eu-west-1a",
+            "eu-west-1b",
+            "eu-west-1c"
+          ],
+          "instance_type": "c5.large",
+          "min_capacity": 1,
+          "max_capacity": 15,
+          "auto_scaling": true,
+          "health_check": {
+            "enabled": true,
+            "interval": 30,
+            "timeout": 5,
+            "healthy_threshold": 2,
+            "unhealthy_threshold": 3
+          },
+          "monitoring": {
+            "cloudwatch": true,
+            "prometheus": true,
+            "custom_metrics": [
+              "consciousness_level",
+              "transcendence_score"
+            ]
+          },
+          "backup": {
+            "enabled": true,
+            "schedule": "0 2 * * *",
+            "retention_days": 30
+          }
+        },
+        "eu-central-1": {
+          "region": "eu-central-1",
+          "availability_zones": [
+            "eu-central-1a",
+            "eu-central-1b",
+            "eu-central-1c"
+          ],
+          "instance_type": "c5.large",
+          "min_capacity": 1,
+          "max_capacity": 10,
+          "auto_scaling": true,
+          "health_check": {
+            "enabled": true,
+            "interval": 30,
+            "timeout": 5,
+            "healthy_threshold": 2,
+            "unhealthy_threshold": 3
+          },
+          "monitoring": {
+            "cloudwatch": true,
+            "prometheus": true,
+            "custom_metrics": [
+              "consciousness_level",
+              "transcendence_score"
+            ]
+          },
+          "backup": {
+            "enabled": true,
+            "schedule": "0 2 * * *",
+            "retention_days": 30
+          }
+        },
+        "ap-southeast-1": {
+          "region": "ap-southeast-1",
+          "availability_zones": [
+            "ap-southeast-1a",
+            "ap-southeast-1b",
+            "ap-southeast-1c"
+          ],
+          "instance_type": "c5.large",
+          "min_capacity": 1,
+          "max_capacity": 12,
+          "auto_scaling": true,
+          "health_check": {
+            "enabled": true,
+            "interval": 30,
+            "timeout": 5,
+            "healthy_threshold": 2,
+            "unhealthy_threshold": 3
+          },
+          "monitoring": {
+            "cloudwatch": true,
+            "prometheus": true,
+            "custom_metrics": [
+              "consciousness_level",
+              "transcendence_score"
+            ]
+          },
+          "backup": {
+            "enabled": true,
+            "schedule": "0 2 * * *",
+            "retention_days": 30
+          }
+        },
+        "ap-northeast-1": {
+          "region": "ap-northeast-1",
+          "availability_zones": [
+            "ap-northeast-1a",
+            "ap-northeast-1b",
+            "ap-northeast-1c"
+          ],
+          "instance_type": "c5.large",
+          "min_capacity": 1,
+          "max_capacity": 15,
+          "auto_scaling": true,
+          "health_check": {
+            "enabled": true,
+            "interval": 30,
+            "timeout": 5,
+            "healthy_threshold": 2,
+            "unhealthy_threshold": 3
+          },
+          "monitoring": {
+            "cloudwatch": true,
+            "prometheus": true,
+            "custom_metrics": [
+              "consciousness_level",
+              "transcendence_score"
+            ]
+          },
+          "backup": {
+            "enabled": true,
+            "schedule": "0 2 * * *",
+            "retention_days": 30
+          }
+        },
+        "ap-south-1": {
+          "region": "ap-south-1",
+          "availability_zones": [
+            "ap-south-1a",
+            "ap-south-1b",
+            "ap-south-1c"
+          ],
+          "instance_type": "c5.large",
+          "min_capacity": 1,
+          "max_capacity": 8,
+          "auto_scaling": true,
+          "health_check": {
+            "enabled": true,
+            "interval": 30,
+            "timeout": 5,
+            "healthy_threshold": 2,
+            "unhealthy_threshold": 3
+          },
+          "monitoring": {
+            "cloudwatch": true,
+            "prometheus": true,
+            "custom_metrics": [
+              "consciousness_level",
+              "transcendence_score"
+            ]
+          },
+          "backup": {
+            "enabled": true,
+            "schedule": "0 2 * * *",
+            "retention_days": 30
+          }
+        }
+      },
+      "load_balancing": {
+        "type": "application",
+        "scheme": "internet-facing",
+        "listeners": [
+          {
+            "port": 80,
+            "protocol": "HTTP",
+            "redirect_to_https": true
+          },
+          {
+            "port": 443,
+            "protocol": "HTTPS",
+            "ssl_certificate": "arn:aws:acm:*:certificate/*"
+          }
+        ],
+        "target_groups": [
+          {
+            "name": "spikeformer-api",
+            "port": 8000,
+            "protocol": "HTTP",
+            "health_check": {
+              "path": "/health",
+              "interval": 30,
+              "timeout": 5
+            }
+          }
+        ],
+        "routing": {
+          "algorithm": "round_robin",
+          "sticky_sessions": false,
+          "health_based": true
+        },
+        "waf": {
+          "enabled": true,
+          "rules": [
+            "AWSManagedRulesCommonRuleSet",
+            "AWSManagedRulesKnownBadInputsRuleSet",
+            "AWSManagedRulesLinuxRuleSet"
+          ]
+        }
+      },
+      "data_replication": {
+        "strategy": "active-passive",
+        "primary_region": "us-east-1",
+        "replication_lag_max": "5s",
+        "backup_regions": [
+          "us-west-2",
+          "eu-west-1",
+          "eu-central-1",
+          "ap-southeast-1",
+          "ap-northeast-1",
+          "ap-south-1"
+        ],
+        "consistency": "eventual",
+        "failover": {
+          "automatic": true,
+          "rpo_target": "1m",
+          "rto_target": "5m"
+        },
+        "data_types": {
+          "user_data": {
+            "replicated": true,
+            "encryption": true,
+            "backup_frequency": "hourly"
+          },
+          "system_metrics": {
+            "replicated": true,
+            "encryption": false,
+            "backup_frequency": "daily"
+          },
+          "model_artifacts": {
+            "replicated": true,
+            "encryption": true,
+            "backup_frequency": "daily"
+          }
+        }
+      },
+      "terraform_files": [
+        "deployment_ready/terraform/main.tf",
+        "deployment_ready/terraform/variables.tf"
+      ]
+    }
   },
-  "internationalization": {
-    "status": "completed",
-    "languages_supported": 6,
-    "translations_ready": true
-  },
-  "compliance": {
-    "status": "completed",
-    "standards_implemented": 4,
-    "privacy_policy_generated": true,
-    "gdpr_ready": true,
-    "ccpa_ready": true
-  },
-  "monitoring": {
-    "status": "completed",
-    "prometheus_configured": true,
-    "grafana_dashboard_ready": true,
-    "endpoints_configured": 3
-  },
-  "documentation": {
-    "status": "completed",
-    "deployment_guide_ready": true,
-    "size_kb": 3.12890625
-  },
-  "metrics": {
-    "total_deployment_time_seconds": 0.0008225440979003906,
-    "regions_deployed": 3,
-    "compliance_standards": 4,
-    "languages_supported": 6,
-    "infrastructure_components": 10,
-    "deployment_ready": true
-  },
-  "overall_status": "SUCCESS"
+  "global_config_file": "deployment_ready/global_config.json",
+  "deployment_guide": "deployment_ready/DEPLOYMENT_GUIDE.md",
+  "setup_time": 0.0060389041900634766
 }

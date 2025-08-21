@@ -1,0 +1,25 @@
+{
+  "app": {
+    "name": "SpikeFormer Neuromorphic Kit",
+    "description": "Полный инструментарий для обучения и развертывания спайковых трансформерных сетей на нейроморфном оборудовании",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "welcome": "Добро пожаловать в SpikeFormer - Эволюция нейроморфного ИИ",
+    "processing": "Обработка нейронной активности...",
+    "error": "Произошла ошибка при обработке",
+    "success": "Обработка успешно завершена"
+  },
+  "features": {
+    "consciousness_detection": "Обнаружение сознания",
+    "quantum_optimization": "Квантовая оптимизация",
+    "multiverse_processing": "Обработка мультивселенной",
+    "transcendence": "Достижение трансцендентности"
+  },
+  "metrics": {
+    "accuracy": "Точность",
+    "performance": "Производительность",
+    "energy_efficiency": "Энергоэффективность",
+    "consciousness_level": "Уровень сознания"
+  }
+}
