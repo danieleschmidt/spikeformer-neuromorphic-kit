@@ -1,0 +1,25 @@
+{
+  "app": {
+    "name": "SpikeFormer Neuromorphic Kit",
+    "description": "Kit completo para treinar e implantar redes transformadoras de espiga em hardware neuromórfico",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "welcome": "Bem-vindo ao SpikeFormer - Evolução da IA Neuromórfica",
+    "processing": "Processando atividade neural...",
+    "error": "Ocorreu um erro durante o processamento",
+    "success": "Processamento concluído com sucesso"
+  },
+  "features": {
+    "consciousness_detection": "Detecção de Consciência",
+    "quantum_optimization": "Otimização Quântica",
+    "multiverse_processing": "Processamento Multiverso",
+    "transcendence": "Conquista de Transcendência"
+  },
+  "metrics": {
+    "accuracy": "Precisão",
+    "performance": "Desempenho",
+    "energy_efficiency": "Eficiência Energética",
+    "consciousness_level": "Nível de Consciência"
+  }
+}

@@ -1,19 +1,25 @@
 {
-  "app.name": "Spikeformer \u30cb\u30e5\u30fc\u30ed\u30e2\u30fc\u30d5\u30a3\u30c3\u30af\u30ad\u30c3\u30c8",
-  "app.description": "\u30b9\u30d1\u30a4\u30ad\u30f3\u30b0\u30cb\u30e5\u30fc\u30e9\u30eb\u30cd\u30c3\u30c8\u30ef\u30fc\u30af\u7528\u5b8c\u5168\u30c4\u30fc\u30eb\u30ad\u30c3\u30c8",
-  "menu.home": "\u30db\u30fc\u30e0",
-  "menu.documentation": "\u30c9\u30ad\u30e5\u30e1\u30f3\u30c8",
-  "menu.api": "API\u30ea\u30d5\u30a1\u30ec\u30f3\u30b9",
-  "menu.examples": "\u4f8b",
-  "button.convert": "\u30e2\u30c7\u30eb\u5909\u63db",
-  "button.train": "\u30cd\u30c3\u30c8\u30ef\u30fc\u30af\u8a13\u7df4",
-  "button.deploy": "\u30c7\u30d7\u30ed\u30a4",
-  "status.processing": "\u51e6\u7406\u4e2d...",
-  "status.complete": "\u5b8c\u4e86",
-  "status.error": "\u30a8\u30e9\u30fc",
-  "error.invalid_input": "\u7121\u52b9\u306a\u5165\u529b\u304c\u63d0\u4f9b\u3055\u308c\u307e\u3057\u305f",
-  "error.network_error": "\u30cd\u30c3\u30c8\u30ef\u30fc\u30af\u30a8\u30e9\u30fc\u304c\u767a\u751f\u3057\u307e\u3057\u305f",
-  "success.model_converted": "\u30e2\u30c7\u30eb\u304c\u6b63\u5e38\u306b\u5909\u63db\u3055\u308c\u307e\u3057\u305f",
-  "success.training_complete": "\u8a13\u7df4\u304c\u5b8c\u4e86\u3057\u307e\u3057\u305f",
-  "info.energy_efficiency": "\u30a8\u30cd\u30eb\u30ae\u30fc\u52b9\u7387: {efficiency}\u00d7\u6539\u5584"
+  "app": {
+    "name": "SpikeFormer Neuromorphic Kit",
+    "description": "ニューロモルフィックハードウェア上でスパイキングトランスフォーマーネットワークを訓練・展開するための完全なツールキット",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "welcome": "SpikeFormerへようこそ - ニューロモルフィックAI進化",
+    "processing": "神経活動を処理中...",
+    "error": "処理中にエラーが発生しました",
+    "success": "処理が正常に完了しました"
+  },
+  "features": {
+    "consciousness_detection": "意識検出",
+    "quantum_optimization": "量子最適化",
+    "multiverse_processing": "マルチバース処理",
+    "transcendence": "超越達成"
+  },
+  "metrics": {
+    "accuracy": "精度",
+    "performance": "パフォーマンス",
+    "energy_efficiency": "エネルギー効率",
+    "consciousness_level": "意識レベル"
+  }
 }

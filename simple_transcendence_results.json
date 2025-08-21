@@ -1,0 +1,122 @@
+{
+  "context_processing": {
+    "neural_activity_stats": {
+      "mean": 0.02492746748115536,
+      "std": 1.1101306258352057,
+      "shape": [
+        100,
+        100
+      ]
+    },
+    "consciousness_metrics": {
+      "phi_value": 0.12323900064172658,
+      "global_workspace_integration": 0.9711043415528602,
+      "metacognition_score": 0.4429266006596225,
+      "consciousness_score": 0.5124233142847364,
+      "consciousness_emerged": false
+    }
+  },
+  "optimization_result": {
+    "best_result": {
+      "params": {
+        "learning_rate": 0.0002581130248152586,
+        "batch_size": 44.9801537371987,
+        "regularization": 0.0023070770606510634
+      },
+      "score": 0.4684352023230254,
+      "method": "quantum_annealing_universe_0"
+    },
+    "ensemble_score": 0.05855440029037817,
+    "universes_explored": 8,
+    "all_results": {
+      "universe_0": {
+        "params": {
+          "learning_rate": 0.0002581130248152586,
+          "batch_size": 44.9801537371987,
+          "regularization": 0.0023070770606510634
+        },
+        "score": 0.4684352023230254,
+        "method": "quantum_annealing_universe_0"
+      },
+      "universe_1": {
+        "params": {
+          "learning_rate": 0.0007570654034050625,
+          "batch_size": 29.27110062548856,
+          "regularization": 0.01007038099473726
+        },
+        "score": 0,
+        "method": "evolutionary_universe_1"
+      },
+      "universe_2": {
+        "params": {
+          "learning_rate": 0.001,
+          "batch_size": 32,
+          "regularization": 0.01
+        },
+        "score": 0,
+        "method": "random_search_universe_2"
+      },
+      "universe_3": {
+        "params": {
+          "learning_rate": 0.0011172571176714613,
+          "batch_size": 65.13437494429304,
+          "regularization": 0.031035189909551255
+        },
+        "score": 0,
+        "method": "quantum_annealing_universe_3"
+      },
+      "universe_4": {
+        "params": {
+          "learning_rate": 0.0005583327561469908,
+          "batch_size": 28.016930970110355,
+          "regularization": 0.006277241045838276
+        },
+        "score": 0,
+        "method": "quantum_annealing_universe_4"
+      },
+      "universe_5": {
+        "params": {
+          "learning_rate": 0.0011208266044946073,
+          "batch_size": 32.772718955818114,
+          "regularization": 0.01026504877807287
+        },
+        "score": 0,
+        "method": "evolutionary_universe_5"
+      },
+      "universe_6": {
+        "params": {
+          "learning_rate": 0.001,
+          "batch_size": 32,
+          "regularization": 0.01
+        },
+        "score": 0,
+        "method": "random_search_universe_6"
+      },
+      "universe_7": {
+        "params": {
+          "learning_rate": 0.004019871630083839,
+          "batch_size": 30.28963484244128,
+          "regularization": 0.013881991863845151
+        },
+        "score": 0,
+        "method": "quantum_annealing_universe_7"
+      }
+    }
+  },
+  "transcendence_score": 0.6304998864108022,
+  "transcendence_achieved": false,
+  "system_metrics": {
+    "consciousness_level": 0.5124233142847364,
+    "optimization_efficiency": 0.4684352023230254,
+    "transcendence_score": 0.6304998864108022,
+    "quantum_coherence": 0.95
+  },
+  "timestamp": 1755749084.6745884,
+  "metadata": {
+    "timestamp": 1755749084.6747077,
+    "system": "SimplifiedTranscendentSystem",
+    "version": "1.0.0",
+    "numpy_available": true,
+    "description": "Simplified breakthrough transcendence demonstration"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "app": {
+    "name": "SpikeFormer Neuromorphic Kit",
+    "description": "뉴로모픽 하드웨어에서 스파이킹 트랜스포머 네트워크를 훈련하고 배포하기 위한 완전한 툴킷",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "welcome": "SpikeFormer에 오신 것을 환영합니다 - 뉴로모픽 AI 진화",
+    "processing": "신경 활동 처리 중...",
+    "error": "처리 중 오류가 발생했습니다",
+    "success": "처리가 성공적으로 완료되었습니다"
+  },
+  "features": {
+    "consciousness_detection": "의식 감지",
+    "quantum_optimization": "양자 최적화",
+    "multiverse_processing": "멀티버스 처리",
+    "transcendence": "초월 달성"
+  },
+  "metrics": {
+    "accuracy": "정확도",
+    "performance": "성능",
+    "energy_efficiency": "에너지 효율성",
+    "consciousness_level": "의식 수준"
+  }
+}

@@ -1,19 +1,25 @@
 {
-  "app.name": "Kit Neurom\u00f3rfico Spikeformer",
-  "app.description": "Kit completo para redes neuronales de picos",
-  "menu.home": "Inicio",
-  "menu.documentation": "Documentaci\u00f3n",
-  "menu.api": "Referencia de API",
-  "menu.examples": "Ejemplos",
-  "button.convert": "Convertir Modelo",
-  "button.train": "Entrenar Red",
-  "button.deploy": "Desplegar",
-  "status.processing": "Procesando...",
-  "status.complete": "Completo",
-  "status.error": "Error",
-  "error.invalid_input": "Entrada inv\u00e1lida proporcionada",
-  "error.network_error": "Ocurri\u00f3 un error de red",
-  "success.model_converted": "Modelo convertido exitosamente",
-  "success.training_complete": "Entrenamiento completado",
-  "info.energy_efficiency": "Eficiencia energ\u00e9tica: mejora de {efficiency}\u00d7"
+  "app": {
+    "name": "SpikeFormer Neuromorphic Kit",
+    "description": "Kit completo para entrenar e implementar redes transformadoras espinosas en hardware neuromórfico",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "welcome": "Bienvenido a SpikeFormer - Evolución de IA Neuromórfica",
+    "processing": "Procesando actividad neuronal...",
+    "error": "Ocurrió un error durante el procesamiento",
+    "success": "Procesamiento completado exitosamente"
+  },
+  "features": {
+    "consciousness_detection": "Detección de Conciencia",
+    "quantum_optimization": "Optimización Cuántica",
+    "multiverse_processing": "Procesamiento Multiverso",
+    "transcendence": "Logro de Trascendencia"
+  },
+  "metrics": {
+    "accuracy": "Precisión",
+    "performance": "Rendimiento",
+    "energy_efficiency": "Eficiencia Energética",
+    "consciousness_level": "Nivel de Conciencia"
+  }
 }

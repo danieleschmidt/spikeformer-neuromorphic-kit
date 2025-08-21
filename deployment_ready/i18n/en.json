@@ -1,19 +1,25 @@
 {
-  "app.name": "Spikeformer Neuromorphic Kit",
-  "app.description": "Complete toolkit for spiking neural networks",
-  "menu.home": "Home",
-  "menu.documentation": "Documentation",
-  "menu.api": "API Reference",
-  "menu.examples": "Examples",
-  "button.convert": "Convert Model",
-  "button.train": "Train Network",
-  "button.deploy": "Deploy",
-  "status.processing": "Processing...",
-  "status.complete": "Complete",
-  "status.error": "Error",
-  "error.invalid_input": "Invalid input provided",
-  "error.network_error": "Network error occurred",
-  "success.model_converted": "Model converted successfully",
-  "success.training_complete": "Training completed",
-  "info.energy_efficiency": "Energy efficiency: {efficiency}\u00d7 improvement"
+  "app": {
+    "name": "SpikeFormer Neuromorphic Kit",
+    "description": "Complete toolkit for training and deploying spiking transformer networks on neuromorphic hardware",
+    "version": "1.0.0"
+  },
+  "ui": {
+    "welcome": "Welcome to SpikeFormer - Neuromorphic AI Evolution",
+    "processing": "Processing neural activity...",
+    "error": "An error occurred during processing",
+    "success": "Processing completed successfully"
+  },
+  "features": {
+    "consciousness_detection": "Consciousness Detection",
+    "quantum_optimization": "Quantum Optimization",
+    "multiverse_processing": "Multiverse Processing",
+    "transcendence": "Transcendence Achievement"
+  },
+  "metrics": {
+    "accuracy": "Accuracy",
+    "performance": "Performance",
+    "energy_efficiency": "Energy Efficiency",
+    "consciousness_level": "Consciousness Level"
+  }
 }
