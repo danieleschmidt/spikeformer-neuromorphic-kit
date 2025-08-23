@@ -1,0 +1,188 @@
+{
+  "session_id": "9c2c9b04c2560becfd07e6120e170e01",
+  "config": {
+    "model_type": "robust_production_spikeformer",
+    "timesteps": 32,
+    "threshold": 1.0,
+    "neuron_model": "robust_lif",
+    "spike_encoding": "validated_rate",
+    "batch_size": 32,
+    "max_sequence_length": 512,
+    "error_recovery": true,
+    "security_enabled": true,
+    "monitoring_enabled": true,
+    "validation_enabled": true,
+    "backup_enabled": true,
+    "failover_enabled": true
+  },
+  "layers": [
+    {
+      "layer_id": 0,
+      "attention_heads": 16,
+      "hidden_dim": 768,
+      "neuron_type": "robust_lif",
+      "spike_threshold": 1.0,
+      "dropout_rate": 0.1,
+      "layer_norm": true,
+      "residual_connections": true,
+      "gradient_clipping": true
+    },
+    {
+      "layer_id": 1,
+      "attention_heads": 16,
+      "hidden_dim": 768,
+      "neuron_type": "robust_lif",
+      "spike_threshold": 1.1,
+      "dropout_rate": 0.1,
+      "layer_norm": true,
+      "residual_connections": true,
+      "gradient_clipping": true
+    },
+    {
+      "layer_id": 2,
+      "attention_heads": 16,
+      "hidden_dim": 768,
+      "neuron_type": "robust_lif",
+      "spike_threshold": 1.2,
+      "dropout_rate": 0.1,
+      "layer_norm": true,
+      "residual_connections": true,
+      "gradient_clipping": true
+    },
+    {
+      "layer_id": 3,
+      "attention_heads": 16,
+      "hidden_dim": 768,
+      "neuron_type": "robust_lif",
+      "spike_threshold": 1.3,
+      "dropout_rate": 0.1,
+      "layer_norm": true,
+      "residual_connections": true,
+      "gradient_clipping": true
+    },
+    {
+      "layer_id": 4,
+      "attention_heads": 16,
+      "hidden_dim": 768,
+      "neuron_type": "robust_lif",
+      "spike_threshold": 1.4,
+      "dropout_rate": 0.1,
+      "layer_norm": true,
+      "residual_connections": true,
+      "gradient_clipping": true
+    },
+    {
+      "layer_id": 5,
+      "attention_heads": 16,
+      "hidden_dim": 768,
+      "neuron_type": "robust_lif",
+      "spike_threshold": 1.5,
+      "dropout_rate": 0.1,
+      "layer_norm": true,
+      "residual_connections": true,
+      "gradient_clipping": true
+    },
+    {
+      "layer_id": 6,
+      "attention_heads": 16,
+      "hidden_dim": 768,
+      "neuron_type": "robust_lif",
+      "spike_threshold": 1.6,
+      "dropout_rate": 0.1,
+      "layer_norm": true,
+      "residual_connections": true,
+      "gradient_clipping": true
+    },
+    {
+      "layer_id": 7,
+      "attention_heads": 16,
+      "hidden_dim": 768,
+      "neuron_type": "robust_lif",
+      "spike_threshold": 1.7000000000000002,
+      "dropout_rate": 0.1,
+      "layer_norm": true,
+      "residual_connections": true,
+      "gradient_clipping": true
+    },
+    {
+      "layer_id": 8,
+      "attention_heads": 16,
+      "hidden_dim": 768,
+      "neuron_type": "robust_lif",
+      "spike_threshold": 1.8,
+      "dropout_rate": 0.1,
+      "layer_norm": true,
+      "residual_connections": true,
+      "gradient_clipping": true
+    },
+    {
+      "layer_id": 9,
+      "attention_heads": 16,
+      "hidden_dim": 768,
+      "neuron_type": "robust_lif",
+      "spike_threshold": 1.9,
+      "dropout_rate": 0.1,
+      "layer_norm": true,
+      "residual_connections": true,
+      "gradient_clipping": true
+    },
+    {
+      "layer_id": 10,
+      "attention_heads": 16,
+      "hidden_dim": 768,
+      "neuron_type": "robust_lif",
+      "spike_threshold": 2.0,
+      "dropout_rate": 0.1,
+      "layer_norm": true,
+      "residual_connections": true,
+      "gradient_clipping": true
+    },
+    {
+      "layer_id": 11,
+      "attention_heads": 16,
+      "hidden_dim": 768,
+      "neuron_type": "robust_lif",
+      "spike_threshold": 2.1,
+      "dropout_rate": 0.1,
+      "layer_norm": true,
+      "residual_connections": true,
+      "gradient_clipping": true
+    }
+  ],
+  "metrics": {
+    "request_latency_ms": [
+      {
+        "timestamp": 1755930852.0820756,
+        "value": 0.16307830810546875
+      },
+      {
+        "timestamp": 1755930852.0823245,
+        "value": 0.14281272888183594
+      },
+      {
+        "timestamp": 1755930852.0825284,
+        "value": 0.1125335693359375
+      }
+    ],
+    "cpu_percent": [
+      {
+        "timestamp": 1755930852.0826325,
+        "value": 53.77309851920022
+      }
+    ],
+    "memory_percent": [
+      {
+        "timestamp": 1755930852.0826364,
+        "value": 30.299756909640045
+      }
+    ]
+  },
+  "error_stats": {
+    "total_errors": 0,
+    "error_counts": {},
+    "recent_errors": [],
+    "error_rate_last_hour": 0.0,
+    "most_common_errors": []
+  },
+  "shutdown_time": "2025-08-23T06:34:12.086883"
+}
