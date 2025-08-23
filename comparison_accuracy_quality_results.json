@@ -1,0 +1,169 @@
+[
+  {
+    "category": "ComparisonCategory.ACCURACY_QUALITY",
+    "baseline_system": "BaselineSystem.GPU_TRANSFORMER",
+    "metrics": [
+      {
+        "metric_name": "imagenet_top1_accuracy",
+        "baseline_value": 94.8,
+        "novel_value": 94.2,
+        "improvement_ratio": 0.9936708860759494,
+        "improvement_percentage": -0.6329113924050556,
+        "statistical_significance": 0.087,
+        "confidence_interval": [
+          0.9836708860759494,
+          1.0036708860759493
+        ],
+        "better_is_lower": false
+      },
+      {
+        "metric_name": "glue_average_score",
+        "baseline_value": 88.1,
+        "novel_value": 87.3,
+        "improvement_ratio": 0.9909194097616345,
+        "improvement_percentage": -0.9080590238365494,
+        "statistical_significance": 0.156,
+        "confidence_interval": [
+          0.9709194097616345,
+          1.0109194097616345
+        ],
+        "better_is_lower": false
+      },
+      {
+        "metric_name": "output_consistency",
+        "baseline_value": 94.5,
+        "novel_value": 93.1,
+        "improvement_ratio": 0.9851851851851852,
+        "improvement_percentage": -1.4814814814814836,
+        "statistical_significance": 0.045,
+        "confidence_interval": [
+          0.9751851851851852,
+          0.9951851851851852
+        ],
+        "better_is_lower": false
+      }
+    ],
+    "overall_improvement": 0.989925160340923,
+    "winner": "baseline",
+    "significance_level": 0.1,
+    "effect_size": -0.20149679318153924
+  },
+  {
+    "category": "ComparisonCategory.ACCURACY_QUALITY",
+    "baseline_system": "BaselineSystem.CPU_TRANSFORMER",
+    "metrics": [
+      {
+        "metric_name": "overall_accuracy",
+        "baseline_value": 90.0,
+        "novel_value": 89.5,
+        "improvement_ratio": 0.994,
+        "improvement_percentage": -0.6,
+        "statistical_significance": 0.2,
+        "confidence_interval": [
+          0.98,
+          1.01
+        ],
+        "better_is_lower": false
+      }
+    ],
+    "overall_improvement": 0.994,
+    "winner": "tie",
+    "significance_level": 0.2,
+    "effect_size": -0.1
+  },
+  {
+    "category": "ComparisonCategory.ACCURACY_QUALITY",
+    "baseline_system": "BaselineSystem.TPU_TRANSFORMER",
+    "metrics": [
+      {
+        "metric_name": "overall_accuracy",
+        "baseline_value": 90.0,
+        "novel_value": 89.5,
+        "improvement_ratio": 0.994,
+        "improvement_percentage": -0.6,
+        "statistical_significance": 0.2,
+        "confidence_interval": [
+          0.98,
+          1.01
+        ],
+        "better_is_lower": false
+      }
+    ],
+    "overall_improvement": 0.994,
+    "winner": "tie",
+    "significance_level": 0.2,
+    "effect_size": -0.1
+  },
+  {
+    "category": "ComparisonCategory.ACCURACY_QUALITY",
+    "baseline_system": "BaselineSystem.TRADITIONAL_SNN",
+    "metrics": [
+      {
+        "metric_name": "overall_accuracy",
+        "baseline_value": 90.0,
+        "novel_value": 89.5,
+        "improvement_ratio": 0.994,
+        "improvement_percentage": -0.6,
+        "statistical_significance": 0.2,
+        "confidence_interval": [
+          0.98,
+          1.01
+        ],
+        "better_is_lower": false
+      }
+    ],
+    "overall_improvement": 0.994,
+    "winner": "tie",
+    "significance_level": 0.2,
+    "effect_size": -0.1
+  },
+  {
+    "category": "ComparisonCategory.ACCURACY_QUALITY",
+    "baseline_system": "BaselineSystem.EFFICIENT_TRANSFORMER",
+    "metrics": [
+      {
+        "metric_name": "imagenet_top1_accuracy",
+        "baseline_value": 92.1,
+        "novel_value": 94.2,
+        "improvement_ratio": 1.022801302931596,
+        "improvement_percentage": 2.28013029315961,
+        "statistical_significance": 0.087,
+        "confidence_interval": [
+          1.012801302931596,
+          1.032801302931596
+        ],
+        "better_is_lower": false
+      },
+      {
+        "metric_name": "glue_average_score",
+        "baseline_value": 85.7,
+        "novel_value": 87.3,
+        "improvement_ratio": 1.0186697782963827,
+        "improvement_percentage": 1.8669778296382722,
+        "statistical_significance": 0.156,
+        "confidence_interval": [
+          0.9986697782963827,
+          1.0386697782963827
+        ],
+        "better_is_lower": false
+      },
+      {
+        "metric_name": "output_consistency",
+        "baseline_value": 91.2,
+        "novel_value": 93.1,
+        "improvement_ratio": 1.0208333333333333,
+        "improvement_percentage": 2.083333333333326,
+        "statistical_significance": 0.045,
+        "confidence_interval": [
+          1.0108333333333333,
+          1.0308333333333333
+        ],
+        "better_is_lower": false
+      }
+    ],
+    "overall_improvement": 1.020768138187104,
+    "winner": "novel",
+    "significance_level": 0.1,
+    "effect_size": 0.41536276374208203
+  }
+]

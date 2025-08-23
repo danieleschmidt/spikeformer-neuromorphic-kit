@@ -1,0 +1,270 @@
+{
+  "initialization": {
+    "success": true,
+    "session_id": "9c2c9b04c2560becfd07e6120e170e01",
+    "timestamp": "2025-08-23T06:34:12.080073",
+    "errors": [],
+    "warnings": []
+  },
+  "processing_results": [
+    {
+      "request_id": "1fd005a7a6e1de58",
+      "timestamp": "2025-08-23T06:34:12.081911",
+      "success": true,
+      "data": {
+        "input_processed": true,
+        "spike_patterns": {
+          "total_spikes": 4792,
+          "spike_rate_hz": 71.00622411574045,
+          "pattern_type": "burst",
+          "temporal_coherence": 0.7927712919025414
+        },
+        "neural_state": {
+          "layer_activations": [
+            0.16670505056991028,
+            0.7646350537429019,
+            0.852740850833016,
+            0.2770183423655972,
+            0.62050205754703,
+            0.2034100555328271,
+            0.6842639577399117,
+            0.4078448658252709,
+            0.5800920926037962,
+            0.8615079624427914,
+            0.5346790385394876,
+            0.7703976409861611
+          ],
+          "attention_weights": [
+            0.3748507789356156,
+            0.8851720031071832,
+            0.8871676095656036,
+            0.7019695881270339,
+            0.019202750446343564,
+            0.10932414650259792,
+            0.025024570989701234,
+            0.7609298375676155,
+            0.5003325946855592,
+            0.8772946371571589,
+            0.014774577465331062,
+            0.0689563978455574,
+            0.44174565670477783,
+            0.35933453995509645,
+            0.3757452730370182,
+            0.29497594143902983
+          ],
+          "memory_state": 0.784767431556754,
+          "plasticity_level": 0.39830819856807226
+        },
+        "output_quality_score": 0.94,
+        "energy_consumption_mj": 23.7,
+        "processing_stages": [
+          {
+            "stage": "input_encoding",
+            "duration_ms": 12.3,
+            "success": true
+          },
+          {
+            "stage": "neural_processing",
+            "duration_ms": 156.7,
+            "success": true
+          },
+          {
+            "stage": "output_decoding",
+            "duration_ms": 8.9,
+            "success": true
+          }
+        ]
+      },
+      "errors": [],
+      "warnings": [],
+      "metrics": {
+        "processing_time_ms": 0.16307830810546875
+      }
+    },
+    {
+      "request_id": "9266cc8ad436fb9a",
+      "timestamp": "2025-08-23T06:34:12.082181",
+      "success": true,
+      "data": {
+        "input_processed": true,
+        "spike_patterns": {
+          "total_spikes": 1624,
+          "spike_rate_hz": 85.46973940822664,
+          "pattern_type": "adaptive",
+          "temporal_coherence": 0.8528111272702136
+        },
+        "neural_state": {
+          "layer_activations": [
+            0.520954630781956,
+            0.6371381574220861,
+            0.7974008335759224,
+            0.2854623203659016,
+            0.4613831238770544,
+            0.45482384395369146,
+            0.13281162672319313,
+            0.25639302545902637,
+            0.6896818320809563,
+            0.4114486946217102,
+            0.5492327623025094,
+            0.18574776117440397
+          ],
+          "attention_weights": [
+            0.1536087156649496,
+            0.7983584552679781,
+            0.08320654330166177,
+            0.34475798046285966,
+            0.7164355114349464,
+            0.3962527573861623,
+            0.6195995868844446,
+            0.974953881707894,
+            0.155453954549163,
+            0.780280765086707,
+            0.16319089371745576,
+            0.40223122775871756,
+            0.657611992399434,
+            0.48494881109125165,
+            0.5797743372946151,
+            0.6811804146007314
+          ],
+          "memory_state": 0.515148487642439,
+          "plasticity_level": 0.3503447547560711
+        },
+        "output_quality_score": 0.94,
+        "energy_consumption_mj": 23.7,
+        "processing_stages": [
+          {
+            "stage": "input_encoding",
+            "duration_ms": 12.3,
+            "success": true
+          },
+          {
+            "stage": "neural_processing",
+            "duration_ms": 156.7,
+            "success": true
+          },
+          {
+            "stage": "output_decoding",
+            "duration_ms": 8.9,
+            "success": true
+          }
+        ]
+      },
+      "errors": [],
+      "warnings": [],
+      "metrics": {
+        "processing_time_ms": 0.14281272888183594
+      }
+    },
+    {
+      "request_id": "565949d1b3797cd4",
+      "timestamp": "2025-08-23T06:34:12.082415",
+      "success": true,
+      "data": {
+        "input_processed": true,
+        "spike_patterns": {
+          "total_spikes": 1740,
+          "spike_rate_hz": 84.44790038623512,
+          "pattern_type": "regular",
+          "temporal_coherence": 0.7065186542725612
+        },
+        "neural_state": {
+          "layer_activations": [
+            0.47937071403630316,
+            0.11783076799248571,
+            0.24694264780596634,
+            0.41229287588606656,
+            0.47481777318448914,
+            0.4048426541508986,
+            0.19915388090276293,
+            0.6182574646562102,
+            0.8769005748211292,
+            0.7395207734838265,
+            0.6753820300465205,
+            0.4158431946008466
+          ],
+          "attention_weights": [
+            0.16974126984056304,
+            0.35936280040999746,
+            0.12333809427210418,
+            0.9062918011638889,
+            0.15031673613795093,
+            0.05624673752620113,
+            0.7126348772148013,
+            0.7697898868069207,
+            0.25374765732661764,
+            0.46110337586725036,
+            0.20653446704137868,
+            0.42060003510144084,
+            0.6671852484453926,
+            0.5240183395891941,
+            0.678539072163565,
+            0.5844495727406235
+          ],
+          "memory_state": 0.5892153480471873,
+          "plasticity_level": 0.496138770955903
+        },
+        "output_quality_score": 0.94,
+        "energy_consumption_mj": 23.7,
+        "processing_stages": [
+          {
+            "stage": "input_encoding",
+            "duration_ms": 12.3,
+            "success": true
+          },
+          {
+            "stage": "neural_processing",
+            "duration_ms": 156.7,
+            "success": true
+          },
+          {
+            "stage": "output_decoding",
+            "duration_ms": 8.9,
+            "success": true
+          }
+        ]
+      },
+      "errors": [],
+      "warnings": [],
+      "metrics": {
+        "processing_time_ms": 0.1125335693359375
+      }
+    }
+  ],
+  "system_status": {
+    "timestamp": "2025-08-23T06:34:12.082667",
+    "session_id": "9c2c9b04c2560becfd07e6120e170e01",
+    "uptime": "0:00:00.003520",
+    "status": "healthy",
+    "health": {
+      "timestamp": "2025-08-23T06:34:12.082618",
+      "status": "healthy",
+      "metrics": {
+        "cpu_percent": 53.77309851920022,
+        "memory_percent": 30.299756909640045,
+        "active_threads": 1,
+        "recent_alerts": 0
+      },
+      "alerts": 0,
+      "uptime": "0 seconds"
+    },
+    "errors": {
+      "total_errors": 0,
+      "error_counts": {},
+      "recent_errors": [],
+      "error_rate_last_hour": 0.0,
+      "most_common_errors": []
+    },
+    "security": {
+      "api_keys_active": 2,
+      "rate_limits_active": 3,
+      "audit_entries": 6,
+      "blocked_ips": 0
+    },
+    "performance": {
+      "layers_initialized": 12,
+      "backup_enabled": true,
+      "encryption_enabled": true
+    }
+  },
+  "execution_timestamp": "2025-08-23T06:34:12.082683"
+}

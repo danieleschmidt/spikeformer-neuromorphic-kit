@@ -1,0 +1,195 @@
+[
+  {
+    "category": "ComparisonCategory.COMPUTATIONAL_PERFORMANCE",
+    "baseline_system": "BaselineSystem.GPU_TRANSFORMER",
+    "metrics": [
+      {
+        "metric_name": "throughput_ops_sec",
+        "baseline_value": 8200,
+        "novel_value": 6430,
+        "improvement_ratio": 0.7841463414634147,
+        "improvement_percentage": -21.585365853658534,
+        "statistical_significance": 0.023,
+        "confidence_interval": [
+          0.6841463414634147,
+          0.8841463414634146
+        ],
+        "better_is_lower": false
+      },
+      {
+        "metric_name": "latency_ms",
+        "baseline_value": 38.2,
+        "novel_value": 42.5,
+        "improvement_ratio": 0.8988235294117648,
+        "improvement_percentage": -10.11764705882352,
+        "statistical_significance": 0.087,
+        "confidence_interval": [
+          0.8488235294117648,
+          0.9488235294117648
+        ],
+        "better_is_lower": true
+      },
+      {
+        "metric_name": "compute_utilization",
+        "baseline_value": 78.5,
+        "novel_value": 94.3,
+        "improvement_ratio": 1.2012738853503184,
+        "improvement_percentage": 20.12738853503184,
+        "statistical_significance": 0.012,
+        "confidence_interval": [
+          1.1712738853503184,
+          1.2312738853503185
+        ],
+        "better_is_lower": false
+      }
+    ],
+    "overall_improvement": 0.9614145854084993,
+    "winner": "tie",
+    "significance_level": 0.025,
+    "effect_size": -0.0694537462647012
+  },
+  {
+    "category": "ComparisonCategory.COMPUTATIONAL_PERFORMANCE",
+    "baseline_system": "BaselineSystem.CPU_TRANSFORMER",
+    "metrics": [
+      {
+        "metric_name": "throughput_ops_sec",
+        "baseline_value": 1200,
+        "novel_value": 6430,
+        "improvement_ratio": 5.358333333333333,
+        "improvement_percentage": 435.8333333333333,
+        "statistical_significance": 0.023,
+        "confidence_interval": [
+          5.258333333333334,
+          5.458333333333333
+        ],
+        "better_is_lower": false
+      },
+      {
+        "metric_name": "latency_ms",
+        "baseline_value": 145.0,
+        "novel_value": 42.5,
+        "improvement_ratio": 3.411764705882353,
+        "improvement_percentage": 241.17647058823528,
+        "statistical_significance": 0.087,
+        "confidence_interval": [
+          3.361764705882353,
+          3.4617647058823526
+        ],
+        "better_is_lower": true
+      },
+      {
+        "metric_name": "compute_utilization",
+        "baseline_value": 65.0,
+        "novel_value": 94.3,
+        "improvement_ratio": 1.4507692307692308,
+        "improvement_percentage": 45.07692307692308,
+        "statistical_significance": 0.012,
+        "confidence_interval": [
+          1.4207692307692308,
+          1.4807692307692308
+        ],
+        "better_is_lower": false
+      }
+    ],
+    "overall_improvement": 3.4069557566616386,
+    "winner": "novel",
+    "significance_level": 0.025,
+    "effect_size": 4.33252036199095
+  },
+  {
+    "category": "ComparisonCategory.COMPUTATIONAL_PERFORMANCE",
+    "baseline_system": "BaselineSystem.TPU_TRANSFORMER",
+    "metrics": [
+      {
+        "metric_name": "throughput_ops_sec",
+        "baseline_value": 15000,
+        "novel_value": 6430,
+        "improvement_ratio": 0.42866666666666664,
+        "improvement_percentage": -57.13333333333333,
+        "statistical_significance": 0.023,
+        "confidence_interval": [
+          0.32866666666666666,
+          0.5286666666666666
+        ],
+        "better_is_lower": false
+      },
+      {
+        "metric_name": "latency_ms",
+        "baseline_value": 25.5,
+        "novel_value": 42.5,
+        "improvement_ratio": 0.6,
+        "improvement_percentage": -40.0,
+        "statistical_significance": 0.087,
+        "confidence_interval": [
+          0.5499999999999999,
+          0.65
+        ],
+        "better_is_lower": true
+      },
+      {
+        "metric_name": "compute_utilization",
+        "baseline_value": 88.0,
+        "novel_value": 94.3,
+        "improvement_ratio": 1.071590909090909,
+        "improvement_percentage": 7.159090909090904,
+        "statistical_significance": 0.012,
+        "confidence_interval": [
+          1.041590909090909,
+          1.101590909090909
+        ],
+        "better_is_lower": false
+      }
+    ],
+    "overall_improvement": 0.7000858585858586,
+    "winner": "baseline",
+    "significance_level": 0.025,
+    "effect_size": -0.5398454545454545
+  },
+  {
+    "category": "ComparisonCategory.COMPUTATIONAL_PERFORMANCE",
+    "baseline_system": "BaselineSystem.TRADITIONAL_SNN",
+    "metrics": [
+      {
+        "metric_name": "throughput_ops_sec",
+        "baseline_value": 5000,
+        "novel_value": 6430,
+        "improvement_ratio": 1.286,
+        "improvement_percentage": 28.6,
+        "statistical_significance": 0.05,
+        "confidence_interval": [
+          1.2,
+          1.4
+        ],
+        "better_is_lower": false
+      }
+    ],
+    "overall_improvement": 1.286,
+    "winner": "novel",
+    "significance_level": 0.05,
+    "effect_size": 0.5
+  },
+  {
+    "category": "ComparisonCategory.COMPUTATIONAL_PERFORMANCE",
+    "baseline_system": "BaselineSystem.EFFICIENT_TRANSFORMER",
+    "metrics": [
+      {
+        "metric_name": "throughput_ops_sec",
+        "baseline_value": 5000,
+        "novel_value": 6430,
+        "improvement_ratio": 1.286,
+        "improvement_percentage": 28.6,
+        "statistical_significance": 0.05,
+        "confidence_interval": [
+          1.2,
+          1.4
+        ],
+        "better_is_lower": false
+      }
+    ],
+    "overall_improvement": 1.286,
+    "winner": "novel",
+    "significance_level": 0.05,
+    "effect_size": 0.5
+  }
+]

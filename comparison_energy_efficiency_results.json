@@ -1,0 +1,198 @@
+[
+  {
+    "category": "ComparisonCategory.ENERGY_EFFICIENCY",
+    "baseline_system": "BaselineSystem.GPU_TRANSFORMER",
+    "metrics": [
+      {
+        "metric_name": "energy_per_inference_mj",
+        "baseline_value": 355.0,
+        "novel_value": 23.7,
+        "improvement_ratio": 14.978902953586498,
+        "improvement_percentage": 1397.8902953586498,
+        "statistical_significance": 0.001,
+        "confidence_interval": [
+          14.678902953586498,
+          15.278902953586499
+        ],
+        "better_is_lower": true
+      },
+      {
+        "metric_name": "power_efficiency_gops_w",
+        "baseline_value": 0.8,
+        "novel_value": 15.2,
+        "improvement_ratio": 18.999999999999996,
+        "improvement_percentage": 1799.9999999999995,
+        "statistical_significance": 0.002,
+        "confidence_interval": [
+          18.499999999999996,
+          19.499999999999996
+        ],
+        "better_is_lower": false
+      },
+      {
+        "metric_name": "idle_power_w",
+        "baseline_value": 250,
+        "novel_value": 2,
+        "improvement_ratio": 125.0,
+        "improvement_percentage": 12400.0,
+        "statistical_significance": 0.001,
+        "confidence_interval": [
+          123.0,
+          127.0
+        ],
+        "better_is_lower": true
+      }
+    ],
+    "overall_improvement": 6.358253521126759,
+    "winner": "novel",
+    "significance_level": 0.001,
+    "effect_size": 13.395633802816898
+  },
+  {
+    "category": "ComparisonCategory.ENERGY_EFFICIENCY",
+    "baseline_system": "BaselineSystem.CPU_TRANSFORMER",
+    "metrics": [
+      {
+        "metric_name": "energy_per_inference_mj",
+        "baseline_value": 425.0,
+        "novel_value": 23.7,
+        "improvement_ratio": 17.932489451476794,
+        "improvement_percentage": 1693.2489451476795,
+        "statistical_significance": 0.001,
+        "confidence_interval": [
+          17.632489451476793,
+          18.232489451476795
+        ],
+        "better_is_lower": true
+      },
+      {
+        "metric_name": "power_efficiency_gops_w",
+        "baseline_value": 0.3,
+        "novel_value": 15.2,
+        "improvement_ratio": 50.666666666666664,
+        "improvement_percentage": 4966.666666666666,
+        "statistical_significance": 0.002,
+        "confidence_interval": [
+          50.166666666666664,
+          51.166666666666664
+        ],
+        "better_is_lower": false
+      },
+      {
+        "metric_name": "idle_power_w",
+        "baseline_value": 65,
+        "novel_value": 2,
+        "improvement_ratio": 32.5,
+        "improvement_percentage": 3150.0,
+        "statistical_significance": 0.001,
+        "confidence_interval": [
+          30.5,
+          34.5
+        ],
+        "better_is_lower": true
+      }
+    ],
+    "overall_improvement": 16.917733534439417,
+    "winner": "novel",
+    "significance_level": 0.001,
+    "effect_size": 39.794333836098545
+  },
+  {
+    "category": "ComparisonCategory.ENERGY_EFFICIENCY",
+    "baseline_system": "BaselineSystem.TPU_TRANSFORMER",
+    "metrics": [
+      {
+        "metric_name": "energy_per_inference_mj",
+        "baseline_value": 89.0,
+        "novel_value": 23.7,
+        "improvement_ratio": 3.755274261603376,
+        "improvement_percentage": 275.5274261603376,
+        "statistical_significance": 0.001,
+        "confidence_interval": [
+          3.455274261603376,
+          4.055274261603376
+        ],
+        "better_is_lower": true
+      },
+      {
+        "metric_name": "power_efficiency_gops_w",
+        "baseline_value": 4.2,
+        "novel_value": 15.2,
+        "improvement_ratio": 3.6190476190476186,
+        "improvement_percentage": 261.90476190476187,
+        "statistical_significance": 0.002,
+        "confidence_interval": [
+          3.1190476190476186,
+          4.119047619047619
+        ],
+        "better_is_lower": false
+      },
+      {
+        "metric_name": "idle_power_w",
+        "baseline_value": 150,
+        "novel_value": 2,
+        "improvement_ratio": 75.0,
+        "improvement_percentage": 7400.0,
+        "statistical_significance": 0.001,
+        "confidence_interval": [
+          73.0,
+          77.0
+        ],
+        "better_is_lower": true
+      }
+    ],
+    "overall_improvement": 1.2995576957374708,
+    "winner": "novel",
+    "significance_level": 0.001,
+    "effect_size": 0.748894239343677
+  },
+  {
+    "category": "ComparisonCategory.ENERGY_EFFICIENCY",
+    "baseline_system": "BaselineSystem.TRADITIONAL_SNN",
+    "metrics": [
+      {
+        "metric_name": "energy_per_inference_mj",
+        "baseline_value": 45.0,
+        "novel_value": 23.7,
+        "improvement_ratio": 1.89873417721519,
+        "improvement_percentage": 89.873417721519,
+        "statistical_significance": 0.001,
+        "confidence_interval": [
+          1.59873417721519,
+          2.19873417721519
+        ],
+        "better_is_lower": true
+      },
+      {
+        "metric_name": "power_efficiency_gops_w",
+        "baseline_value": 8.5,
+        "novel_value": 15.2,
+        "improvement_ratio": 1.788235294117647,
+        "improvement_percentage": 78.8235294117647,
+        "statistical_significance": 0.002,
+        "confidence_interval": [
+          1.288235294117647,
+          2.288235294117647
+        ],
+        "better_is_lower": false
+      },
+      {
+        "metric_name": "idle_power_w",
+        "baseline_value": 5,
+        "novel_value": 2,
+        "improvement_ratio": 2.5,
+        "improvement_percentage": 150.0,
+        "statistical_significance": 0.001,
+        "confidence_interval": [
+          0.5,
+          4.5
+        ],
+        "better_is_lower": true
+      }
+    ],
+    "overall_improvement": 0.9049673202614379,
+    "winner": "tie",
+    "significance_level": 0.001,
+    "effect_size": -0.23758169934640527
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "hypothesis_id": "meta_learning_evolution",
+  "success": true,
+  "metrics": {
+    "performance_improvement": 2.9911214527751855,
+    "parameter_efficiency": 0.45
+  },
+  "statistical_significance": 0.012,
+  "effect_size": 1.45,
+  "confidence_interval": [
+    2.9711214527751855,
+    3.0111214527751855
+  ],
+  "breakthrough_achieved": true,
+  "novel_insights": [
+    "Evolutionary pressure drives architectural innovation",
+    "Meta-learning enables rapid task adaptation",
+    "Population diversity prevents local optima",
+    "Hybrid evolution-gradient methods show promise"
+  ]
+}

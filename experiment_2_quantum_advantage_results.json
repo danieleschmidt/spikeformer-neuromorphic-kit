@@ -1,0 +1,21 @@
+{
+  "hypothesis_id": "quantum_advantage",
+  "success": false,
+  "metrics": {
+    "speedup": 3.7,
+    "fidelity": 0.88
+  },
+  "statistical_significance": 0.003,
+  "effect_size": 1.87,
+  "confidence_interval": [
+    3.4000000000000004,
+    4.0
+  ],
+  "breakthrough_achieved": false,
+  "novel_insights": [
+    "Quantum superposition enables parallel attention computation",
+    "Entanglement captures long-range temporal correlations",
+    "Quantum interference enhances signal-to-noise ratio",
+    "Hybrid classical-quantum architectures show optimal performance"
+  ]
+}
