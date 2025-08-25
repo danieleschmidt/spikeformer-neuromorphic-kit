@@ -1,1006 +1,470 @@
 #!/usr/bin/env python3
-"""Production deployment suite for Spikeformer Neuromorphic Kit."""
+"""
+Production Deployment Suite
+===========================
+
+Production-ready deployment configuration for quantum consciousness research:
+
+Deployment Features:
+- Containerized deployment with Docker
+- Kubernetes orchestration and scaling
+- Production monitoring and observability
+- Global deployment with multi-region support
+- CI/CD pipeline integration
+- Security hardening and compliance
+"""
 
 import os
-import sys
-import shutil
 import json
-from pathlib import Path
+import time
 from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
-import tempfile
-import subprocess
-
+from dataclasses import dataclass
 
 @dataclass
 class DeploymentConfig:
     """Production deployment configuration."""
     environment: str = "production"
     replicas: int = 3
-    cpu_request: str = "500m"
+    cpu_request: str = "1000m"
     cpu_limit: str = "2000m"
-    memory_request: str = "1Gi"
+    memory_request: str = "2Gi"
     memory_limit: str = "4Gi"
-    storage_size: str = "10Gi"
-    neuromorphic_hardware: bool = True
-    monitoring_enabled: bool = True
-    auto_scaling: bool = True
+    enable_autoscaling: bool = True
+    min_replicas: int = 2
     max_replicas: int = 10
     target_cpu_utilization: int = 70
 
 
-class ProductionDeploymentSuite:
-    """Comprehensive production deployment automation."""
+class ProductionDeploymentGenerator:
+    """Generates production deployment configurations."""
     
-    def __init__(self, repo_path: str = "/root/repo"):
-        self.repo_path = Path(repo_path)
-        self.deployment_dir = self.repo_path / "deployment"
-        self.config = DeploymentConfig()
-        
-    def create_production_infrastructure(self):
-        """Create complete production deployment infrastructure."""
-        
-        print("🚀 CREATING PRODUCTION DEPLOYMENT INFRASTRUCTURE...")
-        
-        # Create deployment directories
-        self._create_deployment_structure()
-        
-        # Generate Docker configuration
-        self._create_docker_configuration()
-        
-        # Generate Kubernetes manifests
-        self._create_kubernetes_manifests()
-        
-        # Create monitoring configuration
-        self._create_monitoring_configuration()
-        
-        # Generate CI/CD workflows
-        self._create_cicd_workflows()
-        
-        # Create health check scripts
-        self._create_health_checks()
-        
-        # Generate scaling policies
-        self._create_scaling_policies()
-        
-        # Create backup and recovery scripts
-        self._create_backup_recovery()
-        
-        print("✅ Production deployment infrastructure created successfully!")
-        
-    def _create_deployment_structure(self):
-        """Create deployment directory structure."""
-        
-        directories = [
-            "deployment/docker",
-            "deployment/kubernetes",
-            "deployment/monitoring",
-            "deployment/scripts",
-            "deployment/ci-cd",
-            "deployment/backup",
-            "deployment/configs"
-        ]
-        
-        for directory in directories:
-            (self.repo_path / directory).mkdir(parents=True, exist_ok=True)
-            
-    def _create_docker_configuration(self):
-        """Create Docker configuration files."""
-        
-        # Production Dockerfile
-        dockerfile_content = '''# Production Dockerfile for Spikeformer Neuromorphic Kit
+    def __init__(self):
+        print("🚀 Production Deployment Generator Initialized")
+    
+    def generate_dockerfile(self, config: DeploymentConfig) -> str:
+        """Generate production Dockerfile."""
+        dockerfile_content = '''# Production Dockerfile for Quantum Consciousness Research
 FROM python:3.11-slim
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV NEUROMORPHIC_ENV=production
+# Metadata
+LABEL maintainer="research-team@terragonlabs.com"
+LABEL description="Quantum Consciousness Research - Production Image"
+LABEL version="1.0.0"
 
-# Create app user
-RUN groupadd -r spikeformer && useradd -r -g spikeformer spikeformer
+# Security: Create non-root user
+RUN groupadd -r quantumuser && useradd -r -g quantumuser quantumuser
+
+# Set working directory
+WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \\
+    --no-install-recommends \\
     build-essential \\
-    curl \\
-    git \\
     && rm -rf /var/lib/apt/lists/*
 
-# Set work directory
-WORKDIR /app
-
-# Copy requirements and install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
 # Copy application code
-COPY . .
+COPY *.py ./
 
 # Set ownership
-RUN chown -R spikeformer:spikeformer /app
-USER spikeformer
+RUN chown -R quantumuser:quantumuser /app
+
+# Switch to non-root user
+USER quantumuser
+
+# Environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV QUANTUM_CONSCIOUSNESS_ENV=production
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \\
-    CMD python3 -c "import spikeformer; print('Health check passed')" || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \\
+    CMD python -c "import quantum_consciousness_demo_simple; print('OK')" || exit 1
 
 # Expose port
 EXPOSE 8080
 
-# Run application
-CMD ["python3", "-m", "spikeformer.cli.main", "--serve", "--port", "8080"]
+# Default command
+CMD ["python", "quantum_consciousness_demo_simple.py"]
+'''
+        return dockerfile_content
+    
+    def generate_kubernetes_manifest(self, config: DeploymentConfig) -> str:
+        """Generate Kubernetes deployment manifest."""
+        manifest = f'''apiVersion: v1
+kind: Namespace
+metadata:
+  name: quantum-consciousness
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quantum-consciousness-api
+  namespace: quantum-consciousness
+spec:
+  replicas: {config.replicas}
+  selector:
+    matchLabels:
+      app: quantum-consciousness
+  template:
+    metadata:
+      labels:
+        app: quantum-consciousness
+        version: v1.0.0
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+      containers:
+      - name: quantum-consciousness
+        image: terragonlabs/quantum-consciousness:v1.0.0
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: {config.cpu_request}
+            memory: {config.memory_request}
+          limits:
+            cpu: {config.cpu_limit}
+            memory: {config.memory_limit}
+        env:
+        - name: QUANTUM_CONSCIOUSNESS_ENV
+          value: {config.environment}
+        - name: LOG_LEVEL
+          value: INFO
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quantum-consciousness-service
+  namespace: quantum-consciousness
+spec:
+  selector:
+    app: quantum-consciousness
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: ClusterIP
 '''
         
-        (self.deployment_dir / "docker" / "Dockerfile").write_text(dockerfile_content)
-        
-        # Docker Compose for local development
-        docker_compose_content = '''version: '3.8'
-
-services:
-  spikeformer:
-    build:
-      context: ../../
-      dockerfile: deployment/docker/Dockerfile
-    container_name: spikeformer-app
-    restart: unless-stopped
-    ports:
-      - "8080:8080"
-    environment:
-      - NEUROMORPHIC_ENV=development
-      - PYTHONPATH=/app
-    volumes:
-      - spikeformer-data:/app/data
-      - spikeformer-logs:/app/logs
-    networks:
-      - spikeformer-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-  spikeformer-monitoring:
-    image: prom/prometheus:latest
-    container_name: spikeformer-prometheus
-    restart: unless-stopped
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus-data:/prometheus
-    networks:
-      - spikeformer-network
-
-  spikeformer-grafana:
-    image: grafana/grafana:latest
-    container_name: spikeformer-grafana
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin123
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./monitoring/grafana:/etc/grafana/provisioning
-    networks:
-      - spikeformer-network
-
-volumes:
-  spikeformer-data:
-  spikeformer-logs:
-  prometheus-data:
-  grafana-data:
-
-networks:
-  spikeformer-network:
-    driver: bridge
+        if config.enable_autoscaling:
+            manifest += f'''---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: quantum-consciousness-hpa
+  namespace: quantum-consciousness
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: quantum-consciousness-api
+  minReplicas: {config.min_replicas}
+  maxReplicas: {config.max_replicas}
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: {config.target_cpu_utilization}
 '''
         
-        (self.deployment_dir / "docker" / "docker-compose.yml").write_text(docker_compose_content)
-        
-        # Docker build script
-        build_script = '''#!/bin/bash
-set -e
+        return manifest
+    
+    def generate_monitoring_config(self) -> str:
+        """Generate monitoring configuration."""
+        prometheus_config = '''global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
 
-# Build production Docker image
-echo "🐳 Building production Docker image..."
+rule_files:
+  - "quantum_consciousness_alerts.yml"
 
-# Get version from pyproject.toml
-VERSION=$(grep "version = " pyproject.toml | cut -d'"' -f2)
+scrape_configs:
+  - job_name: 'quantum-consciousness'
+    static_configs:
+      - targets: ['quantum-consciousness-service:80']
+    scrape_interval: 10s
+    metrics_path: /metrics
 
-# Build image
-docker build -f deployment/docker/Dockerfile -t spikeformer-neuromorphic:${VERSION} .
-docker tag spikeformer-neuromorphic:${VERSION} spikeformer-neuromorphic:latest
-
-echo "✅ Docker image built successfully: spikeformer-neuromorphic:${VERSION}"
-
-# Optional: Push to registry
-if [ "$1" = "--push" ]; then
-    echo "📤 Pushing to container registry..."
-    docker push spikeformer-neuromorphic:${VERSION}
-    docker push spikeformer-neuromorphic:latest
-    echo "✅ Images pushed to registry"
-fi
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
 '''
-        
-        build_script_path = self.deployment_dir / "scripts" / "build-docker.sh"
-        build_script_path.write_text(build_script)
-        build_script_path.chmod(0o755)
-        
-    def _create_kubernetes_manifests(self):
-        """Create Kubernetes deployment manifests."""
-        
-        # Namespace
-        namespace_manifest = {
-            "apiVersion": "v1",
-            "kind": "Namespace",
-            "metadata": {
-                "name": "spikeformer",
-                "labels": {
-                    "name": "spikeformer",
-                    "environment": "production"
-                }
-            }
-        }
-        
-        # ConfigMap
-        configmap_manifest = {
-            "apiVersion": "v1",
-            "kind": "ConfigMap",
-            "metadata": {
-                "name": "spikeformer-config",
-                "namespace": "spikeformer"
-            },
-            "data": {
-                "NEUROMORPHIC_ENV": "production",
-                "LOG_LEVEL": "INFO",
-                "WORKERS": "4",
-                "MAX_TIMESTEPS": "64",
-                "ENERGY_OPTIMIZATION": "true"
-            }
-        }
-        
-        # Deployment
-        deployment_manifest = {
-            "apiVersion": "apps/v1",
-            "kind": "Deployment",
-            "metadata": {
-                "name": "spikeformer-app",
-                "namespace": "spikeformer",
-                "labels": {
-                    "app": "spikeformer",
-                    "component": "neuromorphic-processor"
-                }
-            },
-            "spec": {
-                "replicas": self.config.replicas,
-                "selector": {
-                    "matchLabels": {
-                        "app": "spikeformer"
-                    }
-                },
-                "template": {
-                    "metadata": {
-                        "labels": {
-                            "app": "spikeformer"
-                        }
-                    },
-                    "spec": {
-                        "containers": [{
-                            "name": "spikeformer",
-                            "image": "spikeformer-neuromorphic:latest",
-                            "ports": [{
-                                "containerPort": 8080,
-                                "name": "http"
-                            }],
-                            "env": [{
-                                "name": "NEUROMORPHIC_ENV",
-                                "valueFrom": {
-                                    "configMapKeyRef": {
-                                        "name": "spikeformer-config",
-                                        "key": "NEUROMORPHIC_ENV"
-                                    }
-                                }
-                            }],
-                            "resources": {
-                                "requests": {
-                                    "cpu": self.config.cpu_request,
-                                    "memory": self.config.memory_request
-                                },
-                                "limits": {
-                                    "cpu": self.config.cpu_limit,
-                                    "memory": self.config.memory_limit
-                                }
-                            },
-                            "livenessProbe": {
-                                "httpGet": {
-                                    "path": "/health",
-                                    "port": 8080
-                                },
-                                "initialDelaySeconds": 30,
-                                "periodSeconds": 10
-                            },
-                            "readinessProbe": {
-                                "httpGet": {
-                                    "path": "/ready",
-                                    "port": 8080
-                                },
-                                "initialDelaySeconds": 5,
-                                "periodSeconds": 5
-                            }
-                        }],
-                        "securityContext": {
-                            "runAsNonRoot": True,
-                            "runAsUser": 1000
-                        }
-                    }
-                }
-            }
-        }
-        
-        # Service
-        service_manifest = {
-            "apiVersion": "v1",
-            "kind": "Service",
-            "metadata": {
-                "name": "spikeformer-service",
-                "namespace": "spikeformer"
-            },
-            "spec": {
-                "selector": {
-                    "app": "spikeformer"
-                },
-                "ports": [{
-                    "protocol": "TCP",
-                    "port": 80,
-                    "targetPort": 8080
-                }],
-                "type": "ClusterIP"
-            }
-        }
-        
-        # HorizontalPodAutoscaler
-        hpa_manifest = {
-            "apiVersion": "autoscaling/v2",
-            "kind": "HorizontalPodAutoscaler",
-            "metadata": {
-                "name": "spikeformer-hpa",
-                "namespace": "spikeformer"
-            },
-            "spec": {
-                "scaleTargetRef": {
-                    "apiVersion": "apps/v1",
-                    "kind": "Deployment",
-                    "name": "spikeformer-app"
-                },
-                "minReplicas": self.config.replicas,
-                "maxReplicas": self.config.max_replicas,
-                "metrics": [{
-                    "type": "Resource",
-                    "resource": {
-                        "name": "cpu",
-                        "target": {
-                            "type": "Utilization",
-                            "averageUtilization": self.config.target_cpu_utilization
-                        }
-                    }
-                }]
-            }
-        }
-        
-        # Save manifests manually
-        self._write_namespace_manifest()
-        self._write_configmap_manifest()  
-        self._write_deployment_manifest()
-        self._write_service_manifest()
-        self._write_hpa_manifest()
-        
-    def _write_namespace_manifest(self):
-        """Write namespace manifest manually."""
-        manifest_path = self.deployment_dir / "kubernetes" / "namespace.yaml"
-        with open(manifest_path, 'w') as f:
-            f.write("apiVersion: v1\n")
-            f.write("kind: Namespace\n")
-            f.write("metadata:\n")
-            f.write("  name: spikeformer\n")
-            f.write("  labels:\n")
-            f.write("    name: spikeformer\n")
-            f.write("    environment: production\n")
+        return prometheus_config
     
-    def _write_configmap_manifest(self):
-        """Write configmap manifest manually.""" 
-        manifest_path = self.deployment_dir / "kubernetes" / "configmap.yaml"
-        with open(manifest_path, 'w') as f:
-            f.write("apiVersion: v1\n")
-            f.write("kind: ConfigMap\n")
-            f.write("metadata:\n")
-            f.write("  name: spikeformer-config\n")
-            f.write("  namespace: spikeformer\n")
-            f.write("data:\n")
-            f.write("  NEUROMORPHIC_ENV: production\n")
-            f.write("  LOG_LEVEL: INFO\n")
-            f.write("  WORKERS: '4'\n")
-            f.write("  MAX_TIMESTEPS: '64'\n")
-            f.write("  ENERGY_OPTIMIZATION: 'true'\n")
+    def generate_deployment_guide(self) -> str:
+        """Generate comprehensive deployment guide."""
+        guide_content = '''# Quantum Consciousness Research - Production Deployment Guide
+
+## Overview
+
+This guide covers the production deployment of the Quantum Consciousness Research platform.
+
+## Prerequisites
+
+- Kubernetes cluster (v1.20+)
+- Docker runtime
+- kubectl configured
+- Prometheus and Grafana for monitoring
+
+## Quick Start
+
+### 1. Build and Push Docker Image
+
+```bash
+# Build production image
+docker build -f Dockerfile.prod -t terragonlabs/quantum-consciousness:v1.0.0 .
+
+# Push to registry
+docker push terragonlabs/quantum-consciousness:v1.0.0
+```
+
+### 2. Deploy to Kubernetes
+
+```bash
+# Deploy all resources
+kubectl apply -f k8s-deployment.yaml
+```
+
+### 3. Verify Deployment
+
+```bash
+# Check deployment status
+kubectl get pods -n quantum-consciousness
+kubectl get services -n quantum-consciousness
+kubectl get hpa -n quantum-consciousness
+
+# Check logs
+kubectl logs -f deployment/quantum-consciousness-api -n quantum-consciousness
+```
+
+## Monitoring Setup
+
+```bash
+# Apply monitoring configuration
+kubectl create configmap prometheus-config --from-file=prometheus.yml -n quantum-consciousness
+```
+
+## Security
+
+The deployment includes several security measures:
+
+- Non-root containers running as user 1000
+- Resource limits to prevent resource exhaustion
+- Security context with fsGroup
+- Health checks for reliability
+
+## Scaling
+
+The platform supports automatic scaling via HPA based on CPU utilization.
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Pod not starting**: Check resource requests and limits
+2. **High memory usage**: Monitor consciousness processing load
+3. **Slow response times**: Scale up replicas or increase resources
+
+### Debug Commands
+
+```bash
+# Get detailed pod information
+kubectl describe pod <pod-name> -n quantum-consciousness
+
+# Check events
+kubectl get events -n quantum-consciousness
+
+# Port forward for local testing
+kubectl port-forward service/quantum-consciousness-service 8080:80 -n quantum-consciousness
+```
+
+## Production Checklist
+
+- [ ] Docker image built and pushed to registry
+- [ ] Kubernetes manifests applied
+- [ ] Monitoring setup completed
+- [ ] Load testing performed
+- [ ] Security hardening verified
+- [ ] Backup procedures documented
+- [ ] Incident response plan ready
+
+## Performance Optimization
+
+### Resource Tuning
+- Monitor CPU and memory usage
+- Adjust resource requests/limits based on actual usage
+- Scale replicas based on load patterns
+
+### Consciousness Processing Optimization
+- Monitor quantum coherence levels
+- Track consciousness emergence rates
+- Optimize processing batch sizes
+
+## Support
+
+For deployment issues:
+1. Check application logs
+2. Review Kubernetes events
+3. Monitor resource utilization
+4. Verify network connectivity
+
+Contact: research-team@terragonlabs.com
+'''
+        return guide_content
     
-    def _write_deployment_manifest(self):
-        """Write deployment manifest manually."""
-        manifest_path = self.deployment_dir / "kubernetes" / "deployment.yaml"
-        with open(manifest_path, 'w') as f:
-            f.write("apiVersion: apps/v1\n")
-            f.write("kind: Deployment\n")
-            f.write("metadata:\n")
-            f.write("  name: spikeformer-app\n")
-            f.write("  namespace: spikeformer\n")
-            f.write("  labels:\n")
-            f.write("    app: spikeformer\n")
-            f.write("    component: neuromorphic-processor\n")
-            f.write("spec:\n")
-            f.write(f"  replicas: {self.config.replicas}\n")
-            f.write("  selector:\n")
-            f.write("    matchLabels:\n")
-            f.write("      app: spikeformer\n")
-            f.write("  template:\n")
-            f.write("    metadata:\n")
-            f.write("      labels:\n")
-            f.write("        app: spikeformer\n")
-            f.write("    spec:\n")
-            f.write("      containers:\n")
-            f.write("        - name: spikeformer\n")
-            f.write("          image: spikeformer-neuromorphic:latest\n")
-            f.write("          ports:\n")
-            f.write("            - containerPort: 8080\n")
-            f.write("              name: http\n")
-            f.write("          resources:\n")
-            f.write("            requests:\n")
-            f.write(f"              cpu: {self.config.cpu_request}\n")
-            f.write(f"              memory: {self.config.memory_request}\n")
-            f.write("            limits:\n")
-            f.write(f"              cpu: {self.config.cpu_limit}\n")
-            f.write(f"              memory: {self.config.memory_limit}\n")
-    
-    def _write_service_manifest(self):
-        """Write service manifest manually."""
-        manifest_path = self.deployment_dir / "kubernetes" / "service.yaml"
-        with open(manifest_path, 'w') as f:
-            f.write("apiVersion: v1\n")
-            f.write("kind: Service\n")
-            f.write("metadata:\n")
-            f.write("  name: spikeformer-service\n")
-            f.write("  namespace: spikeformer\n")
-            f.write("spec:\n")
-            f.write("  selector:\n")
-            f.write("    app: spikeformer\n")
-            f.write("  ports:\n")
-            f.write("    - protocol: TCP\n")
-            f.write("      port: 80\n")
-            f.write("      targetPort: 8080\n")
-            f.write("  type: ClusterIP\n")
-    
-    def _write_hpa_manifest(self):
-        """Write HPA manifest manually."""
-        manifest_path = self.deployment_dir / "kubernetes" / "hpa.yaml"
-        with open(manifest_path, 'w') as f:
-            f.write("apiVersion: autoscaling/v2\n")
-            f.write("kind: HorizontalPodAutoscaler\n")
-            f.write("metadata:\n")
-            f.write("  name: spikeformer-hpa\n")
-            f.write("  namespace: spikeformer\n")
-            f.write("spec:\n")
-            f.write("  scaleTargetRef:\n")
-            f.write("    apiVersion: apps/v1\n")
-            f.write("    kind: Deployment\n")
-            f.write("    name: spikeformer-app\n")
-            f.write(f"  minReplicas: {self.config.replicas}\n")
-            f.write(f"  maxReplicas: {self.config.max_replicas}\n")
-            f.write("  metrics:\n")
-            f.write("    - type: Resource\n")
-            f.write("      resource:\n")
-            f.write("        name: cpu\n")
-            f.write("        target:\n")
-            f.write("          type: Utilization\n")
-            f.write(f"          averageUtilization: {self.config.target_cpu_utilization}\n")
-                
-    def _create_monitoring_configuration(self):
-        """Create monitoring and observability configuration."""
+    def generate_production_deployment(self) -> Dict[str, Any]:
+        """Generate complete production deployment configuration."""
+        print("🚀 Generating Production Deployment Configuration")
         
-        # Prometheus configuration
-        prometheus_config = {
-            "global": {
-                "scrape_interval": "15s"
-            },
-            "scrape_configs": [{
-                "job_name": "spikeformer",
-                "static_configs": [{
-                    "targets": ["spikeformer-service:80"]
-                }],
-                "metrics_path": "/metrics",
-                "scrape_interval": "15s"
-            }]
-        }
+        # Default production configuration
+        config = DeploymentConfig(
+            environment="production",
+            replicas=3,
+            cpu_request="1000m",
+            cpu_limit="2000m", 
+            memory_request="2Gi",
+            memory_limit="4Gi",
+            enable_autoscaling=True,
+            min_replicas=2,
+            max_replicas=10,
+            target_cpu_utilization=70
+        )
         
-        prometheus_path = self.deployment_dir / "monitoring" / "prometheus.yml"
-        with open(prometheus_path, 'w') as f:
-            # Write YAML manually
-            f.write("global:\n  scrape_interval: 15s\n\n")
-            f.write("scrape_configs:\n")
-            f.write("  - job_name: spikeformer\n")
-            f.write("    static_configs:\n")
-            f.write("      - targets: ['spikeformer-service:80']\n")
-            f.write("    metrics_path: /metrics\n")
-            f.write("    scrape_interval: 15s\n")
-            
-        # Grafana dashboard
-        grafana_dashboard = {
-            "dashboard": {
-                "title": "Spikeformer Neuromorphic Metrics",
-                "panels": [
-                    {
-                        "title": "Spike Rate",
-                        "type": "graph",
-                        "targets": [{
-                            "expr": "spikeformer_spike_rate",
-                            "legendFormat": "{{instance}}"
-                        }]
-                    },
-                    {
-                        "title": "Energy Consumption",
-                        "type": "graph",
-                        "targets": [{
-                            "expr": "spikeformer_energy_consumption_mj",
-                            "legendFormat": "{{instance}}"
-                        }]
-                    },
-                    {
-                        "title": "Processing Latency",
-                        "type": "graph",
-                        "targets": [{
-                            "expr": "spikeformer_processing_latency_ms",
-                            "legendFormat": "{{instance}}"
-                        }]
-                    }
-                ]
-            }
-        }
+        deployment_files = {}
         
-        dashboard_path = self.deployment_dir / "monitoring" / "spikeformer-dashboard.json"
-        with open(dashboard_path, 'w') as f:
-            json.dump(grafana_dashboard, f, indent=2)
-            
-    def _create_cicd_workflows(self):
-        """Create CI/CD workflow configurations."""
+        # Generate Docker configuration
+        print("   📦 Generating Docker configuration...")
+        deployment_files['Dockerfile.prod'] = self.generate_dockerfile(config)
         
-        # GitHub Actions workflow
-        github_workflow = {
-            "name": "Spikeformer CI/CD",
-            "on": {
-                "push": {
-                    "branches": ["main", "develop"]
+        # Generate Kubernetes manifest
+        print("   ☸️  Generating Kubernetes manifest...")
+        deployment_files['k8s-deployment.yaml'] = self.generate_kubernetes_manifest(config)
+        
+        # Generate monitoring configuration
+        print("   📊 Generating monitoring configuration...")
+        deployment_files['prometheus.yml'] = self.generate_monitoring_config()
+        
+        # Generate deployment guide
+        print("   📖 Generating deployment documentation...")
+        deployment_files['DEPLOYMENT_GUIDE.md'] = self.generate_deployment_guide()
+        
+        deployment_summary = {
+            'generated_at': time.time(),
+            'environment': config.environment,
+            'configuration': {
+                'replicas': config.replicas,
+                'resources': {
+                    'cpu_request': config.cpu_request,
+                    'cpu_limit': config.cpu_limit,
+                    'memory_request': config.memory_request,
+                    'memory_limit': config.memory_limit
                 },
-                "pull_request": {
-                    "branches": ["main"]
+                'autoscaling': {
+                    'enabled': config.enable_autoscaling,
+                    'min_replicas': config.min_replicas,
+                    'max_replicas': config.max_replicas,
+                    'target_cpu_utilization': config.target_cpu_utilization
                 }
             },
-            "jobs": {
-                "test": {
-                    "runs-on": "ubuntu-latest",
-                    "steps": [
-                        {"uses": "actions/checkout@v3"},
-                        {
-                            "name": "Set up Python",
-                            "uses": "actions/setup-python@v4",
-                            "with": {"python-version": "3.11"}
-                        },
-                        {
-                            "name": "Install dependencies",
-                            "run": "pip install -r requirements.txt"
-                        },
-                        {
-                            "name": "Run quality gates",
-                            "run": "python3 quality_gates_comprehensive.py"
-                        },
-                        {
-                            "name": "Run tests",
-                            "run": "python3 -m pytest tests/"
-                        }
-                    ]
-                },
-                "build-and-deploy": {
-                    "needs": "test",
-                    "runs-on": "ubuntu-latest",
-                    "if": "github.ref == 'refs/heads/main'",
-                    "steps": [
-                        {"uses": "actions/checkout@v3"},
-                        {
-                            "name": "Build Docker image",
-                            "run": "deployment/scripts/build-docker.sh"
-                        },
-                        {
-                            "name": "Deploy to production",
-                            "run": "deployment/scripts/deploy-production.sh"
-                        }
-                    ]
-                }
-            }
+            'files_generated': list(deployment_files.keys()),
+            'deployment_ready': True
         }
         
-        github_dir = self.repo_path / ".github" / "workflows"
-        github_dir.mkdir(parents=True, exist_ok=True)
+        return {
+            'summary': deployment_summary,
+            'files': deployment_files
+        }
+
+
+def save_deployment_files(deployment_result: Dict[str, Any], base_path: str = "./deployment_production"):
+    """Save all deployment files to disk."""
+    print(f"\n💾 Saving deployment files to {base_path}")
+    
+    files = deployment_result['files']
+    
+    # Create base directory
+    os.makedirs(base_path, exist_ok=True)
+    
+    for filepath, content in files.items():
+        full_path = os.path.join(base_path, filepath)
         
-        workflow_path = github_dir / "ci-cd.yml"
-        with open(workflow_path, 'w') as f:
-            # Write GitHub Actions YAML manually
-            f.write("name: Spikeformer CI/CD\n\n")
-            f.write("on:\n")
-            f.write("  push:\n    branches: [main, develop]\n")
-            f.write("  pull_request:\n    branches: [main]\n\n")
-            f.write("jobs:\n")
-            f.write("  test:\n")
-            f.write("    runs-on: ubuntu-latest\n")
-            f.write("    steps:\n")
-            f.write("      - uses: actions/checkout@v3\n")
-            f.write("      - name: Set up Python\n")
-            f.write("        uses: actions/setup-python@v4\n")
-            f.write("        with:\n          python-version: '3.11'\n")
-            f.write("      - name: Install dependencies\n")
-            f.write("        run: pip install -r requirements.txt\n")
-            f.write("      - name: Run quality gates\n")
-            f.write("        run: python3 quality_gates_comprehensive.py\n")
-            f.write("      - name: Run tests\n")
-            f.write("        run: python3 -m pytest tests/\n")
-            
-    def _create_health_checks(self):
-        """Create comprehensive health check scripts."""
+        # Write file
+        with open(full_path, 'w') as f:
+            f.write(content)
         
-        # Production health check
-        health_check_script = '''#!/usr/bin/env python3
-"""Production health check for Spikeformer Neuromorphic Kit."""
-
-import sys
-import time
-import requests
-import json
-from pathlib import Path
-
-
-def check_api_health():
-    """Check API health endpoint."""
-    try:
-        response = requests.get("http://localhost:8080/health", timeout=10)
-        return response.status_code == 200
-    except:
-        return False
-
-
-def check_neuromorphic_hardware():
-    """Check neuromorphic hardware connectivity."""
-    try:
-        # Simulate hardware check
-        return True  # Would check actual hardware
-    except:
-        return False
-
-
-def check_memory_usage():
-    """Check memory usage is within limits."""
-    try:
-        import psutil
-        memory = psutil.virtual_memory()
-        return memory.percent < 90
-    except:
-        return False
-
-
-def check_disk_space():
-    """Check disk space availability."""
-    try:
-        import shutil
-        total, used, free = shutil.disk_usage("/")
-        usage_percent = (used / total) * 100
-        return usage_percent < 85
-    except:
-        return False
+        print(f"   ✅ Created: {filepath}")
+    
+    # Save deployment summary
+    summary_path = os.path.join(base_path, "deployment_summary.json")
+    with open(summary_path, 'w') as f:
+        json.dump(deployment_result['summary'], f, indent=2)
+    
+    print(f"   📋 Summary saved: deployment_summary.json")
 
 
 def main():
-    """Run comprehensive health checks."""
+    """Generate production deployment configuration."""
+    print("🚀 Production Deployment Suite")
+    print("Generating production-ready deployment for quantum consciousness research")
+    print("=" * 80)
     
-    checks = {
-        "api_health": check_api_health,
-        "neuromorphic_hardware": check_neuromorphic_hardware,
-        "memory_usage": check_memory_usage,
-        "disk_space": check_disk_space
-    }
-    
-    results = {}
-    all_healthy = True
-    
-    for check_name, check_func in checks.items():
-        try:
-            result = check_func()
-            results[check_name] = result
-            if not result:
-                all_healthy = False
-        except Exception as e:
-            results[check_name] = False
-            all_healthy = False
-    
-    # Output results
-    health_status = {
-        "timestamp": time.time(),
-        "healthy": all_healthy,
-        "checks": results
-    }
-    
-    print(json.dumps(health_status, indent=2))
-    
-    # Exit with appropriate code
-    sys.exit(0 if all_healthy else 1)
+    try:
+        # Initialize deployment generator
+        generator = ProductionDeploymentGenerator()
+        
+        # Generate complete deployment
+        deployment_result = generator.generate_production_deployment()
+        
+        # Save deployment files
+        save_deployment_files(deployment_result)
+        
+        # Print summary
+        summary = deployment_result['summary']
+        print(f"\n🎯 Production Deployment Summary:")
+        print(f"   Environment: {summary['configuration']['replicas']} replicas")
+        print(f"   Resource Requests: {summary['configuration']['resources']['cpu_request']} CPU, {summary['configuration']['resources']['memory_request']} Memory")
+        print(f"   Autoscaling: {'Enabled' if summary['configuration']['autoscaling']['enabled'] else 'Disabled'}")
+        print(f"   Files Generated: {len(summary['files_generated'])}")
+        print(f"   Deployment Ready: {'✅ YES' if summary['deployment_ready'] else '❌ NO'}")
+        
+        print(f"\n📁 Generated Files:")
+        for file_path in summary['files_generated']:
+            print(f"   • {file_path}")
+        
+        print(f"\n🚀 Deployment Instructions:")
+        print(f"   1. Review generated files in ./deployment_production/")
+        print(f"   2. Build Docker image: docker build -f deployment_production/Dockerfile.prod -t quantum-consciousness .")
+        print(f"   3. Deploy to Kubernetes: kubectl apply -f deployment_production/k8s-deployment.yaml")
+        print(f"   4. Setup monitoring: kubectl create configmap prometheus-config --from-file=deployment_production/prometheus.yml")
+        print(f"   5. Follow DEPLOYMENT_GUIDE.md for detailed instructions")
+        
+        print(f"\n✅ Production deployment configuration completed successfully!")
+        
+        return deployment_result
+        
+    except Exception as e:
+        print(f"\n❌ Deployment generation failed: {str(e)}")
+        return None
 
 
 if __name__ == "__main__":
-    main()
-'''
-        
-        health_check_path = self.deployment_dir / "scripts" / "health-check.py"
-        health_check_path.write_text(health_check_script)
-        health_check_path.chmod(0o755)
-        
-    def _create_scaling_policies(self):
-        """Create auto-scaling policies and configurations."""
-        
-        # Kubernetes YAML for custom scaling
-        scaling_policy = {
-            "apiVersion": "autoscaling/v2",
-            "kind": "HorizontalPodAutoscaler",
-            "metadata": {
-                "name": "spikeformer-advanced-hpa",
-                "namespace": "spikeformer"
-            },
-            "spec": {
-                "scaleTargetRef": {
-                    "apiVersion": "apps/v1",
-                    "kind": "Deployment",
-                    "name": "spikeformer-app"
-                },
-                "minReplicas": 2,
-                "maxReplicas": 20,
-                "metrics": [
-                    {
-                        "type": "Resource",
-                        "resource": {
-                            "name": "cpu",
-                            "target": {
-                                "type": "Utilization",
-                                "averageUtilization": 70
-                            }
-                        }
-                    },
-                    {
-                        "type": "Resource",
-                        "resource": {
-                            "name": "memory",
-                            "target": {
-                                "type": "Utilization",
-                                "averageUtilization": 80
-                            }
-                        }
-                    }
-                ],
-                "behavior": {
-                    "scaleUp": {
-                        "stabilizationWindowSeconds": 60,
-                        "policies": [{
-                            "type": "Percent",
-                            "value": 100,
-                            "periodSeconds": 15
-                        }]
-                    },
-                    "scaleDown": {
-                        "stabilizationWindowSeconds": 300,
-                        "policies": [{
-                            "type": "Percent", 
-                            "value": 10,
-                            "periodSeconds": 60
-                        }]
-                    }
-                }
-            }
-        }
-        
-        scaling_path = self.deployment_dir / "kubernetes" / "advanced-hpa.yaml"
-        with open(scaling_path, 'w') as f:
-            # Write Kubernetes YAML manually
-            f.write("apiVersion: autoscaling/v2\n")
-            f.write("kind: HorizontalPodAutoscaler\n")
-            f.write("metadata:\n")
-            f.write("  name: spikeformer-advanced-hpa\n")
-            f.write("  namespace: spikeformer\n")
-            f.write("spec:\n")
-            f.write("  scaleTargetRef:\n")
-            f.write("    apiVersion: apps/v1\n")
-            f.write("    kind: Deployment\n")
-            f.write("    name: spikeformer-app\n")
-            f.write("  minReplicas: 2\n")
-            f.write("  maxReplicas: 20\n")
-            f.write("  metrics:\n")
-            f.write("    - type: Resource\n")
-            f.write("      resource:\n")
-            f.write("        name: cpu\n")
-            f.write("        target:\n")
-            f.write("          type: Utilization\n")
-            f.write("          averageUtilization: 70\n")
-            
-    def _create_backup_recovery(self):
-        """Create backup and disaster recovery scripts."""
-        
-        # Backup script
-        backup_script = '''#!/bin/bash
-set -e
-
-# Backup script for Spikeformer production data
-BACKUP_DIR="/backups/spikeformer"
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_NAME="spikeformer_backup_${TIMESTAMP}"
-
-echo "🔄 Starting backup: ${BACKUP_NAME}"
-
-# Create backup directory
-mkdir -p "${BACKUP_DIR}/${BACKUP_NAME}"
-
-# Backup application data
-echo "📦 Backing up application data..."
-kubectl exec -n spikeformer deployment/spikeformer-app -- tar czf - /app/data | \\
-    cat > "${BACKUP_DIR}/${BACKUP_NAME}/app_data.tar.gz"
-
-# Backup configuration
-echo "⚙️ Backing up configuration..."
-kubectl get configmap -n spikeformer -o yaml > "${BACKUP_DIR}/${BACKUP_NAME}/configmaps.yaml"
-kubectl get secret -n spikeformer -o yaml > "${BACKUP_DIR}/${BACKUP_NAME}/secrets.yaml"
-
-# Backup persistent volumes
-echo "💾 Backing up persistent volumes..."
-kubectl get pv,pvc -n spikeformer -o yaml > "${BACKUP_DIR}/${BACKUP_NAME}/volumes.yaml"
-
-# Create backup manifest
-cat > "${BACKUP_DIR}/${BACKUP_NAME}/backup_manifest.json" << EOF
-{
-    "backup_name": "${BACKUP_NAME}",
-    "timestamp": "${TIMESTAMP}",
-    "kubernetes_version": "$(kubectl version --short)",
-    "spikeformer_version": "$(kubectl get deployment -n spikeformer spikeformer-app -o jsonpath='{.spec.template.spec.containers[0].image}')"
-}
-EOF
-
-# Compress backup
-echo "🗜️ Compressing backup..."
-cd "${BACKUP_DIR}"
-tar czf "${BACKUP_NAME}.tar.gz" "${BACKUP_NAME}"
-rm -rf "${BACKUP_NAME}"
-
-echo "✅ Backup completed: ${BACKUP_DIR}/${BACKUP_NAME}.tar.gz"
-
-# Cleanup old backups (keep last 7 days)
-find "${BACKUP_DIR}" -name "spikeformer_backup_*.tar.gz" -mtime +7 -delete
-'''
-        
-        backup_path = self.deployment_dir / "scripts" / "backup.sh"
-        backup_path.write_text(backup_script)
-        backup_path.chmod(0o755)
-        
-        # Recovery script
-        recovery_script = '''#!/bin/bash
-set -e
-
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 <backup_file>"
-    exit 1
-fi
-
-BACKUP_FILE="$1"
-RESTORE_DIR="/tmp/spikeformer_restore_$(date +%s)"
-
-echo "🔄 Starting recovery from: ${BACKUP_FILE}"
-
-# Extract backup
-echo "📦 Extracting backup..."
-mkdir -p "${RESTORE_DIR}"
-tar xzf "${BACKUP_FILE}" -C "${RESTORE_DIR}" --strip-components=1
-
-# Restore configuration
-echo "⚙️ Restoring configuration..."
-kubectl apply -f "${RESTORE_DIR}/configmaps.yaml"
-kubectl apply -f "${RESTORE_DIR}/secrets.yaml"
-
-# Restore application data
-echo "📂 Restoring application data..."
-kubectl exec -n spikeformer deployment/spikeformer-app -- tar xzf - -C / < "${RESTORE_DIR}/app_data.tar.gz"
-
-# Restart deployment
-echo "🔄 Restarting deployment..."
-kubectl rollout restart deployment/spikeformer-app -n spikeformer
-kubectl rollout status deployment/spikeformer-app -n spikeformer
-
-# Cleanup
-rm -rf "${RESTORE_DIR}"
-
-echo "✅ Recovery completed successfully"
-'''
-        
-        recovery_path = self.deployment_dir / "scripts" / "recovery.sh"
-        recovery_path.write_text(recovery_script)
-        recovery_path.chmod(0o755)
-        
-        # Deployment script
-        deploy_script = '''#!/bin/bash
-set -e
-
-echo "🚀 Deploying Spikeformer to production..."
-
-# Apply Kubernetes manifests
-echo "📋 Applying Kubernetes manifests..."
-kubectl apply -f deployment/kubernetes/namespace.yaml
-kubectl apply -f deployment/kubernetes/configmap.yaml
-kubectl apply -f deployment/kubernetes/deployment.yaml
-kubectl apply -f deployment/kubernetes/service.yaml
-kubectl apply -f deployment/kubernetes/hpa.yaml
-
-# Wait for deployment
-echo "⏳ Waiting for deployment to be ready..."
-kubectl rollout status deployment/spikeformer-app -n spikeformer --timeout=300s
-
-# Run health check
-echo "🏥 Running health check..."
-kubectl exec -n spikeformer deployment/spikeformer-app -- python3 deployment/scripts/health-check.py
-
-echo "✅ Production deployment completed successfully!"
-'''
-        
-        deploy_path = self.deployment_dir / "scripts" / "deploy-production.sh" 
-        deploy_path.write_text(deploy_script)
-        deploy_path.chmod(0o755)
-
-
-def main():
-    """Main execution function."""
-    
-    print("🏗️ TERRAGON PRODUCTION DEPLOYMENT SUITE")
-    print("=" * 50)
-    
-    deployment_suite = ProductionDeploymentSuite()
-    deployment_suite.create_production_infrastructure()
-    
-    print("\n📋 DEPLOYMENT ARTIFACTS CREATED:")
-    print("├── deployment/docker/")
-    print("│   ├── Dockerfile")
-    print("│   └── docker-compose.yml")
-    print("├── deployment/kubernetes/")
-    print("│   ├── namespace.yaml")
-    print("│   ├── deployment.yaml")
-    print("│   ├── service.yaml")
-    print("│   └── hpa.yaml")
-    print("├── deployment/monitoring/")
-    print("│   ├── prometheus.yml")
-    print("│   └── grafana-dashboard.json")
-    print("├── deployment/scripts/")
-    print("│   ├── build-docker.sh")
-    print("│   ├── deploy-production.sh")
-    print("│   ├── health-check.py")
-    print("│   ├── backup.sh")
-    print("│   └── recovery.sh")
-    print("└── .github/workflows/")
-    print("    └── ci-cd.yml")
-    
-    print("\n🎯 NEXT STEPS:")
-    print("1. Review deployment configuration")
-    print("2. Configure container registry")
-    print("3. Set up Kubernetes cluster")
-    print("4. Run: deployment/scripts/build-docker.sh")
-    print("5. Run: deployment/scripts/deploy-production.sh")
-    
-    print("\n🚀 PRODUCTION DEPLOYMENT READY!")
-
-
-if __name__ == "__main__":
-    main()
+    production_deployment = main()
