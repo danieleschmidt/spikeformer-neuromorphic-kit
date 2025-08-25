@@ -1,0 +1,220 @@
+{
+  "processing_result": {
+    "layer_results": [
+      {
+        "layer_index": 1,
+        "energy": 32446.821793083174,
+        "spikes": "210244",
+        "coherence": 0.87,
+        "spike_rate": 102.658203125
+      },
+      {
+        "layer_index": 2,
+        "energy": 64803.870896963344,
+        "spikes": "420024",
+        "coherence": 0.8609126836840953,
+        "spike_rate": 205.08984375
+      },
+      {
+        "layer_index": 3,
+        "energy": 32430.068918923702,
+        "spikes": "210248",
+        "coherence": 0.8519202861243118,
+        "spike_rate": 102.66015625
+      },
+      {
+        "layer_index": 4,
+        "energy": 16132.34534875962,
+        "spikes": "104602",
+        "coherence": 0.8430218158760961,
+        "spike_rate": 51.0751953125
+      }
+    ],
+    "total_energy": 145813.10695772985,
+    "total_spikes": "945118",
+    "processing_time": 0.2420210838317871,
+    "quantum_fidelity": 0.996005996001,
+    "energy_per_sample": 4556.659592429058,
+    "throughput": 132.21988552964703
+  },
+  "system_status": {
+    "config": {
+      "neural_layers": [
+        256,
+        512,
+        256,
+        128,
+        10
+      ],
+      "quantum_coherence": 0.87,
+      "spike_threshold": 0.75,
+      "energy_efficiency_target": 15.0,
+      "temporal_dynamics": 64,
+      "learning_rate": 0.001,
+      "max_retries": 3,
+      "timeout_seconds": 30.0,
+      "error_threshold": 0.05,
+      "validation_samples": 100,
+      "backup_interval_sec": 300,
+      "health_check_interval_sec": 60
+    },
+    "state": {
+      "initialized": true,
+      "processing": false,
+      "last_checkpoint": 1756132529.518314,
+      "processed_samples": 32,
+      "total_energy": 145813.10695772985
+    },
+    "quantum_state": {
+      "coherence": 0.8682613045650546,
+      "entanglement": 0.0,
+      "fidelity": 0.996005996001,
+      "decoherence_rate": 0.01
+    },
+    "health_report": {
+      "status": "healthy",
+      "current_metrics": {
+        "cpu_usage": 0.0,
+        "memory_usage": 0.0,
+        "energy_consumption": 0.0,
+        "error_count": 0,
+        "performance_degradation": 0.0,
+        "quantum_fidelity": 1.0,
+        "last_check": 1756132529.2762141
+      },
+      "recent_alerts": [],
+      "health_score": 100.0,
+      "uptime_seconds": 0.2468430995941162
+    },
+    "logger_metrics": {
+      "errors": 6,
+      "warnings": 3,
+      "info_messages": 7,
+      "start_time": 1756132529.2510517,
+      "runtime_seconds": 0.27201080322265625,
+      "error_rate": 6.0,
+      "warning_rate": 3.0
+    },
+    "recovery_stats": {
+      "total_recoveries": 3,
+      "successful_recoveries": 0,
+      "success_rate": 0.0,
+      "error_types": {
+        "valueerror": 3
+      },
+      "recent_recoveries": [
+        {
+          "timestamp": 1756132529.5207746,
+          "error_type": "valueerror",
+          "exception": "Input must be 3D array, got shape (10, 20)",
+          "context": {
+            "input_shape": [
+              10,
+              20
+            ],
+            "processing_time": 2.09808349609375e-05,
+            "config": {
+              "neural_layers": [
+                256,
+                512,
+                256,
+                128,
+                10
+              ],
+              "quantum_coherence": 0.87,
+              "spike_threshold": 0.75,
+              "energy_efficiency_target": 15.0,
+              "temporal_dynamics": 64,
+              "learning_rate": 0.001,
+              "max_retries": 3,
+              "timeout_seconds": 30.0,
+              "error_threshold": 0.05,
+              "validation_samples": 100,
+              "backup_interval_sec": 300,
+              "health_check_interval_sec": 60
+            }
+          },
+          "recovery_success": false
+        },
+        {
+          "timestamp": 1756132529.5219483,
+          "error_type": "valueerror",
+          "exception": "Input contains NaN values",
+          "context": {
+            "input_shape": [
+              8,
+              32,
+              256
+            ],
+            "processing_time": 0.00016760826110839844,
+            "config": {
+              "neural_layers": [
+                256,
+                512,
+                256,
+                128,
+                10
+              ],
+              "quantum_coherence": 0.87,
+              "spike_threshold": 0.75,
+              "energy_efficiency_target": 15.0,
+              "temporal_dynamics": 64,
+              "learning_rate": 0.001,
+              "max_retries": 3,
+              "timeout_seconds": 30.0,
+              "error_threshold": 0.05,
+              "validation_samples": 100,
+              "backup_interval_sec": 300,
+              "health_check_interval_sec": 60
+            }
+          },
+          "recovery_success": false
+        },
+        {
+          "timestamp": 1756132529.5228927,
+          "error_type": "valueerror",
+          "exception": "Input contains infinite values",
+          "context": {
+            "input_shape": [
+              8,
+              32,
+              256
+            ],
+            "processing_time": 0.00012922286987304688,
+            "config": {
+              "neural_layers": [
+                256,
+                512,
+                256,
+                128,
+                10
+              ],
+              "quantum_coherence": 0.87,
+              "spike_threshold": 0.75,
+              "energy_efficiency_target": 15.0,
+              "temporal_dynamics": 64,
+              "learning_rate": 0.001,
+              "max_retries": 3,
+              "timeout_seconds": 30.0,
+              "error_threshold": 0.05,
+              "validation_samples": 100,
+              "backup_interval_sec": 300,
+              "health_check_interval_sec": 60
+            }
+          },
+          "recovery_success": false
+        }
+      ]
+    },
+    "performance_summary": {
+      "avg_throughput": 129.43772235128924,
+      "avg_energy": 145813.10695772985,
+      "avg_latency": 0.2472231388092041,
+      "total_samples": 32,
+      "total_energy": 145813.10695772985,
+      "uptime_hours": 7.55905442767673e-05
+    }
+  },
+  "demonstration_success": true,
+  "processing_time": 0.24753475189208984
+}
