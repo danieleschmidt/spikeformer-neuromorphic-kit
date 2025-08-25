@@ -1,0 +1,26 @@
+{
+  "generated_at": 1756125732.8309672,
+  "environment": "production",
+  "configuration": {
+    "replicas": 3,
+    "resources": {
+      "cpu_request": "1000m",
+      "cpu_limit": "2000m",
+      "memory_request": "2Gi",
+      "memory_limit": "4Gi"
+    },
+    "autoscaling": {
+      "enabled": true,
+      "min_replicas": 2,
+      "max_replicas": 10,
+      "target_cpu_utilization": 70
+    }
+  },
+  "files_generated": [
+    "Dockerfile.prod",
+    "k8s-deployment.yaml",
+    "prometheus.yml",
+    "DEPLOYMENT_GUIDE.md"
+  ],
+  "deployment_ready": true
+}
