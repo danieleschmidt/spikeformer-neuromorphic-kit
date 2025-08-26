@@ -1,5 +1,5 @@
 # SpikeFormer Neuromorphic Kit - Production Image
-FROM python:3.11-slim AS base
+FROM python:3.13-slim AS base
 
 # Security and performance optimizations
 RUN apt-get update && apt-get install -y \
