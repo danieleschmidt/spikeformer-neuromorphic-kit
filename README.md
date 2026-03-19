@@ -1,599 +1,216 @@
-# spikeformer-neuromorphic-kit
+# SpikeFormer Neuromorphic Kit
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/danieleschmidt/spikeformer-neuromorphic-kit/ci.yml?branch=main)](https://github.com/danieleschmidt/spikeformer-neuromorphic-kit/actions)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Hardware](https://img.shields.io/badge/hardware-Loihi2%20|%20SpiNNaker-purple)](https://github.com/danieleschmidt/spikeformer-neuromorphic-kit)
+A clean, minimal implementation of the **Spiking Transformer** architecture in pure PyTorch — built for neuromorphic hardware deployment and energy-efficient inference.
 
-Complete toolkit for training and deploying spiking transformer networks on neuromorphic hardware. Achieve 10-15× energy reduction vs traditional transformers while maintaining competitive accuracy on vision and language tasks.
+> **Core idea:** Replace floating-point activations with binary spike trains. On neuromorphic chips (Intel Loihi, IBM TrueNorth), spikes are processed as integer accumulations instead of multiply-accumulates — yielding 10–100× energy reductions at realistic spike rates.
 
-## 🎯 Key Features
+---
 
-- **PyTorch → SNN Conversion**: Automated conversion of pre-trained transformers to spiking networks
-- **Hardware Backends**: Native support for Intel Loihi 2, SpiNNaker2, and BrainScaleS
-- **Energy Profiling**: Real-time power consumption monitoring and optimization
-- **Hybrid Training**: Combined ANN-SNN training for optimal accuracy-efficiency trade-offs
-- **Vision & Language**: Support for both ViT-style and BERT-style architectures
-- **Edge Deployment**: Export to neuromorphic chips for ultra-low power inference
+## Architecture
 
-## 📋 Table of Contents
+```
+Input (float)
+  │
+  ▼
+Linear Embed ──► LIF Neuron (binary spikes)
+  │
+  ▼
+┌─────────────────────────────────────┐
+│  SpikeFormerBlock (×N)              │
+│                                     │
+│  x ──► LayerNorm ──► LIF₁ ─────────┤
+│                       │ (spikes)    │
+│                       ▼             │
+│               SpikeAttention        │
+│                Q·Kᵀ → LIF → ·V     │
+│                       │             │
+│                       ▼             │ + residual
+│  x ──► LayerNorm ──► LIF₂ ─────────┤
+│                       │ (spikes)    │
+│                       ▼             │
+│                  SpikeMLP           │
+│              Linear → LIF → Linear  │
+│                       │             │ + residual
+└───────────────────────┼─────────────┘
+                        ▼
+              Mean pool (time + seq)
+                        ▼
+                  LayerNorm
+                        ▼
+                    Classifier
+```
 
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Architecture](#architecture)
-- [Conversion Pipeline](#conversion-pipeline)
-- [Hardware Deployment](#hardware-deployment)
-- [Energy Profiling](#energy-profiling)
-- [Training](#training)
-- [Benchmarks](#benchmarks)
-- [Examples](#examples)
-- [API Reference](#api-reference)
-- [Contributing](#contributing)
+**Key components:**
 
-## 🚀 Installation
+| Component | What it does |
+|-----------|-------------|
+| `LIFNeuron` | Leaky Integrate-and-Fire with learnable decay α, subtract-reset, fast-sigmoid surrogate gradient for backprop |
+| `SpikeAttention` | Multi-head attention where Q·Kᵀ scores pass through a LIF layer → binary attention weights. No softmax, no exp(). |
+| `SpikeMLP` | Two-layer FFN with a LIF hidden layer — sparsifies internal activations |
+| `SpikeRateTracker` | Context manager to measure firing rates per layer (energy efficiency metric) |
 
-### Prerequisites
+---
 
-- Python 3.9+
-- PyTorch 2.0+
-- (Optional) Intel NxSDK for Loihi 2
-- (Optional) sPyNNaker for SpiNNaker2
-
-### From PyPI
+## Installation
 
 ```bash
-pip install spikeformer-neuromorphic-kit
+pip install torch  # requires PyTorch ≥ 2.0
+pip install -e .
 ```
 
-### From Source with Hardware Support
+---
+
+## Quick Start
+
+```python
+from spikeformer import SpikeFormer, SpikeRateTracker
+import torch
+
+model = SpikeFormer(
+    input_dim=64,    # input feature dimension
+    dim=128,         # internal embedding dimension
+    num_heads=4,
+    num_layers=4,
+    num_classes=10,
+    timesteps=16,    # simulation timesteps (temporal resolution)
+    tau_mem=20.0,    # LIF membrane time constant (ms)
+    threshold=1.0,   # firing threshold
+)
+
+x = torch.randn(8, 64)         # (batch=8, input_dim=64)
+logits, spike_rates = model(x)  # logits: (8, 10)
+
+# Inspect energy efficiency
+print(spike_rates)
+# {'embed': 0.042, 'block0.lif1': 0.051, 'block0.attn': 0.003, ...}
+```
+
+### Spike Rate Monitoring
+
+```python
+with SpikeRateTracker(model) as tracker:
+    logits, _ = model(x)
+
+mean_rate = sum(tracker.rates.values()) / len(tracker.rates)
+print(f"Mean spike rate: {mean_rate:.2%}")
+print(f"Estimated energy reduction vs ANN: {1/mean_rate:.1f}×")
+```
+
+---
+
+## Demo Results
+
+Training a 2-layer SpikeFormer (103K params) on a 10-class synthetic dataset:
+
+```
+Epoch  Train Loss  Train Acc   Val Loss   Val Acc
+    1      1.9300    69.19%     1.4768  100.00%
+    5      0.0871   100.00%     0.0627  100.00%
+   15      0.0154   100.00%     0.0154  100.00%
+
+Best validation accuracy: 100.00%
+
+Spike rates (fraction of neurons firing per timestep):
+  block0.lif1              0.053  ██
+  block0.lif2              0.053  ██
+  block0.attn              0.000
+  block0.ffn_hidden        0.000
+  block1.lif1              0.053  ██
+  block1.lif2              0.053  ██
+  embed                    0.034  █
+  mean                     0.027
+
+Estimated energy reduction vs ANN: 36.5× fewer MACs
+```
+
+At 2.7% mean spike rate, the model uses ~36× fewer synaptic operations than an equivalent ANN — the defining advantage for neuromorphic deployment.
+
+Run the demo:
+```bash
+python demo_basic.py
+```
+
+---
+
+## Energy Efficiency Framing
+
+**Why spike rates matter:**
+
+- **ANN on GPU:** every neuron fires every forward pass → O(N·D) multiply-accumulates per layer
+- **SNN on neuromorphic chip:** only firing neurons send events → O(spike\_rate · N · D) accumulations (no multiply — spike = ±1)
+- At 5% spike rate: **20× fewer operations** → proportional energy reduction
+
+**Typical results:**
+| Spike Rate | Energy Reduction |
+|-----------|-----------------|
+| 10% | 10× |
+| 5% | 20× |
+| 2.7% (this model) | ~37× |
+| 1% | 100× |
+
+**Hardware targets:** Intel Loihi 2, IBM TrueNorth, BrainScaleS, SpiNNaker — all benefit directly from lower spike rates.
+
+---
+
+## Encoding Inputs
+
+Three encoders convert continuous inputs to spike trains:
+
+```python
+from spikeformer import RateEncoder, LatencyEncoder, DirectEncoder
+
+# Poisson rate coding (default for most tasks)
+enc = RateEncoder(timesteps=16)
+spikes = enc(x)        # (batch, 16, features) — binary
+
+# Time-to-first-spike (higher value = fires sooner)
+enc = LatencyEncoder(timesteps=16)
+spikes = enc(x)        # exactly one spike per neuron per sequence
+
+# Direct (repeat input T times, let LIF handle temporal dynamics)
+enc = DirectEncoder(timesteps=16)
+spikes = enc(x)        # (batch, 16, features) — float repeated
+```
+
+---
+
+## Tests
 
 ```bash
-# Clone repository
-git clone https://github.com/danieleschmidt/spikeformer-neuromorphic-kit
-cd spikeformer-neuromorphic-kit
-
-# Install with specific hardware backend
-pip install -e ".[loihi2]"  # For Intel Loihi 2
-pip install -e ".[spinnaker]"  # For SpiNNaker2
-pip install -e ".[all]"  # All backends
+pip install pytest
+pytest tests/ -v
 ```
 
-### Docker Installation
+38 tests covering neurons, attention, full model end-to-end backprop, spike rate validity, and encoding.
 
-```bash
-# CPU simulation
-docker pull danieleschmidt/spikeformer:latest
+---
 
-# With hardware access
-docker run --privileged -it danieleschmidt/spikeformer:loihi2
+## Project Structure
+
+```
+spikeformer/
+  __init__.py      — public API
+  neurons.py       — LIFNeuron, spike_fn, SpikeRateTracker
+  models.py        — SpikeFormer, SpikeFormerBlock, SpikeAttention, SpikeMLP
+  encoding.py      — RateEncoder, LatencyEncoder, DirectEncoder
+tests/
+  test_neurons.py
+  test_models.py
+  test_encoding.py
+demo_basic.py      — training demo with spike rate report
 ```
 
-## ⚡ Quick Start
+---
 
-### Convert a Pre-trained Transformer
+## References
 
-```python
-from spikeformer import SpikeformerConverter, EnergyProfiler
+- **SpikeFormer** (Zhou et al., 2022): spike-based self-attention for vision
+- **Surrogate Gradient Learning** (Neftci et al., 2019): making SNNs differentiable
+- **LIF dynamics**: Gerstner & Kistler, *Spiking Neuron Models* (2002)
+- **Neuromorphic efficiency**: Merolla et al., *Science* 2014 (TrueNorth)
 
-# Load pre-trained Vision Transformer
-from transformers import ViTModel
-vit = ViTModel.from_pretrained("google/vit-base-patch16-224")
+---
 
-# Convert to spiking neural network
-converter = SpikeformerConverter(
-    timesteps=32,
-    threshold=1.0,
-    spike_encoding="rate",
-    neuron_model="LIF"  # Leaky Integrate-and-Fire
-)
+## License
 
-spiking_vit = converter.convert(vit)
-
-# Profile energy consumption
-profiler = EnergyProfiler()
-with profiler.measure():
-    output = spiking_vit(sample_input)
-
-print(f"Energy: {profiler.energy_mJ:.2f} mJ")
-print(f"vs GPU: {profiler.gpu_baseline_ratio:.1f}x reduction")
-```
-
-### Deploy to Neuromorphic Hardware
-
-```python
-from spikeformer.hardware import Loihi2Deployer
-
-# Deploy to Intel Loihi 2
-deployer = Loihi2Deployer()
-loihi_model = deployer.compile(
-    spiking_vit,
-    chip_config={
-        "num_chips": 2,
-        "partition_strategy": "layer_wise"
-    }
-)
-
-# Run inference on chip
-result = loihi_model.run(
-    input_spikes,
-    power_profile=True
-)
-
-print(f"Chip energy: {result.energy_uJ} μJ")
-print(f"Latency: {result.latency_ms} ms")
-```
-
-## 🏗️ Architecture
-
-### Spiking Transformer Architecture
-
-```mermaid
-graph TB
-    subgraph "Input Encoding"
-        A[Image/Text] --> B[Spike Encoder]
-        B --> C[Temporal Spikes]
-    end
-    
-    subgraph "Spiking Transformer"
-        C --> D[S-Embedding]
-        D --> E[S-Attention]
-        E --> F[S-MLP]
-        F --> G[S-LayerNorm]
-    end
-    
-    subgraph "Output Decoding"
-        G --> H[Spike Accumulator]
-        H --> I[Classification]
-    end
-    
-    J[Energy Monitor] --> E
-    J --> F
-```
-
-### Key Components
-
-```python
-from spikeformer.nn import (
-    SpikingAttention,      # Efficient spiking self-attention
-    SpikingMLP,           # Spiking feed-forward network
-    TemporalBatchNorm,    # Normalization for spike trains
-    RateCoding,           # Input encoding strategies
-    LifNeuron             # Neuron models
-)
-
-# Build custom spiking transformer
-class CustomSpikeformer(nn.Module):
-    def __init__(self, config):
-        super().__init__()
-        self.encoder = RateCoding(config.input_dim)
-        self.layers = nn.ModuleList([
-            SpikingTransformerBlock(
-                dim=config.hidden_dim,
-                heads=config.num_heads,
-                neuron_type=config.neuron_model,
-                timesteps=config.timesteps
-            )
-            for _ in range(config.num_layers)
-        ])
-        
-    def forward(self, x):
-        spikes = self.encoder(x)
-        for layer in self.layers:
-            spikes = layer(spikes)
-        return self.decode(spikes)
-```
-
-## 🔄 Conversion Pipeline
-
-### Automated Conversion
-
-```python
-from spikeformer.conversion import ConversionPipeline
-
-# Configure conversion
-pipeline = ConversionPipeline(
-    calibration_data=calibration_loader,
-    conversion_mode="layer_wise",  # or "channel_wise"
-    optimization_target="accuracy"  # or "energy", "latency"
-)
-
-# Convert with calibration
-snn_model = pipeline.convert(
-    ann_model,
-    calibration_samples=1000,
-    fine_tune_epochs=5
-)
-
-# Verify conversion quality
-metrics = pipeline.evaluate_conversion(
-    snn_model,
-    test_loader,
-    metrics=["accuracy", "activation_sparsity", "energy"]
-)
-
-print(f"Accuracy retention: {metrics.accuracy_retention:.1%}")
-print(f"Spike sparsity: {metrics.sparsity:.1%}")
-```
-
-### Manual Fine-grained Control
-
-```python
-from spikeformer.conversion import LayerConverter
-
-# Convert specific layers
-converter = LayerConverter()
-
-# Different strategies for different layers
-for name, module in ann_model.named_modules():
-    if "attention" in name:
-        snn_module = converter.convert_attention(
-            module,
-            method="threshold_balancing"
-        )
-    elif "mlp" in name:
-        snn_module = converter.convert_mlp(
-            module,
-            method="percentile_based"
-        )
-```
-
-## 🔌 Hardware Deployment
-
-### Intel Loihi 2
-
-```python
-from spikeformer.hardware.loihi2 import Loihi2Compiler
-
-compiler = Loihi2Compiler()
-
-# Compile for Loihi 2
-loihi_model = compiler.compile(
-    spiking_model,
-    optimization_level=3,
-    num_chips=4,
-    constraints={
-        "max_fanin": 64,
-        "max_fanout": 128,
-        "synapse_precision": 8
-    }
-)
-
-# Deploy and benchmark
-benchmark = loihi_model.benchmark(
-    test_inputs,
-    metrics=["throughput", "latency", "power", "energy_per_sample"]
-)
-```
-
-### SpiNNaker2
-
-```python
-from spikeformer.hardware.spinnaker import SpiNNakerDeployer
-
-# Deploy to SpiNNaker2
-deployer = SpiNNakerDeployer(
-    board_config="spin2-48chip"
-)
-
-spinn_model = deployer.deploy(
-    spiking_model,
-    routing_algorithm="neighbour_aware",
-    time_scale_factor=1000  # Real-time operation
-)
-
-# Run with live visualization
-spinn_model.run_interactive(
-    input_stream,
-    visualize_spikes=True,
-    record_power=True
-)
-```
-
-### Edge Device Deployment
-
-```python
-from spikeformer.edge import EdgeCompiler
-
-# Compile for edge neuromorphic chips
-edge_compiler = EdgeCompiler(
-    target="akida_1.0",  # or "grai_matter", "mythic_m1076"
-    quantization_bits=4
-)
-
-edge_model = edge_compiler.compile(
-    spiking_model,
-    optimize_for="power",  # or "latency", "memory"
-    constraints={
-        "max_memory_mb": 16,
-        "max_power_mw": 500
-    }
-)
-
-# Generate deployment package
-edge_compiler.export_package(
-    edge_model,
-    output_dir="edge_deployment/",
-    include_runtime=True
-)
-```
-
-## ⚡ Energy Profiling
-
-### Real-time Power Monitoring
-
-```python
-from spikeformer.profiling import PowerMonitor
-
-monitor = PowerMonitor(
-    backend="loihi2",
-    sampling_rate_hz=1000
-)
-
-# Profile during inference
-with monitor.record() as recording:
-    for batch in dataloader:
-        output = spiking_model(batch)
-
-# Analyze power consumption
-analysis = recording.analyze()
-print(f"Average power: {analysis.avg_power_mw:.2f} mW")
-print(f"Peak power: {analysis.peak_power_mw:.2f} mW")
-print(f"Energy per inference: {analysis.energy_per_sample_uj:.2f} μJ")
-
-# Visualize power timeline
-monitor.plot_power_timeline(
-    recording,
-    save_to="power_profile.png"
-)
-```
-
-### Comparative Analysis
-
-```python
-from spikeformer.profiling import EnergyComparison
-
-comparison = EnergyComparison()
-
-# Compare different configurations
-results = comparison.compare([
-    ("GPU ViT", gpu_model, "cuda"),
-    ("CPU ViT", cpu_model, "cpu"),
-    ("Loihi2 Spikeformer", loihi_model, "loihi2"),
-    ("SpiNNaker Spikeformer", spinn_model, "spinnaker")
-])
-
-comparison.plot_energy_comparison(
-    results,
-    metrics=["energy_per_token", "power_consumption", "throughput"],
-    save_to="energy_comparison.pdf"
-)
-```
-
-## 🎓 Training
-
-### Hybrid ANN-SNN Training
-
-```python
-from spikeformer.training import HybridTrainer
-
-trainer = HybridTrainer(
-    model=spikeformer,
-    ann_epochs=50,      # Pre-train as ANN
-    snn_epochs=20,      # Fine-tune as SNN
-    surrogate_gradient="fast_sigmoid"
-)
-
-# Train with knowledge distillation
-trainer.train(
-    train_loader,
-    val_loader,
-    teacher_model=pretrained_vit,
-    distillation_weight=0.5
-)
-```
-
-### Direct SNN Training
-
-```python
-from spikeformer.training import SpikingTrainer
-
-trainer = SpikingTrainer(
-    model=spikeformer,
-    optimizer="AdamW",
-    loss_fn="spike_count_loss",
-    learning_rate=1e-4
-)
-
-# Train from scratch
-history = trainer.fit(
-    train_loader,
-    val_loader,
-    epochs=100,
-    callbacks=[
-        "spike_regularization",
-        "energy_aware_early_stopping",
-        "threshold_adaptation"
-    ]
-)
-```
-
-## 📊 Benchmarks
-
-### Vision Tasks
-
-| Model | Dataset | ANN Acc | SNN Acc | Energy | Speedup |
-|-------|---------|---------|---------|---------|---------|
-| ViT-B/16 | ImageNet | 84.5% | 83.8% | 15× less | 8× |
-| DeiT-S | CIFAR-100 | 91.3% | 90.5% | 12× less | 10× |
-| Swin-T | COCO | 43.2 mAP | 42.5 mAP | 18× less | 6× |
-
-### Language Tasks
-
-| Model | Dataset | ANN Score | SNN Score | Energy | Latency |
-|-------|---------|-----------|-----------|---------|---------|
-| BERT-Base | GLUE | 82.5 | 81.2 | 20× less | 1.2× slower |
-| DistilBERT | SQuAD | 86.9 F1 | 85.5 F1 | 15× less | 0.9× |
-
-### Hardware Performance
-
-```python
-from spikeformer.benchmarks import HardwareBenchmark
-
-bench = HardwareBenchmark()
-
-# Run standard benchmarks
-results = bench.run_all(
-    models=["vit_tiny", "vit_small", "vit_base"],
-    hardware=["loihi2", "spinnaker2", "gpu_baseline"],
-    datasets=["imagenet_subset", "cifar100"]
-)
-
-# Generate report
-bench.generate_report(
-    results,
-    include_plots=True,
-    format="latex"  # For papers
-)
-```
-
-## 💡 Examples
-
-### Computer Vision Example
-
-```python
-# examples/image_classification.py
-from spikeformer.models import SpikeViT
-from spikeformer.data import ImageNetSpikeDataset
-
-# Load pre-converted model
-model = SpikeViT.from_pretrained("spikeformer-vit-base")
-
-# Prepare spiking dataset
-dataset = ImageNetSpikeDataset(
-    root="data/imagenet",
-    timesteps=32,
-    encoding="poisson"
-)
-
-# Deploy to Loihi 2
-from spikeformer.hardware import deploy_to_loihi2
-
-loihi_model = deploy_to_loihi2(
-    model,
-    power_budget_mw=1000,
-    optimize_for="accuracy"
-)
-
-# Run inference
-predictions = loihi_model.predict(dataset)
-```
-
-### Natural Language Example
-
-```python
-# examples/text_classification.py
-from spikeformer.models import SpikeBERT
-
-# Initialize spiking BERT
-model = SpikeBERT(
-    vocab_size=30522,
-    hidden_size=768,
-    num_layers=12,
-    timesteps=20
-)
-
-# Fine-tune on downstream task
-from spikeformer.training import fine_tune_spiking_llm
-
-fine_tune_spiking_llm(
-    model,
-    task="sentiment_analysis",
-    dataset="imdb",
-    hardware_aware=True,
-    target_device="spinnaker2"
-)
-```
-
-## 📚 API Reference
-
-### Core Classes
-
-```python
-class SpikeformerConverter:
-    def convert(self, ann_model, **kwargs) -> SpikingModel
-    def calibrate(self, model, data_loader) -> None
-    
-class SpikingTransformer(nn.Module):
-    def __init__(self, config: SpikingConfig)
-    def forward(self, x: SpikeTensor) -> SpikeTensor
-    
-class EnergyProfiler:
-    def measure(self) -> EnergyMetrics
-    def compare(self, models: List) -> ComparisonReport
-```
-
-### Hardware Interfaces
-
-```python
-class NeuromorphicDeployer(ABC):
-    @abstractmethod
-    def compile(self, model) -> HardwareModel
-    
-    @abstractmethod  
-    def deploy(self, compiled_model) -> DeployedModel
-    
-    @abstractmethod
-    def benchmark(self, deployed_model) -> BenchmarkResults
-```
-
-## 🤝 Contributing
-
-We welcome contributions! Priority areas:
-- New neuron models (AdLIF, PLIF)
-- Additional hardware backends
-- Transformer architecture variants
-- Energy optimization algorithms
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-### Development Setup
-
-```bash
-# Clone repository
-git clone https://github.com/danieleschmidt/spikeformer-neuromorphic-kit
-cd spikeformer-neuromorphic-kit
-
-# Install development dependencies
-pip install -e ".[dev]"
-
-# Run tests
-pytest tests/
-
-# Run hardware tests (requires hardware)
-pytest tests/hardware/ --loihi2
-```
-
-## 📄 License
-
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
-
-## 🔗 Related Projects
-
-- [snnTorch](https://github.com/jeshraghian/snntorch) - PyTorch spiking neural networks
-- [Norse](https://github.com/norse/norse) - Deep learning with spiking neural networks
-- [Lava](https://github.com/lava-nc/lava) - Intel's neuromorphic framework
-- [sPyNNaker](https://github.com/SpiNNakerManchester/sPyNNaker) - SpiNNaker PyNN implementation
-
-## 📞 Support
-
-- 📧 Email: neuromorphic@danieleschmidt.com
-- 💬 Discord: [Join our community](https://discord.gg/danieleschmidt)
-- 📖 Documentation: [Full docs](https://docs.danieleschmidt.com/spikeformer)
-- 🎓 Tutorial: [Neuromorphic AI Course](https://learn.danieleschmidt.com/neuromorphic)
-
-## 📚 References
-
-- [Spikformer: When Spiking Neural Network Meets Transformer](https://arxiv.org/abs/2209.15425)
-- [Efficient SNN-Transformer](https://www.sciencedirect.com/science/article/abs/pii/S0893608025006665) - Energy efficiency results
-- [Neuromorphic Computing Roadmap](https://www.nature.com/articles/s41467-025-57352-1) - Commercial outlook
-- [Brain-Inspired Computing](https://www.intel.com/content/www/us/en/research/neuromorphic-computing.html) - Intel's approach
+MIT

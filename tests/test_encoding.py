@@ -1,110 +1,69 @@
-#!/usr/bin/env python3
-"""Test cases for spike encoding methods."""
+"""Tests for spike encoding modules."""
+import pytest
+import torch
 
-import sys
-from pathlib import Path
-
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+from spikeformer.encoding import RateEncoder, LatencyEncoder, DirectEncoder
 
 
-def test_rate_coding_structure():
-    """Test RateCoding class structure."""
-    try:
-        from spikeformer.encoding import RateCoding
-        assert RateCoding is not None
-        assert hasattr(RateCoding, '__init__')
-        assert hasattr(RateCoding, 'forward')
-    except ImportError:
-        assert True
+class TestRateEncoder:
+    def test_output_shape(self):
+        enc = RateEncoder(timesteps=16)
+        x = torch.rand(4, 32)
+        spikes = enc(x)
+        assert spikes.shape == (4, 16, 32)
+
+    def test_binary_output(self):
+        enc = RateEncoder(timesteps=8)
+        x = torch.rand(4, 32)
+        spikes = enc(x)
+        assert set(spikes.unique().tolist()).issubset({0.0, 1.0})
+
+    def test_rate_proportional_to_value(self):
+        """Higher input → higher spike rate on average."""
+        enc = RateEncoder(timesteps=1000, normalize=False)
+        # Two groups: low (0.1) and high (0.9)
+        x = torch.tensor([[0.1, 0.9]])
+        spikes = enc(x)  # (1, 1000, 2)
+        low_rate = spikes[0, :, 0].mean().item()
+        high_rate = spikes[0, :, 1].mean().item()
+        assert high_rate > low_rate
 
 
-def test_temporal_coding_structure():
-    """Test TemporalCoding class structure."""
-    try:
-        from spikeformer.encoding import TemporalCoding
-        assert TemporalCoding is not None
-        assert hasattr(TemporalCoding, '__init__')
-        assert hasattr(TemporalCoding, 'forward')
-    except ImportError:
-        assert True
+class TestLatencyEncoder:
+    def test_output_shape(self):
+        enc = LatencyEncoder(timesteps=16)
+        x = torch.rand(4, 32)
+        spikes = enc(x)
+        assert spikes.shape == (4, 16, 32)
+
+    def test_one_spike_per_neuron(self):
+        enc = LatencyEncoder(timesteps=16)
+        x = torch.rand(4, 32)
+        spikes = enc(x)
+        # Each neuron should fire exactly once
+        spike_counts = spikes.sum(dim=1)  # (4, 32)
+        assert (spike_counts == 1).all()
+
+    def test_higher_value_fires_earlier(self):
+        enc = LatencyEncoder(timesteps=100)
+        x = torch.tensor([[0.1, 0.9]])
+        spikes = enc(x)  # (1, 100, 2)
+        # Find first spike time for each neuron
+        low_t = spikes[0, :, 0].argmax().item()   # first 1 in time
+        high_t = spikes[0, :, 1].argmax().item()
+        assert high_t < low_t, f"High-value neuron should fire first: {high_t} vs {low_t}"
 
 
-def test_poisson_coding_structure():
-    """Test PoissonCoding class structure."""
-    try:
-        from spikeformer.encoding import PoissonCoding
-        assert PoissonCoding is not None
-        assert hasattr(PoissonCoding, '__init__')
-        assert hasattr(PoissonCoding, 'forward')
-    except ImportError:
-        assert True
+class TestDirectEncoder:
+    def test_output_shape(self):
+        enc = DirectEncoder(timesteps=8)
+        x = torch.randn(4, 32)
+        out = enc(x)
+        assert out.shape == (4, 8, 32)
 
-
-def test_delta_coding_structure():
-    """Test DeltaCoding class structure."""
-    try:
-        from spikeformer.encoding import DeltaCoding
-        assert DeltaCoding is not None
-        assert hasattr(DeltaCoding, '__init__')
-        assert hasattr(DeltaCoding, 'forward')
-    except ImportError:
-        assert True
-
-
-def test_rank_order_coding_structure():
-    """Test RankOrderCoding class structure."""
-    try:
-        from spikeformer.encoding import RankOrderCoding
-        assert RankOrderCoding is not None
-        assert hasattr(RankOrderCoding, '__init__')
-        assert hasattr(RankOrderCoding, 'forward')
-    except ImportError:
-        assert True
-
-
-def test_latency_coding_structure():
-    """Test LatencyCoding class structure."""
-    try:
-        from spikeformer.encoding import LatencyCoding
-        assert LatencyCoding is not None
-        assert hasattr(LatencyCoding, '__init__')
-        assert hasattr(LatencyCoding, 'forward')
-    except ImportError:
-        assert True
-
-
-def test_adaptive_optimal_encoder_structure():
-    """Test AdaptiveOptimalEncoder class structure."""
-    try:
-        from spikeformer.encoding import AdaptiveOptimalEncoder
-        assert AdaptiveOptimalEncoder is not None
-        assert hasattr(AdaptiveOptimalEncoder, '__init__')
-        assert hasattr(AdaptiveOptimalEncoder, 'encode_adaptively')
-    except ImportError:
-        assert True
-
-
-if __name__ == "__main__":
-    print("🧪 Running encoding tests...")
-    
-    tests = [
-        test_rate_coding_structure,
-        test_temporal_coding_structure,
-        test_poisson_coding_structure,
-        test_delta_coding_structure,
-        test_rank_order_coding_structure,
-        test_latency_coding_structure,
-        test_adaptive_optimal_encoder_structure
-    ]
-    
-    passed = 0
-    for test in tests:
-        try:
-            test()
-            passed += 1
-            print(f"✅ {test.__name__}")
-        except Exception as e:
-            print(f"❌ {test.__name__}: {e}")
-    
-    print(f"Encoding tests: {passed}/{len(tests)} passed")
+    def test_values_repeated(self):
+        enc = DirectEncoder(timesteps=4)
+        x = torch.randn(2, 8)
+        out = enc(x)
+        for t in range(4):
+            assert torch.allclose(out[:, t, :], x)
